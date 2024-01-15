@@ -144,6 +144,7 @@ action:
           - service: climate.turn_on
             data_template:
               entity_id: "{{ climate_entity }}"
+
           - delay: "00:00:04"
   - choose:
       - conditions:
