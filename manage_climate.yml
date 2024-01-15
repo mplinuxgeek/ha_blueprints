@@ -1,5 +1,5 @@
 blueprint:
-  name: Manage Climate Based on Temperature
+  name: Managed Climate
   description: |
     ## Managed Climate
 
@@ -127,6 +127,7 @@ action:
       high_scale_temp: !input high_scale_temp
       hysteresis: !input hysteresis
       swing_mode: !input swing_mode
+      current_hvac_mode: "{{ states(climate_entity) }}"
       current_temp: "{{ states(temperature_sensor) | float }}"
       hvac_mode: >
         {% set current_season = states('season.season') %}
