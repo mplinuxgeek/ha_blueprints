@@ -1,16 +1,18 @@
 blueprint:
   name: Manage Climate Based on Temperature
-  description: >
+  description: |
+    ## Managed Climate
+
     This blueprint offers an automated solution to manage an air conditioning system based on the current temperature, the season, and the temperature's rate of change. It is designed to provide optimal comfort while also being energy efficient.
 
-    Key Features:
-    - Seasonal Awareness: The automation adjusts the HVAC mode (heating, cooling, fan only) based on the current season and room temperature. During autumn and winter, it activates heating if the room is colder than 16°C. In other seasons, it cools the room if the temperature rises above a user-defined threshold.
-    - Fan Speed Scaling: When in cooling mode, the fan speed is dynamically scaled based on the current room temperature. The scaling operates between two user-defined temperatures: a low scale temperature and a high scale temperature. As the room temperature increases from the low scale to the high scale, the fan speed increments from 1 to 5 accordingly. For instance, a lower room temperature would result in a lower fan speed, gradually increasing as the temperature rises, ensuring efficient cooling and energy usage.
-    - Temperature Hysteresis: A hysteresis value prevents frequent switching of the AC unit by providing a buffer around the set temperature. This ensures that minor fluctuations in temperature don't trigger the system, adding to its efficiency and longevity.
-    - Swing Mode Control: Users can choose the desired swing mode for their AC unit, providing further comfort customization.
-    - Derivative Sensor Integration: By using a derivative sensor, the automation can assess the rate of temperature change, aiding in making more informed decisions about when to activate or deactivate the AC unit.
+    ### Key Features:
+      - Seasonal Awareness: The automation adjusts the HVAC mode (heating, cooling, fan only) based on the current season and room temperature. During autumn and winter, it activates heating if the room is colder than 16°C. In other seasons, it cools the room if the temperature rises above a user-defined threshold.
+      - Fan Speed Scaling: When in cooling mode, the fan speed is dynamically scaled based on the current room temperature. The scaling operates between two user-defined temperatures: a low scale temperature and a high scale temperature. As the room temperature increases from the low scale to the high scale, the fan speed increments from 1 to 5 accordingly. For instance, a lower room temperature would result in a lower fan speed, gradually increasing as the temperature rises, ensuring efficient cooling and energy usage.
+      - Temperature Hysteresis: A hysteresis value prevents frequent switching of the AC unit by providing a buffer around the set temperature. This ensures that minor fluctuations in temperature don't trigger the system, adding to its efficiency and longevity.
+      - Swing Mode Control: Users can choose the desired swing mode for their AC unit, providing further comfort customization.
+      - Derivative Sensor Integration: By using a derivative sensor, the automation can assess the rate of temperature change, aiding in making more informed decisions about when to activate or deactivate the AC unit.
 
-    Usage:
+    ### Usage
     To use this blueprint, select your climate entity, temperature sensor, and optionally a derivative sensor. Define your preferred temperatures for different conditions and choose the appropriate swing mode for your AC unit. The automation will handle the rest, adjusting settings every 10 minutes based on the current conditions.
   domain: automation
   input:
