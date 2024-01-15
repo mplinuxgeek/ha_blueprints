@@ -195,4 +195,3 @@ action:
             data_template:
               entity_id: "{{ climate_entity }}"
               swing_mode: "{{ swing_mode }}"
-        
