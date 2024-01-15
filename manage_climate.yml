@@ -1,5 +1,5 @@
 blueprint:
-  name: Manage Bedroom AC Based on Temperature
+  name: Manage Climate Based on Temperature
   description: Manage your AC based on temperature, season, and temperature stability.
   domain: automation
   input:
