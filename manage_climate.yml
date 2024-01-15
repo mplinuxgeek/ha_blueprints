@@ -129,7 +129,7 @@ action:
           {% if current_temp < set_temperature + hysteresis %}
             'Silence'
           {% elif current_temp >= set_temperature + hysteresis %}
-            {% set mapped_value = ((current_temp - low_scale_temp) * (5 - 1) / (high_scale_temp - low_scale_temp)) | round(1, 'floor') %}
+            {% set mapped_value = ((current_temp - low_scale_temp) * (5 - 1) / (high_scale_temp - low_scale_temp)) | round %}
             {% set mapped_value = [mapped_value, 5] | min %}
             {% set mapped_value = [mapped_value, 1] | max %}
             {{ mapped_value }}
