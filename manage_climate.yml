@@ -152,7 +152,7 @@ action:
         sequence:
           - service: climate.turn_on
             entity_id: "{{ climate_entity }}"
-          - delay: "00:00:{{ delay }}"
+          - delay: "00:00:04"
   - choose:
       - conditions:
           - condition: template
@@ -162,7 +162,7 @@ action:
             entity_id: "{{ climate_entity }}"
             data:
               hvac_mode: "{{ hvac_mode }}"
-          - delay: "00:00:{{ delay }}"
+          - delay: "00:00:04"
   - choose:
       - conditions:
           - condition: template
@@ -174,7 +174,7 @@ action:
             entity_id: "{{ climate_entity }}"
             data:
               temperature: "{{ set_temperature }}"
-          - delay: "00:00:{{ delay }}"
+          - delay: "00:00:04"
   - choose:
       - conditions:
           - condition: template
@@ -184,7 +184,7 @@ action:
             entity_id: "{{ climate_entity }}"
             data:
               fan_mode: "{{ fan_mode }}"
-          - delay: "00:00:{{ delay }}"
+          - delay: "00:00:04"
   - choose:
       - conditions:
         - condition: template
