@@ -1,0 +1,197 @@
+blueprint:
+  name: Manage Bedroom AC Based on Temperature
+  description: Manage your AC based on temperature, season, and temperature stability.
+  domain: automation
+  input:
+    climate_entity:
+      name: Climate Entity
+      description: The climate entity to control.
+      selector:
+        entity:
+          domain: climate
+    temperature_sensor:
+      name: Temperature Sensor
+      description: The sensor to measure room temperature.
+      selector:
+        entity:
+          domain: sensor
+          device_class: temperature
+    derivative_sensor:
+      name: Derivative Sensor
+      description: The sensor for measuring temperature change rate.
+      selector:
+        entity:
+          domain: sensor
+    set_temperature:
+      name: Set Temperature
+      description: The target temperature for the climate entity.
+      default: 20
+      selector:
+        number:
+          min: 15
+          max: 30
+          unit_of_measurement: °C
+    summer_on_temp:
+      name: Summer On Temperature
+      description: Temperature to turn on AC in summer.
+      default: 23
+      selector:
+        number:
+          min: 15
+          max: 30
+          unit_of_measurement: °C
+    winter_on_temp:
+      name: Winter On Temperature
+      description: Temperature to turn on AC in winter.
+      default: 16
+      selector:
+        number:
+          min: 0
+          max: 25
+          unit_of_measurement: °C
+    low_scale_temp:
+      name: Low Scale Temperature
+      description: Lower bound for scaling fan mode.
+      default: 20
+      selector:
+        number:
+          min: 15
+          max: 25
+          unit_of_measurement: °C
+    high_scale_temp:
+      name: High Scale Temperature
+      description: Upper bound for scaling fan mode.
+      default: 24
+      selector:
+        number:
+          min: 20
+          max: 30
+          unit_of_measurement: °C
+    hysteresis:
+      name: Hysteresis
+      description: Temperature buffer for stability (°C).
+      default: 0.5
+      selector:
+        number:
+          min: 0.1
+          max: 1.0
+          step: 0.1
+          unit_of_measurement: °C
+    swing_mode:
+      name: Swing Mode
+      description: Swing mode for the AC.
+      default: '3D'
+      selector:
+        select:
+          options:
+            - 'Off'
+            - 'Vertical'
+            - 'Horizontal'
+            - '3D'
+    delay:
+      name: Delay
+      description: Delay between actions (seconds).
+      default: 4
+      selector:
+        number:
+          min: 0
+          max: 60
+          unit_of_measurement: seconds
+
+trigger:
+  - platform: time_pattern
+    minutes: /10
+
+action:
+  - variables:
+      climate_entity: !input climate_entity
+      temperature_sensor: !input temperature_sensor
+      derivative_sensor: !input derivative_sensor
+      set_temperature: !input set_temperature
+      summer_on_temp: !input summer_on_temp
+      winter_on_temp: !input winter_on_temp
+      low_scale_temp: !input low_scale_temp
+      high_scale_temp: !input high_scale_temp
+      hysteresis: !input hysteresis
+      swing_mode: !input swing_mode
+      current_temp: "{{ states(temperature_sensor) | float }}"
+      hvac_mode: >
+        {% set current_season = states('season.season') %}
+        {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
+          heat
+        {% elif current_temp < set_temperature + hysteresis %}
+          fan_only
+        {% else %}
+          cool
+        {% endif %}
+      fan_mode: >
+        {% if hvac_mode == 'cool' %}
+          {% if current_temp < set_temperature + hysteresis %}
+            'Silence'
+          {% elif current_temp >= set_temperature + hysteresis %}
+            {% set mapped_value = ((current_temp - low_scale_temp) * (5 - 1) / (high_scale_temp - low_scale_temp)) | round(1, 'floor') %}
+            {% set mapped_value = [mapped_value, 5] | min %}
+            {% set mapped_value = [mapped_value, 1] | max %}
+            {{ mapped_value }}
+          {% endif %}
+        {% elif hvac_mode == 'fan_only' %}
+          {% if current_temp < set_temperature + hysteresis %}
+            'Silence'
+          {% else %}
+            1
+          {% endif %}
+        {% else %}
+          'Auto'
+        {% endif %}
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ states(temperature_sensor) | float > summer_on_temp }}"
+          - condition: template
+            value_template: "{{ states(temperature_sensor) | float < winter_on_temp }}"
+        sequence:
+          - service: climate.turn_on
+            entity_id: "{{ climate_entity }}"
+          - delay: "00:00:{{ delay }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ states(climate_entity) != hvac_mode }}"
+        sequence:
+          - service: climate.set_hvac_mode
+            entity_id: "{{ climate_entity }}"
+            data:
+              hvac_mode: "{{ hvac_mode }}"
+          - delay: "00:00:{{ delay }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ state_attr(climate_entity, 'temperature') != set_temperature }}"
+          - condition: template
+            value_template: "{{ states(climate_entity) in ['cool', 'heat', 'heat_cool'] }}"
+        sequence:
+          - service: climate.set_temperature
+            entity_id: "{{ climate_entity }}"
+            data:
+              temperature: "{{ set_temperature }}"
+          - delay: "00:00:{{ delay }}"
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ state_attr(climate_entity, 'fan_mode') != fan_mode }}"
+        sequence:
+          - service: climate.set_fan_mode
+            entity_id: "{{ climate_entity }}"
+            data:
+              fan_mode: "{{ fan_mode }}"
+        - delay: "00:00:{{ delay }}"
+  - choose:
+      - conditions:
+        - condition: template
+          value_template: "{{ state_attr(climate_entity, 'swing_mode') != swing_mode }}"
+        sequence:
+          - service: climate.set_swing_mode
+            entity_id: "{{ climate_entity }}"
+            data:
+              swing_mode: "{{ swing_mode }}"
+        
