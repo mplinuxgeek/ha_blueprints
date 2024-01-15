@@ -159,6 +159,8 @@ action:
   - choose:
       - conditions:
           - condition: template
+            value_template: "{{ states(climate_entity) != 'off' }}"
+          - condition: template
             value_template: "{{ states(temperature_sensor) | float > summer_on_temp }}"
           - condition: template
             value_template: "{{ states(temperature_sensor) | float < winter_on_temp }}"
