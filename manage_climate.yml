@@ -3,7 +3,7 @@ blueprint:
   description: |
     ## Managed Climate
 
-    Update: 20240116-010956
+    Update: 20240116-012254
 
     This blueprint offers an automated solution to manage an air conditioning system based on the current temperature, the season, and the temperature's rate of change. It is designed to provide optimal comfort while also being energy efficient.
 
@@ -37,7 +37,7 @@ blueprint:
       selector:
         entity:
           domain: sensor
-    derivative_fan_boost:
+    derivative_threshold:
       name: Derivative Threshold
       description: Derivative boost value, fan speed will be +1 above this value.
       default: 0.5
@@ -45,6 +45,7 @@ blueprint:
         number:
           min: 0
           max: 2
+          step: 0.1
           unit_of_measurement: °C
     set_temperature:
       name: Set Temperature
@@ -131,6 +132,7 @@ action:
       climate_entity: !input climate_entity
       temperature_sensor: !input temperature_sensor
       derivative_sensor: !input derivative_sensor
+      derivative_threshold: !input derivative_threshold
       set_temperature: !input set_temperature
       summer_on_temp: !input summer_on_temp
       winter_on_temp: !input winter_on_temp
@@ -160,7 +162,7 @@ action:
             {% set base_mapped_value = ((current_temp - low_scale_temp) * (5 - 1) / (high_scale_temp - low_scale_temp)) | round %}
             {% set base_mapped_value = [base_mapped_value, 5] | min %}
             {% set base_mapped_value = [base_mapped_value, 1] | max %}
-            {% if derivative > 0.5 %}
+            {% if derivative > derivative_threshold %}
               {% set fan_speed = [base_mapped_value + 1, 5] | min %}
             {% else %}
               {% set fan_speed = base_mapped_value %}
