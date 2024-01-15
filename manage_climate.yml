@@ -184,7 +184,7 @@ action:
             entity_id: "{{ climate_entity }}"
             data:
               fan_mode: "{{ fan_mode }}"
-        - delay: "00:00:{{ delay }}"
+          - delay: "00:00:{{ delay }}"
   - choose:
       - conditions:
         - condition: template
