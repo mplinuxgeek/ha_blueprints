@@ -38,7 +38,7 @@ blueprint:
         entity:
           domain: sensor
     derivative_fan_boost:
-      name: Summer On Temperature
+      name: Derivative Threshold
       description: Derivative boost value, fan speed will be +1 above this value.
       default: 0.5
       selector:
