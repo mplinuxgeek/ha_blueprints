@@ -104,8 +104,8 @@ trigger:
 
 action:
   - variables:
-      current_temp: "{{ states(temperature_sensor) | float }}"
       hvac_mode: >
+        {% set current_temp = states(temperature_sensor) | float %}
         {% set current_season = states('season.season') %}
         {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
           heat
@@ -115,6 +115,7 @@ action:
           cool
         {% endif %}
       fan_mode: >
+        {% set current_temp = states(temperature_sensor) | float %}
         {% if hvac_mode == 'cool' %}
           {% if current_temp < set_temperature + hysteresis %}
             'Silence'
