@@ -104,8 +104,18 @@ trigger:
 
 action:
   - variables:
+      climate_entity: !input climate_entity
+      temperature_sensor: !input temperature_sensor
+      derivative_sensor: !input derivative_sensor
+      set_temperature: !input set_temperature
+      summer_on_temp: !input summer_on_temp
+      winter_on_temp: !input winter_on_temp
+      low_scale_temp: !input low_scale_temp
+      high_scale_temp: !input high_scale_temp
+      hysteresis: !input hysteresis
+      swing_mode: !input swing_mode
+      current_temp: "{{ states(temperature_sensor) | float }}"
       hvac_mode: >
-        {% set current_temp = states(!input temperature_sensor) | float %}
         {% set current_season = states('season.season') %}
         {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
           heat
@@ -115,7 +125,6 @@ action:
           cool
         {% endif %}
       fan_mode: >
-        {% set current_temp = states(!input temperature_sensor) | float %}
         {% if hvac_mode == 'cool' %}
           {% if current_temp < set_temperature + hysteresis %}
             'Silence'
@@ -137,14 +146,13 @@ action:
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ states(!input temperature_sensor) | float > summer_on_temp }}"
+            value_template: "{{ states(temperature_sensor) | float > summer_on_temp }}"
           - condition: template
-            value_template: "{{ states(!input temperature_sensor) | float < winter_on_temp }}"
+            value_template: "{{ states(temperature_sensor) | float < winter_on_temp }}"
         sequence:
           - service: climate.turn_on
             data_template:
               entity_id: "{{ climate_entity }}"
-
           - delay: "00:00:04"
   - choose:
       - conditions:
