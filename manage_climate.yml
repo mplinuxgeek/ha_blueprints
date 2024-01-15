@@ -104,16 +104,6 @@ trigger:
 
 action:
   - variables:
-      climate_entity: climate_entity
-      temperature_sensor: temperature_sensor
-      derivative_sensor: derivative_sensor
-      set_temperature: set_temperature
-      summer_on_temp: summer_on_temp
-      winter_on_temp: winter_on_temp
-      low_scale_temp: low_scale_temp
-      high_scale_temp: high_scale_temp
-      hysteresis: hysteresis
-      swing_mode: swing_mode
       current_temp: "{{ states(temperature_sensor) | float }}"
       hvac_mode: >
         {% set current_season = states('season.season') %}
