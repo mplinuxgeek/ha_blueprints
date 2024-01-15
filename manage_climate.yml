@@ -144,14 +144,18 @@ action:
       current_temp: "{{ states(temperature_sensor) | float }}"
       current_season: "{{ states('season.season') }}"
       hvac_mode: >
-        {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
-          heat
-        {% elif current_temp > summer_on_temp %}
-          cool
-        {% elif current_temp >= set_temperature - hysteresis and current_temp <= set_temperature + hysteresis %}
-          fan_only
+        {% if current_hvac_mode != 'off' %}
+          {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
+            heat
+          {% elif current_temp > summer_on_temp %}
+            cool
+          {% elif current_temp >= set_temperature - hysteresis and current_temp <= set_temperature + hysteresis %}
+            fan_only
+          {% else %}
+            {{ current_hvac_mode }}
+          {% endif %}
         {% else %}
-          off
+          cool
         {% endif %}
       fan_mode: >
         {% set derivative = states(derivative_sensor) | float %}
