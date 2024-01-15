@@ -117,7 +117,7 @@ action:
   - variables:
       climate_entity: !input climate_entity
       temperature_sensor: !input temperature_sensor
-      derivative_sensor: !input derivative_sensor
+      # derivative_sensor: !input derivative_sensor
       set_temperature: !input set_temperature
       summer_on_temp: !input summer_on_temp
       winter_on_temp: !input winter_on_temp
