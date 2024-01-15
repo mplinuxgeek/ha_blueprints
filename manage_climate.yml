@@ -151,7 +151,8 @@ action:
             value_template: "{{ states(temperature_sensor) | float < winter_on_temp }}"
         sequence:
           - service: climate.turn_on
-            entity_id: "{{ climate_entity }}"
+            data_template:
+              entity_id: "{{ climate_entity }}"
           - delay: "00:00:04"
   - choose:
       - conditions:
@@ -160,7 +161,8 @@ action:
         sequence:
           - service: climate.set_hvac_mode
             entity_id: "{{ climate_entity }}"
-            data:
+            data_template:
+              entity_id: "{{ climate_entity }}"
               hvac_mode: "{{ hvac_mode }}"
           - delay: "00:00:04"
   - choose:
@@ -172,7 +174,8 @@ action:
         sequence:
           - service: climate.set_temperature
             entity_id: "{{ climate_entity }}"
-            data:
+            data_template:
+              entity_id: "{{ climate_entity }}"
               temperature: "{{ set_temperature }}"
           - delay: "00:00:04"
   - choose:
@@ -182,7 +185,8 @@ action:
         sequence:
           - service: climate.set_fan_mode
             entity_id: "{{ climate_entity }}"
-            data:
+            data_template:
+              entity_id: "{{ climate_entity }}"
               fan_mode: "{{ fan_mode }}"
           - delay: "00:00:04"
   - choose:
@@ -191,7 +195,7 @@ action:
           value_template: "{{ state_attr(climate_entity, 'swing_mode') != swing_mode }}"
         sequence:
           - service: climate.set_swing_mode
-            entity_id: "{{ climate_entity }}"
-            data:
+            data_template:
+              entity_id: "{{ climate_entity }}"
               swing_mode: "{{ swing_mode }}"
         
