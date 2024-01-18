@@ -1,0 +1,41 @@
+blueprint:
+  name: LG WebOS WOL
+  description: Turn on LG WebOS TV using WakeOnLan for devices connected via LAN or WLAN.
+  domain: automation
+  input:
+    lg_tv_entity:
+      name: LG WebOS Smart TV Entity
+      description: The entity_id of your LG WebOS Smart TV.
+      selector:
+        entity:
+          domain: media_player
+
+    primary_mac:
+      name: Primary MAC Address
+      description: The MAC address of the TV when connected via LAN.
+      selector:
+        text:
+
+    secondary_mac:
+      name: Secondary MAC Address
+      description: The MAC address of the TV when connected via WLAN.
+      selector:
+        text:
+
+trigger:
+  - platform: state
+    entity_id: !input 'lg_tv_entity'
+    to: 'on'
+
+action:
+  - choose:
+      - conditions: "{{ trigger.to_state.state == 'on' }}"
+        sequence:
+          - service: wake_on_lan.send_magic_packet
+            data:
+              mac: !input 'primary_mac'
+          - service: wake_on_lan.send_magic_packet
+            data:
+              mac: !input 'secondary_mac'
+
+mode: single
