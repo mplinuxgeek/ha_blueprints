@@ -1,5 +1,5 @@
 blueprint:
-  name: LG WebOS WOL
+  name: LG WebOS TV WOL
   description: Turn on LG WebOS TV using WakeOnLan for devices connected via LAN or WLAN.
   domain: automation
   input:
