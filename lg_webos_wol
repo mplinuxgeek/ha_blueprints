@@ -23,9 +23,8 @@ blueprint:
         text:
 
 trigger:
-  - platform: state
+  - platform: webostv.turn_on
     entity_id: !input 'lg_tv_entity'
-    to: 'on'
 
 action:
   - choose:
