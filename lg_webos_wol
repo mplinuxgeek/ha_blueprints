@@ -27,14 +27,11 @@ trigger:
     entity_id: !input 'lg_tv_entity'
 
 action:
-  - choose:
-      - conditions: "{{ trigger.to_state.state == 'on' }}"
-        sequence:
-          - service: wake_on_lan.send_magic_packet
-            data:
-              mac: !input 'primary_mac'
-          - service: wake_on_lan.send_magic_packet
-            data:
-              mac: !input 'secondary_mac'
+  - service: wake_on_lan.send_magic_packet
+    data:
+      mac: !input 'primary_mac'
+  - service: wake_on_lan.send_magic_packet
+    data:
+      mac: !input 'secondary_mac'
 
 mode: single
