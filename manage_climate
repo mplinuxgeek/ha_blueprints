@@ -150,7 +150,11 @@ action:
           {% elif current_temp > summer_on_temp %}
             cool
           {% elif current_temp >= set_temperature - hysteresis and current_temp <= set_temperature + hysteresis %}
-            fan_only
+            {% if derivative > derivative_threshold %}
+              cool
+            {% else %}
+              fan_only
+            {% endif %}
           {% else %}
             {{ current_hvac_mode }}
           {% endif %}
