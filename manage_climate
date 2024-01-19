@@ -144,13 +144,14 @@ action:
       current_hvac_mode: "{{ states(climate_entity) }}"
       current_temp: "{{ states(temperature_sensor) | float }}"
       current_season: "{{ states('season.season') }}"
+      current_derivative: "{{ states(derivative_sensor) | float }}"
       hvac_mode: >
         {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
           heat
         {% elif current_temp > summer_on_temp %}
           cool
         {% elif current_temp >= set_temperature - hysteresis and current_temp <= set_temperature + hysteresis %}
-          {% if derivative > derivative_threshold %}
+          {% if current_derivative > derivative_threshold %}
             cool
           {% else %}
             fan_only
@@ -159,7 +160,6 @@ action:
           off
         {% endif %}
       fan_mode: >
-        {% set derivative = states(derivative_sensor) | float %}
         {% if hvac_mode == 'cool' %}
           {% if current_temp < set_temperature + hysteresis %}
             'Silence'
@@ -167,7 +167,7 @@ action:
             {% set base_mapped_value = ((current_temp - low_scale_temp) * (5 - 1) / (high_scale_temp - low_scale_temp)) | round %}
             {% set base_mapped_value = [base_mapped_value, 5] | min %}
             {% set base_mapped_value = [base_mapped_value, 1] | max %}
-            {% if derivative > derivative_threshold %}
+            {% if current_derivative > derivative_threshold %}
               {% set fan_speed = [base_mapped_value + 1, 5] | min %}
             {% else %}
               {% set fan_speed = base_mapped_value %}
