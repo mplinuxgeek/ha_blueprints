@@ -3,8 +3,6 @@ blueprint:
   description: |
     ## Managed Climate
 
-    Update: 20240116-013041
-
     This blueprint offers an automated solution to manage an air conditioning system based on the current temperature, the season, and the temperature's rate of change. It is designed to provide optimal comfort while also being energy efficient.
 
     ### Key Features:
@@ -43,8 +41,9 @@ blueprint:
       default: 20
       selector:
         number:
-          min: 15
-          max: 30
+          min: 18
+          max: 26
+          step: 0.5
           unit_of_measurement: °C
     summer_on_temp:
       name: Summer On Temperature
@@ -54,6 +53,7 @@ blueprint:
         number:
           min: 15
           max: 30
+          step: 0.5
           unit_of_measurement: °C
     winter_on_temp:
       name: Winter On Temperature
@@ -63,6 +63,7 @@ blueprint:
         number:
           min: 0
           max: 25
+          step: 0.5
           unit_of_measurement: °C
     derivative_threshold:
       name: Derivative Threshold
@@ -144,22 +145,18 @@ action:
       current_temp: "{{ states(temperature_sensor) | float }}"
       current_season: "{{ states('season.season') }}"
       hvac_mode: >
-        {% if current_hvac_mode != 'off' %}
-          {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
-            heat
-          {% elif current_temp > summer_on_temp %}
+        {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
+          heat
+        {% elif current_temp > summer_on_temp %}
+          cool
+        {% elif current_temp >= set_temperature - hysteresis and current_temp <= set_temperature + hysteresis %}
+          {% if derivative > derivative_threshold %}
             cool
-          {% elif current_temp >= set_temperature - hysteresis and current_temp <= set_temperature + hysteresis %}
-            {% if derivative > derivative_threshold %}
-              cool
-            {% else %}
-              fan_only
-            {% endif %}
           {% else %}
-            {{ current_hvac_mode }}
+            fan_only
           {% endif %}
         {% else %}
-          cool
+          off
         {% endif %}
       fan_mode: >
         {% set derivative = states(derivative_sensor) | float %}
