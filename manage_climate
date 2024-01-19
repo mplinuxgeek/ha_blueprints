@@ -150,7 +150,9 @@ action:
           heat
         {% elif current_temp > summer_on_temp %}
           cool
-        {% elif current_temp >= set_temperature - hysteresis and current_temp <= set_temperature + hysteresis %}
+        {% elif current_temp > set_temperature + hysteresis %}
+          cool
+        {% elif current_temp >= set_temperature - hysteresis %}
           {% if current_derivative > derivative_threshold %}
             cool
           {% else %}
