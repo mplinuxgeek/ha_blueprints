@@ -152,7 +152,7 @@ action:
           cool
         {% elif current_temp > set_temperature + hysteresis %}
           cool
-        {% elif current_temp >= set_temperature - hysteresis %}
+        {% elif current_temp >= set_temperature - hysteresis and current_hvac_mode != 'off' %}
           {% if current_derivative > derivative_threshold %}
             cool
           {% else %}
