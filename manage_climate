@@ -37,16 +37,6 @@ blueprint:
       selector:
         entity:
           domain: sensor
-    derivative_threshold:
-      name: Derivative Threshold
-      description: Derivative boost value, fan speed will be +1 above this value.
-      default: 0.5
-      selector:
-        number:
-          min: 0
-          max: 2
-          step: 0.1
-          unit_of_measurement: °C
     set_temperature:
       name: Set Temperature
       description: The target temperature for the climate entity.
@@ -74,6 +64,26 @@ blueprint:
           min: 0
           max: 25
           unit_of_measurement: °C
+    derivative_threshold:
+      name: Derivative Threshold
+      description: Derivative boost value, fan speed will be +1 above this value.
+      default: 0.5
+      selector:
+        number:
+          min: 0
+          max: 2
+          step: 0.1
+          unit_of_measurement: °C
+    hysteresis:
+      name: Hysteresis
+      description: Temperature buffer for stability (°C).
+      default: 1
+      selector:
+        number:
+          min: 0.0
+          max: 5.0
+          step: 0.1
+          unit_of_measurement: °C
     low_scale_temp:
       name: Low Scale Temperature
       description: Lower bound for scaling fan mode.
@@ -91,16 +101,6 @@ blueprint:
         number:
           min: 20
           max: 30
-          unit_of_measurement: °C
-    hysteresis:
-      name: Hysteresis
-      description: Temperature buffer for stability (°C).
-      default: 1
-      selector:
-        number:
-          min: 0.0
-          max: 5.0
-          step: 0.1
           unit_of_measurement: °C
     swing_mode:
       name: Swing Mode
