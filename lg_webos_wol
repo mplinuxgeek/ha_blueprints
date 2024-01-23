@@ -30,11 +30,11 @@ trigger:
 action:
   - service: wake_on_lan.send_magic_packet
     data:
-      mac: "{{ primary_mac }}"
+      mac: !input 'primary_mac'
   - condition: template
-    value_template: "{{ secondary_mac | trim != '' }}"
+    value_template: "{{ input_secondary_mac | trim != '' }}"
   - service: wake_on_lan.send_magic_packet
     data_template:
-      mac: "{{ secondary_mac }}"
+      mac: !input 'secondary_mac'
 
 mode: single
