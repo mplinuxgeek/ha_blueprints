@@ -18,26 +18,35 @@ blueprint:
   input:
     climate_entity:
       name: Climate Entity
-      description: The climate entity to control.
+      description: Climate entity to control.
       selector:
         entity:
           domain: climate
     temperature_sensor:
       name: Temperature Sensor
-      description: The sensor to measure room temperature.
+      description: Sensor to measure room temperature.
       selector:
         entity:
           domain: sensor
           device_class: temperature
+    temperature_override:
+      name: Temperature Override
+      description: (Optional) Helper to override the set temperature.
+      selector:
+        entity:
+          domain: input_number
+          integration: input_number
+      default: ""
     derivative_sensor:
       name: Derivative Sensor
-      description: The sensor for measuring temperature change rate.
+      description: (Optional) Sensor for measuring temperature change rate.
       selector:
         entity:
           domain: sensor
+      default: ""
     set_temperature:
       name: Set Temperature
-      description: The target temperature for the climate entity.
+      description: Target temperature for the climate entity.
       default: 20
       selector:
         number:
@@ -134,7 +143,6 @@ action:
       temperature_sensor: !input temperature_sensor
       derivative_sensor: !input derivative_sensor
       derivative_threshold: !input derivative_threshold
-      set_temperature: !input set_temperature
       summer_on_temp: !input summer_on_temp
       winter_on_temp: !input winter_on_temp
       low_scale_temp: !input low_scale_temp
@@ -144,7 +152,13 @@ action:
       current_hvac_mode: "{{ states(climate_entity) }}"
       current_temp: "{{ states(temperature_sensor) | float }}"
       current_season: "{{ states('season.season') }}"
-      current_derivative: "{{ states(derivative_sensor) | float }}"
+      current_derivative: "{{ states(derivative_sensor) | float(default=0) }}"
+      set_temperature: >
+        {% if states(input_temperature_override) != 'unknown' and states(input_temperature_override) != 'none' %}
+          {{ states(input_temperature_override) | float }}
+        {% else %}
+          {{ set_temperature_input }}
+        {% endif %}
       hvac_mode: >
         {% if current_temp < winter_on_temp and current_season in ['winter', 'autumn'] %}
           heat
