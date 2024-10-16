@@ -22,20 +22,25 @@ blueprint:
       selector:
         entity:
           domain: climate
-    temperature_sensor:
-      name: Temperature Sensor
-      description: Sensor to measure room temperature.
+    temperature_sensor_or_entity:
+      name: Temperature Sensor or Entity Attribute
+      description: Sensor or entity attribute to measure room temperature.
       selector:
         entity:
           domain: sensor
           device_class: temperature
+    temperature_attribute:
+      name: Temperature Attribute (Optional)
+      description: Attribute of the entity if using an entity's attribute for temperature.
+      default: ""
+      selector:
+        text: {}
     temperature_override:
       name: Temperature Override
       description: (Optional) Helper to override the set temperature.
       selector:
         entity:
           domain: input_number
-          integration: input_number
       default: ""
     derivative_sensor:
       name: Derivative Sensor
@@ -140,7 +145,8 @@ trigger:
 action:
   - variables:
       climate_entity: !input climate_entity
-      temperature_sensor: !input temperature_sensor
+      temperature_sensor_or_entity: !input temperature_sensor_or_entity
+      temperature_attribute: !input temperature_attribute
       derivative_sensor: !input derivative_sensor
       derivative_threshold: !input derivative_threshold
       summer_on_temp: !input summer_on_temp
@@ -150,7 +156,12 @@ action:
       hysteresis: !input hysteresis
       swing_mode: !input swing_mode
       current_hvac_mode: "{{ states(climate_entity) }}"
-      current_temp: "{{ states(temperature_sensor) | float }}"
+      current_temp: >
+        {% if temperature_attribute != "" %}
+          {{ state_attr(temperature_sensor_or_entity, temperature_attribute) | float }}
+        {% else %}
+          {{ states(temperature_sensor_or_entity) | float }}
+        {% endif %}
       current_season: "{{ states('season.season') }}"
       current_derivative: "{{ states(derivative_sensor) | float(default=0) }}"
       set_temperature: >
