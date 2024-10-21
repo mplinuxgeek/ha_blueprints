@@ -1,7 +1,7 @@
 blueprint:
   name: Managed Climate
   description: |
-    Version: 0.12
+    Version: 0.13
     ## Managed Climate
 
     This blueprint offers an automated solution to manage an air conditioning system based on the current temperature, the season, and the temperature's rate of change. It is designed to provide optimal comfort while also being energy efficient.
@@ -36,13 +36,21 @@ blueprint:
       default: ""
       selector:
         text: {}
-    temperature_override:
-      name: Temperature Override
-      description: (Optional) Helper to override the set temperature.
+    temperature_override_entity_or_sensor:
+      name: Temperature Override Entity or Sensor
+      description: (Optional) Entity to override the set temperature (climate or sensor entity).
       selector:
         entity:
-          domain: input_number
+          domain:
+            - sensor
+            - climate
       default: ""
+    temperature_override_attribute:
+      name: Temperature Override Attribute (Optional)
+      description: Attribute of the entity to use for overriding the set temperature.
+      default: ""
+      selector:
+        text: {}
     derivative_sensor:
       name: Derivative Sensor
       description: (Optional) Sensor for measuring temperature change rate.
@@ -148,6 +156,8 @@ action:
       climate_entity: !input climate_entity
       temperature_sensor_or_entity: !input temperature_sensor_or_entity
       temperature_attribute: !input temperature_attribute
+      temperature_override_entity_or_sensor: !input temperature_override_entity_or_sensor
+      temperature_override_attribute: !input temperature_override_attribute
       derivative_sensor: !input derivative_sensor
       derivative_threshold: !input derivative_threshold
       summer_on_temp: !input summer_on_temp
@@ -166,8 +176,12 @@ action:
       current_season: "{{ states('season.season') }}"
       current_derivative: "{{ states(derivative_sensor) | float(default=0) }}"
       set_temperature: >
-        {% if states(temperature_override) != 'unknown' and states(temperature_override) != 'none' and temperature_override != "" %}
-          {{ states(temperature_override) | float }}
+        {% if temperature_override_entity_or_sensor != "" %}
+          {% if temperature_override_attribute != "" %}
+            {{ state_attr(temperature_override_entity_or_sensor, temperature_override_attribute) | float }}
+          {% else %}
+            {{ states(temperature_override_entity_or_sensor) | float }}
+          {% endif %}
         {% else %}
           {{ set_temperature_input }}
         {% endif %}
