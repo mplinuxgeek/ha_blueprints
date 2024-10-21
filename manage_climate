@@ -1,7 +1,7 @@
 blueprint:
   name: Managed Climate
   description: |
-    Version: 0.13
+    Version: 0.14
     ## Managed Climate
 
     This blueprint offers an automated solution to manage an air conditioning system based on the current temperature, the season, and the temperature's rate of change. It is designed to provide optimal comfort while also being energy efficient.
@@ -223,7 +223,7 @@ action:
             1
           {% endif %}
         {% else %}
-          'Auto'
+          Auto
         {% endif %}
   - choose:
       - conditions:
