@@ -1,0 +1,43 @@
+blueprint:
+  name: LG WebOS TV WOL
+  description: Turn on LG WebOS TV using WakeOnLan for devices connected via LAN or WLAN, the blueprint allows for specifying two MAC addresses in case you change between LAN and WLAN like I do.
+  domain: automation
+  input:
+    lg_tv_entity:
+      name: LG WebOS Smart TV Entity
+      description: The entity_id of your LG WebOS Smart TV.
+      selector:
+        entity:
+          domain: media_player
+
+    primary_mac:
+      name: Primary MAC Address
+      description: Primary MAC address of the TV.
+      selector:
+        text:
+
+    secondary_mac:
+      name: Secondary MAC Address (Optional)
+      description: Secondary MAC address of the TV.
+      default: ""
+      selector:
+        text:
+
+trigger:
+  - platform: webostv.turn_on
+    entity_id: !input 'lg_tv_entity'
+
+action:
+  - variables:
+      primary_mac: !input primary_mac
+      secondary_mac: !input secondary_mac
+  - service: wake_on_lan.send_magic_packet
+    data:
+      mac: "{{ primary_mac }}"
+  - condition: template
+    value_template: "{{ secondary_mac | trim != '' }}"
+  - service: wake_on_lan.send_magic_packet
+    data_template:
+      mac: "{{ secondary_mac }}"
+
+mode: single
