@@ -1255,13 +1255,13 @@ action:
         {% elif not price_valid %}
           Import blocked (price unavailable)
         {% elif price_is_negative %}
-          Importing (neg price)
+          Importing (price is negative)
         {% elif feedin_price >= export_threshold_low %}
-          Import blocked (high feed-in)
+          Import blocked (FIT higher than buy)
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
-          Import blocked (price high)
+          Import blocked (price above cheap threshold with enough SoC)
         {% elif grid_limit_base <= 0 %}
-          Import blocked (grid_limit_base 0)
+          Import blocked (price not cheap enough or no top-up needed)
         {% elif desired_import_limit > 0 %}
           Import enabled {{ desired_import_limit }} kW
         {% else %}
