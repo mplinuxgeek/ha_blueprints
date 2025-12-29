@@ -1229,7 +1229,7 @@ action:
             {% if export_spike_active %}
               Export spike (full cap)
             {% elif export_solar_override %}
-              Export override (using forecast PV)
+              Export override (exporting excess PV)
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
               {% set hours_div = [hours, 2] | min %}
@@ -1610,7 +1610,12 @@ action:
             target:
               entity_id: !input grid_import_limit
             data:
-              value: "{{ desired_import_limit }}"
+              value: >
+                {% if desired_import_limit > 0 %}
+                  {{ desired_import_limit }}
+                {% else %}
+                  0.1
+                {% endif %}
 
   - action: number.set_value
     target:
@@ -1637,7 +1642,7 @@ action:
         {% if desired_import_limit > 0 %}
           {{ desired_import_limit }}
         {% else %}
-          0
+          0.1
         {% endif %}
 
   - choose:
