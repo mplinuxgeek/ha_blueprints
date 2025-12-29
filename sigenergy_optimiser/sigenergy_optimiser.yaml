@@ -1327,10 +1327,10 @@ action:
         {% set currently_discharging = current_mode in
           ['Command Discharging (PV First)', 'Command Discharging (ESS First)'] %}
         {% set currently_charging = current_mode in ['Command Charging (PV First)', 'Command Charging (Grid First)'] %}
-        {% if standby_holdoff_active %}
-          Command Discharging (PV First)
-        {% elif export_solar_override %}
+        {% if export_solar_override %}
           Maximum Self Consumption
+        {% elif standby_holdoff_active %}
+          Command Discharging (PV First)
         {% elif price_is_negative and current_price <= import_threshold_low %}
           Command Charging (Grid First)
         {% elif feedin_is_negative %}
