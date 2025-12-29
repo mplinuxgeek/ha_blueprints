@@ -991,6 +991,7 @@ action:
       price_valid: "{{ price_state not in ['unknown','unavailable','none',''] }}"
       current_price: "{{ price_state | float(999) if price_valid else 999 }}"
       feedin_price: "{{ states(feedin_sensor_entity) | float(-999) }}"
+      export_spike_active: "{{ feedin_price >= (export_spike_threshold | float(0)) }}"
       solar_power_now: "{{ states(solar_power_now_sensor_entity) | float(0) }}"
       current_mode: "{{ states(ems_mode_select_entity) }}"
       current_export_limit: "{{ states(grid_export_limit_entity) | float(0) }}"
@@ -1118,7 +1119,7 @@ action:
         {% endif %}
 
       export_tier_limit: >
-        {% if export_spike_active %}
+        {% if export_spike_active | default(false) %}
           {{ export_limit_high }}
         {% elif export_solar_override %}
           {{ export_limit_high }}
@@ -1226,7 +1227,7 @@ action:
           {% if tier_cap <= 0 %}
             Export blocked (price low)
           {% else %}
-            {% if export_spike_active %}
+            {% if export_spike_active | default(false) %}
               Export spike (full cap)
             {% elif export_solar_override %}
               Export override (exporting excess PV)
@@ -1287,7 +1288,7 @@ action:
           {% if tier_cap <= 0 %}
             0
           {% else %}
-            {% if export_spike_active %}
+            {% if export_spike_active | default(false) %}
               {{ [tier_cap, export_limit_high] | min | round(1) }}
             {% elif export_solar_override %}
               {% set override_cap = [solar_power_now_kw, export_limit_high] | min %}
