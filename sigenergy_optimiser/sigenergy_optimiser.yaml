@@ -1002,6 +1002,10 @@ action:
       forecast_today: "{{ states(forecast_today_sensor_entity) | float(0) }}"
       available_discharge_energy: "{{ states(available_discharge_sensor_entity) | float(0) }}"
       ha_control_enabled: "{{ is_state(ha_control_switch_entity, 'on') }}"
+      pv_kw: "{{ (pv_power | float(0)) / (1000 if (pv_power | float(0)) > 1000 else 1) }}"
+      load_kw: "{{ (consumed_power | float(0)) / (1000 if (consumed_power | float(0)) > 1000 else 1) }}"
+      solar_power_now_kw: "{{ (solar_power_now | float(0)) / (1000 if (solar_power_now | float(0)) > 1000 else 1) }}"
+      solar_potential_kw: "{{ [pv_kw, solar_power_now_kw] | max }}"
       battery_capacity_kwh: >
         {% set cap_raw = states(rated_capacity_sensor_entity) | float(0) %}
         {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}
@@ -1286,11 +1290,7 @@ action:
             {% if export_spike_active %}
               {{ [tier_cap, export_limit_high] | min | round(1) }}
             {% elif export_solar_override %}
-              {% set pv_raw = pv_power | float(0) %}
-              {% set load_raw = consumed_power | float(0) %}
-              {% set pv_kw = pv_raw / 1000 if pv_raw > 1000 or load_raw > 1000 else pv_raw %}
-              {% set load_kw = load_raw / 1000 if pv_raw > 1000 or load_raw > 1000 else load_raw %}
-              {% set excess_kw = [pv_kw - load_kw, 0] | max %}
+              {% set excess_kw = [solar_potential_kw - load_kw, 0] | max %}
               {% set cap = [tier_cap, export_limit_high] | min %}
               {{ [cap, excess_kw] | min | round(2) }}
             {% else %}
