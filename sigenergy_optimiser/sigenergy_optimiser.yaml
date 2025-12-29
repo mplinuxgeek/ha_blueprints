@@ -1225,7 +1225,7 @@ action:
             {% if export_spike_active %}
               Export spike (full cap)
             {% elif export_solar_override %}
-              Export override (battery full, FIT>0)
+              Export override (PV excess only)
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
               {% set hours_div = [hours, 2] | min %}
@@ -1286,7 +1286,11 @@ action:
             {% if export_spike_active %}
               {{ [tier_cap, export_limit_high] | min | round(1) }}
             {% elif export_solar_override %}
-              {{ [tier_cap, export_limit_high] | min | round(1) }}
+              {% set pv_kw = (pv_power | float(0)) / 1000 %}
+              {% set load_kw = (consumed_power | float(0)) / 1000 %}
+              {% set excess_kw = [pv_kw - load_kw, 0] | max %}
+              {% set cap = [tier_cap, export_limit_high] | min %}
+              {{ [cap, excess_kw] | min | round(1) }}
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
               {% set hours_div = [hours, 2] | min %}
