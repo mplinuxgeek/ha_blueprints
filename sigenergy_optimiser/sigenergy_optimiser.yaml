@@ -368,6 +368,13 @@ blueprint:
           selector:
             entity:
               domain: sensor
+        solar_power_now_sensor:
+          name: PV Forecast Power Now
+          description: PV power now estimate (e.g., `sensor.solcast_pv_forecast_power_now`) to confirm generation potential.
+          default: sensor.solcast_pv_forecast_power_now
+          selector:
+            entity:
+              domain: sensor
         feedin_sensor:
           name: Feed-in Price Sensor
           description: Feed-in tariff sensor (default `sensor.amber_feed_in_price`).
@@ -958,6 +965,7 @@ action:
       pcs_import_limit_entity: !input pcs_import_limit
       forecast_remaining_sensor_entity: !input forecast_remaining_sensor
       forecast_today_sensor_entity: !input forecast_today_sensor
+      solar_power_now_sensor_entity: !input solar_power_now_sensor
       available_discharge_sensor_entity: !input available_discharge_sensor
       ha_control_switch_entity: !input ha_control_switch
       price_forecast_sensor_entity: !input price_forecast_sensor
@@ -983,6 +991,7 @@ action:
       price_valid: "{{ price_state not in ['unknown','unavailable','none',''] }}"
       current_price: "{{ price_state | float(999) if price_valid else 999 }}"
       feedin_price: "{{ states(feedin_sensor_entity) | float(-999) }}"
+      solar_power_now: "{{ states(solar_power_now_sensor_entity) | float(0) }}"
       current_mode: "{{ states(ems_mode_select_entity) }}"
       current_export_limit: "{{ states(grid_export_limit_entity) | float(0) }}"
       current_import_limit: "{{ states(grid_import_limit_entity) | float(0) }}"
@@ -1078,6 +1087,7 @@ action:
         {% else %}
           {{ min_soc_floor }}
         {% endif %}
+      export_solar_override: "{{ feedin_price > 0 and battery_soc >= max_battery_soc and solar_power_now > 0 }}"
 
       standby_holdoff_active: >
         {% set cutoff = today_at(standby_holdoff_end_time) %}
@@ -1105,6 +1115,8 @@ action:
 
       export_tier_limit: >
         {% if export_spike_active %}
+          {{ export_limit_high }}
+        {% elif export_solar_override %}
           {{ export_limit_high }}
         {% elif feedin_price < export_threshold_low %}
           0
@@ -1212,6 +1224,8 @@ action:
           {% else %}
             {% if export_spike_active %}
               Export spike (full cap)
+            {% elif export_solar_override %}
+              Export override (battery full, FIT>0)
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
               {% set hours_div = [hours, 2] | min %}
@@ -1270,6 +1284,8 @@ action:
             0
           {% else %}
             {% if export_spike_active %}
+              {{ [tier_cap, export_limit_high] | min | round(1) }}
+            {% elif export_solar_override %}
               {{ [tier_cap, export_limit_high] | min | round(1) }}
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
