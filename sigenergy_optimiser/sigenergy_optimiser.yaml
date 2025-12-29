@@ -1286,11 +1286,13 @@ action:
             {% if export_spike_active %}
               {{ [tier_cap, export_limit_high] | min | round(1) }}
             {% elif export_solar_override %}
-              {% set pv_kw = (pv_power | float(0)) / 1000 %}
-              {% set load_kw = (consumed_power | float(0)) / 1000 %}
+              {% set pv_raw = pv_power | float(0) %}
+              {% set load_raw = consumed_power | float(0) %}
+              {% set pv_kw = pv_raw / 1000 if pv_raw > 1000 or load_raw > 1000 else pv_raw %}
+              {% set load_kw = load_raw / 1000 if pv_raw > 1000 or load_raw > 1000 else load_raw %}
               {% set excess_kw = [pv_kw - load_kw, 0] | max %}
               {% set cap = [tier_cap, export_limit_high] | min %}
-              {{ [cap, excess_kw] | min | round(1) }}
+              {{ [cap, excess_kw] | min | round(2) }}
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
               {% set hours_div = [hours, 2] | min %}
