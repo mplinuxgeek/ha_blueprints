@@ -1100,12 +1100,10 @@ action:
 
       standby_holdoff_active: >
         {% set cutoff = today_at(standby_holdoff_end_time) %}
-        {% set reserve = sunrise_soc_target | float(0) %}
         {{ standby_holdoff_enabled
            and forecast_today >= pv_forecast_holdoff_kwh
            and negative_price_forecast_ahead
            and now() < cutoff
-           and battery_soc >= reserve
            and current_price > import_threshold_medium }}
 
       export_min_soc: >
@@ -1222,7 +1220,7 @@ action:
         {% if price_is_negative or feedin_is_negative or export_blocked_for_forecast %}
           Export blocked (price/forecast)
         {% elif battery_soc <= export_min_soc %}
-          Export blocked (SoC low)
+          Export blocked (SoC below sunrise target)
         {% else %}
           {% set diff = battery_soc - export_min_soc %}
           {% set span = export_soc_span_dynamic %}
@@ -1232,7 +1230,7 @@ action:
             Export blocked (price low)
           {% else %}
             {% if export_spike_active | default(false) %}
-              Export spike (full cap)
+              Export spike (full export)
             {% elif export_solar_override %}
               Export override (exporting excess PV)
             {% else %}
@@ -1268,7 +1266,7 @@ action:
         {% elif feedin_price >= export_threshold_low %}
           Import blocked (FIT higher than buy)
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
-          Import blocked (price above cheap threshold with enough SoC)
+          Import blocked (price/SoC above cheap threshold)
         {% elif grid_limit_base <= 0 %}
           Import blocked (price not cheap enough or no top-up needed)
         {% elif desired_import_limit > 0 %}
