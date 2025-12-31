@@ -1404,7 +1404,10 @@ action:
         {% endif %}
 
       desired_ess_discharge_limit: >
-        {% if desired_export_limit | float(0) > 0 %}
+        {% if standby_holdoff_active %}
+          {% set cover_load = [load_kw, min_grid_transfer_kw | float(0.5)] | max %}
+          {{ cover_load }}
+        {% elif desired_export_limit | float(0) > 0 %}
           {{ desired_export_limit }}
         {% else %}
           0.1
