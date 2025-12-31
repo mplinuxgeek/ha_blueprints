@@ -1455,13 +1455,13 @@ action:
   - choose:
       - conditions:
           - condition: template
-            value_template: "{{ effective_ha_control_enabled and (standby_holdoff_active or current_mode != desired_ems_mode) }}"
+            value_template: "{{ effective_ha_control_enabled and current_mode != desired_ems_mode }}"
         sequence:
           - action: select.select_option
             target:
               entity_id: !input ems_mode_select
             data:
-              option: "{{ 'Maximum Self Consumption' if standby_holdoff_active else desired_ems_mode }}"
+              option: "{{ desired_ems_mode }}"
 
   - choose:
       - conditions:
