@@ -1352,7 +1352,7 @@ action:
         {% if export_solar_override %}
           Maximum Self Consumption
         {% elif standby_holdoff_active %}
-          Command Discharging (PV First)
+          Maximum Self Consumption
         {% elif price_is_negative and current_price <= import_threshold_low %}
           Command Charging (Grid First)
         {% elif feedin_is_negative %}
