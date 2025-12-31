@@ -1350,7 +1350,11 @@ action:
         {% if export_solar_override %}
           Maximum Self Consumption
         {% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
-          Maximum Self Consumption
+          {% if battery_soc > (export_min_soc + soc_hysteresis) %}
+            Command Discharging (ESS First)
+          {% else %}
+            Maximum Self Consumption
+          {% endif %}
         {% elif price_is_negative and current_price <= import_threshold_low %}
           Command Charging (Grid First)
         {% elif feedin_is_negative %}
