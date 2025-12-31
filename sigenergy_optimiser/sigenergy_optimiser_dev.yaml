@@ -1,0 +1,1394 @@
+blueprint:
+  name: "SigEnergy + Amber: Battery Controller (Rewrite, resilient)"
+  description: >
+    State-machine EMS controller for SigEnergy + Amber + Solcast.
+    Dynamic sunrise reserve, tiered export/import, forecast-based holdoff,
+    anti-flapping (price+SoC hysteresis, min-change writes, min-hold),
+    session tracking and notification dedupe using existing helpers.
+
+  domain: automation
+
+  input:
+    control_notifications:
+      name: |
+        # Control & Notifications
+      description: Primary control toggles and notification target.
+      icon: mdi:bell-ring
+      collapsed: true
+      input:
+        notification_service:
+          name: Notification Service
+          description: Notify service name (e.g., `notify.home_users`). Leave blank to disable.
+          default: ""
+          selector:
+            text:
+        auto_enable_ha_control:
+          name: Auto-enable HA Control
+          description: Turn on the EMS HA control switch automatically when needed.
+          default: true
+          selector:
+            boolean: {}
+        notify_daily_summary:
+          name: Send Daily Summary
+          description: Toggle to send the nightly summary notification at the configured time.
+          default: true
+          selector:
+            boolean: {}
+        daily_summary_time:
+          name: Daily Summary Time
+          description: Time to send the nightly summary notification.
+          default: "23:55:00"
+          selector:
+            time: {}
+        notify_morning_summary:
+          name: Send Morning PV Forecast
+          description: Toggle to send the morning PV forecast notification.
+          default: true
+          selector:
+            boolean: {}
+        morning_summary_time:
+          name: Morning PV Forecast Time
+          description: Time to send the morning PV forecast notification.
+          default: "07:30:00"
+          selector:
+            time: {}
+        automated_export_flag:
+          name: Automated Export Flag
+          description: Input boolean to enable or disable automated export (default `input_boolean.sigenergy_automated_export`).
+          default: input_boolean.sigenergy_automated_export
+          selector:
+            entity:
+              domain: input_boolean
+
+    session_tracking:
+      name: |
+        # Session Tracking & Notification State
+      description: Helpers for kWh session tracking and notification dedupe.
+      icon: mdi:counter
+      collapsed: true
+      input:
+        export_session_start:
+          name: Export Session Start kWh
+          description: Input number storing export session start kWh (default `input_number.sigenergy_export_session_start_kwh`).
+          default: input_number.sigenergy_export_session_start_kwh
+          selector:
+            entity:
+              domain: input_number
+        import_session_start:
+          name: Import Session Start kWh
+          description: Input number storing import session start kWh (default `input_number.sigenergy_import_session_start_kwh`).
+          default: input_number.sigenergy_import_session_start_kwh
+          selector:
+            entity:
+              domain: input_number
+        last_export_notification:
+          name: Last Export Notification State
+          description: Input text used to deduplicate export notifications (default `input_text.sigenergy_last_export_notification`).
+          default: input_text.sigenergy_last_export_notification
+          selector:
+            entity:
+              domain: input_text
+        last_import_notification:
+          name: Last Import Notification State
+          description: Input text used to deduplicate import notifications (default `input_text.sigenergy_last_import_notification`).
+          default: input_text.sigenergy_last_import_notification
+          selector:
+            entity:
+              domain: input_text
+        reason_text_helper:
+          name: Reason Text Helper
+          description: Input text to store the latest decision reason (default `input_text.sigenergy_reason`).
+          default: input_text.sigenergy_reason
+          selector:
+            entity:
+              domain: input_text
+
+    ems_limits:
+      name: |
+        # EMS Control & Limits
+      description: Entities used to switch EMS modes and set import/export limits.
+      icon: mdi:transmission-tower-export
+      collapsed: true
+      input:
+        ha_control_switch:
+          name: HA Control Switch
+          description: Switch that grants HA control of the EMS (default `switch.sigen_plant_remote_ems_controled_by_home_assistant`).
+          default: switch.sigen_plant_remote_ems_controled_by_home_assistant
+          selector:
+            entity:
+              domain: switch
+        ems_mode_select:
+          name: EMS Control Mode Select
+          description: Select entity to set EMS operating mode (default `select.sigen_plant_remote_ems_control_mode`).
+          default: select.sigen_plant_remote_ems_control_mode
+          selector:
+            entity:
+              domain: select
+        grid_export_limit:
+          name: Grid Export Limitation
+          description: Number entity for grid export limit (default `number.sigen_plant_grid_export_limitation`).
+          default: number.sigen_plant_grid_export_limitation
+          selector:
+            entity:
+              domain: number
+        grid_import_limit:
+          name: Grid Import Limitation
+          description: Number entity for grid import limit (default `number.sigen_plant_grid_import_limitation`).
+          default: number.sigen_plant_grid_import_limitation
+          selector:
+            entity:
+              domain: number
+        pv_max_power_limit:
+          name: PV Max Power Limit
+          description: PV max power limit number entity (default `number.sigen_plant_pv_max_power_limit`).
+          default: number.sigen_plant_pv_max_power_limit
+          selector:
+            entity:
+              domain: number
+        pcs_export_limit:
+          name: PCS Export Limitation
+          description: PCS export limit number entity (default `number.sigen_plant_pcs_export_limitation`).
+          default: number.sigen_plant_pcs_export_limitation
+          selector:
+            entity:
+              domain: number
+        pcs_import_limit:
+          name: PCS Import Limitation
+          description: PCS import limit number entity (default `number.sigen_plant_pcs_import_limitation`).
+          default: number.sigen_plant_pcs_import_limitation
+          selector:
+            entity:
+              domain: number
+        ess_max_charging_limit:
+          name: ESS Max Charging Limit (Optional)
+          description: Number entity that caps ESS/grid charging power. Leave blank to skip writes.
+          default: ""
+          selector:
+            entity:
+              domain: number
+        ess_max_discharging_limit:
+          name: ESS Max Discharging Limit (Optional)
+          description: Number entity that caps ESS discharging power. Leave blank to skip writes.
+          default: ""
+          selector:
+            entity:
+              domain: number
+
+    sigenergy_sensors:
+      name: |
+        # SigEnergy Sensors
+      description: Core PV/battery sensors and daily grid energy totals.
+      icon: mdi:solar-power-variant
+      collapsed: true
+      input:
+        pv_power_sensor:
+          name: PV Power Sensor (W)
+          description: PV power sensor in Watts (default `sensor.sigen_plant_pv_power`).
+          default: sensor.sigen_plant_pv_power
+          selector:
+            entity:
+              domain: sensor
+        consumed_power_sensor:
+          name: Consumed Power Sensor (W)
+          description: Home load/consumption power sensor in Watts (default `sensor.sigen_plant_consumed_power`).
+          default: sensor.sigen_plant_consumed_power
+          selector:
+            entity:
+              domain: sensor
+        battery_soc_sensor:
+          name: Battery SoC Sensor (%)
+          description: Battery state-of-charge percentage sensor (default `sensor.sigen_plant_battery_state_of_charge`).
+          default: sensor.sigen_plant_battery_state_of_charge
+          selector:
+            entity:
+              domain: sensor
+        rated_capacity_sensor:
+          name: Rated Energy Capacity Sensor (kWh)
+          description: Battery rated capacity sensor (Wh or kWh, default `sensor.sigen_plant_rated_energy_capacity`).
+          default: sensor.sigen_plant_rated_energy_capacity
+          selector:
+            entity:
+              domain: sensor
+        sun_entity:
+          name: Sun Entity
+          description: Sun entity for elevation and sunrise/sunset timings (default `sun.sun`).
+          default: sun.sun
+          selector:
+            entity:
+              domain: sun
+
+        daily_export_energy:
+          name: Daily Grid Export Energy (kWh)
+          description: Daily export energy sensor in kWh (default `sensor.sigen_plant_daily_grid_export_energy`).
+          default: sensor.sigen_plant_daily_grid_export_energy
+          selector:
+            entity:
+              domain: sensor
+        daily_import_energy:
+          name: Daily Grid Import Energy (kWh)
+          description: Daily import energy sensor in kWh (default `sensor.sigen_plant_daily_grid_import_energy`).
+          default: sensor.sigen_plant_daily_grid_import_energy
+          selector:
+            entity:
+              domain: sensor
+        daily_load_energy:
+          name: Daily Load Energy (kWh)
+          description: Home load/consumption energy kWh (default `sensor.sigen_plant_daily_load_consumption`).
+          default: sensor.sigen_plant_daily_load_consumption
+          selector:
+            entity:
+              domain: sensor
+        daily_battery_charge_energy:
+          name: Daily Battery Charge Energy (kWh)
+          description: Battery charge energy kWh (default `sensor.sigen_plant_daily_battery_charge_energy`).
+          default: sensor.sigen_plant_daily_battery_charge_energy
+          selector:
+            entity:
+              domain: sensor
+        daily_battery_discharge_energy:
+          name: Daily Battery Discharge Energy (kWh)
+          description: Battery discharge energy kWh (default `sensor.sigen_plant_daily_battery_discharge_energy`).
+          default: sensor.sigen_plant_daily_battery_discharge_energy
+          selector:
+            entity:
+              domain: sensor
+        daily_pv_energy:
+          name: Daily PV Energy (kWh)
+          description: PV generation energy kWh (default `sensor.sigen_plant_daily_pv_energy`).
+          default: sensor.sigen_plant_daily_pv_energy
+          selector:
+            entity:
+              domain: sensor
+
+        total_export_energy:
+          name: Total Export Energy (kWh) (Optional, preferred for session tracking)
+          description: Lifetime/total export energy sensor to improve session tracking (default `sensor.sigen_plant_total_exported_energy`).
+          default: sensor.sigen_plant_total_exported_energy
+          selector:
+            entity:
+              domain: sensor
+        total_import_energy:
+          name: Total Import Energy (kWh) (Optional, preferred for session tracking)
+          description: Lifetime/total import energy sensor to improve session tracking (default `sensor.sigen_plant_total_imported_energy`).
+          default: sensor.sigen_plant_total_imported_energy
+          selector:
+            entity:
+              domain: sensor
+
+    price_forecast:
+      name: |
+        # Price & Forecast Sensors
+      description: Price sensors and PV/price forecasts.
+      icon: mdi:chart-multiline
+      collapsed: true
+      input:
+        price_sensor:
+          name: Buy Price Sensor
+          description: Current buy price sensor (default `sensor.amber_general_price`).
+          default: sensor.amber_general_price
+          selector:
+            entity:
+              domain: sensor
+        feedin_sensor:
+          name: Feed-in Price Sensor
+          description: Feed-in tariff sensor (default `sensor.amber_feed_in_price`).
+          default: sensor.amber_feed_in_price
+          selector:
+            entity:
+              domain: sensor
+        price_forecast_sensor:
+          name: Price Forecast Sensor (forecasts attribute)
+          description: Price forecast sensor with a `forecasts` attribute (default `sensor.amber_general_forecast`).
+          default: sensor.amber_general_forecast
+          selector:
+            entity:
+              domain: sensor
+        forecast_remaining_sensor:
+          name: PV Forecast Remaining (Today) (kWh)
+          description: Remaining PV forecast for today in kWh (default `sensor.solcast_pv_forecast_forecast_remaining_today`).
+          default: sensor.solcast_pv_forecast_forecast_remaining_today
+          selector:
+            entity:
+              domain: sensor
+        forecast_today_sensor:
+          name: PV Forecast Today (kWh)
+          description: Total PV forecast for today in kWh (default `sensor.solcast_pv_forecast_forecast_today`).
+          default: sensor.solcast_pv_forecast_forecast_today
+          selector:
+            entity:
+              domain: sensor
+
+    export_pricing:
+      name: |
+        # Export Pricing & Caps
+      description: FIT tiers and export caps (kW).
+      icon: mdi:solar-power
+      collapsed: false
+      input:
+        export_threshold_low:
+          name: Export Threshold Low FIT
+          description: Feed-in price ($/kWh) where export starts at the low tier.
+          default: 0.10
+          selector:
+            number:
+              min: -1
+              max: 5
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        export_threshold_medium:
+          name: Export Threshold Medium FIT
+          description: Feed-in price ($/kWh) for medium export tier.
+          default: 0.20
+          selector:
+            number:
+              min: -1
+              max: 5
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        export_threshold_high:
+          name: Export Threshold High FIT
+          description: Feed-in price ($/kWh) for full/high export tier.
+          default: 1.00
+          selector:
+            number:
+              min: 0
+              max: 5
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        export_spike_threshold:
+          name: Export FIT Spike
+          description: Feed-in price ($/kWh) above which export is fully uncapped to the high limit (maximise earnings).
+          default: 3.0
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        export_limit_low:
+          name: Export Limit Low (kW)
+          description: Export power cap (kW) when feed-in price is at the low tier (grid export after serving your load).
+          default: 5
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        export_limit_medium:
+          name: Export Limit Medium (kW)
+          description: Export power cap (kW) when feed-in price is at the medium tier (grid export after serving your load).
+          default: 12
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        export_limit_high:
+          name: Export Limit High (kW)
+          description: Export power cap (kW) when feed-in price is at the high tier (grid export after serving your load).
+          default: 25
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+
+    import_pricing:
+      name: |
+        # Import Pricing & Caps
+      description: Negative-price thresholds and import caps (kW).
+      icon: mdi:transmission-tower-import
+      collapsed: false
+      input:
+        import_threshold_low:
+          name: Import Threshold Low (<=)
+          description: Negative/low price ($/kWh) to begin importing.
+          default: 0.0
+          selector:
+            number:
+              min: -5
+              max: 1
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        import_threshold_medium:
+          name: Import Threshold Medium (<=)
+          description: More negative price ($/kWh) for medium import limit.
+          default: -0.15
+          selector:
+            number:
+              min: -5
+              max: 1
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        import_threshold_high:
+          name: Import Threshold High (<=)
+          description: Most negative price ($/kWh) for full/high import limit.
+          default: -0.30
+          selector:
+            number:
+              min: -5
+              max: 1
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        import_limit_low:
+          name: Import Limit Low (kW)
+          description: Import power cap (kW) at the low negative-price tier.
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        import_limit_medium:
+          name: Import Limit Medium (kW)
+          description: Import power cap (kW) at the medium negative-price tier.
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        import_limit_high:
+          name: Import Limit High (kW)
+          description: Import power cap (kW) at the high/most negative price tier.
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+
+    soc_reserves:
+      name: |
+        # SoC Floors & Reserves
+      description: Reserve levels and buffers for protecting overnight capacity.
+      icon: mdi:battery-plus-outline
+      collapsed: true
+      input:
+        min_soc_floor:
+          name: Minimum SoC Floor (day)
+          description: Minimum daytime battery SoC to maintain.
+          default: 20
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        night_reserve_soc:
+          name: Night Reserve SoC
+          description: Minimum SoC to keep for overnight coverage.
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        night_reserve_buffer:
+          name: Night Reserve Buffer (%)
+          description: Extra SoC buffer (%) added on top of the night reserve.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        max_battery_soc:
+          name: Max Battery SoC (Paid Import Cap)
+          description: Upper SoC limit when performing paid imports.
+          default: 50
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        sunrise_reserve_soc:
+          name: Sunrise Reserve SoC (floor)
+          description: Desired SoC at sunrise for overnight protection.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        sunrise_safety_factor:
+          name: Sunrise Safety Factor
+          description: Multiplier on estimated overnight consumption to ensure margin.
+          default: 1.0
+          selector:
+            number:
+              min: 0.5
+              max: 3
+              step: 0.01
+              mode: box
+        sunrise_buffer_percent:
+          name: Sunrise Buffer Percent (%)
+          description: Additional SoC buffer (%) added to the sunrise target.
+          default: 0
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        sunrise_export_relax_percent:
+          name: Sunrise Export Relax Percent (%)
+          description: How much the sunrise target can be relaxed for export during evening/night.
+          default: 12
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+
+    import_topup:
+      name: |
+        # Cheap Import Top Up
+      description: Discretionary cheap-import rules and daytime top-ups.
+      icon: mdi:battery-charging
+      collapsed: true
+      input:
+        max_price_threshold:
+          name: Cheap Import Price Threshold (<=)
+          description: Highest buy price ($/kWh) allowed for discretionary imports and daytime top-ups.
+          default: 0.015
+          selector:
+            number:
+              min: -1
+              max: 1
+              step: 0.001
+              unit_of_measurement: $/kWh
+              mode: box
+        target_battery_charge:
+          name: Target Battery Charge (kW)
+          description: Target charging power when topping up from grid.
+          default: 2
+          selector:
+            number:
+              min: 0
+              max: 20
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        cap_total_import:
+          name: Max Total Import (kW)
+          description: Overall import power cap (kW) after thresholds.
+          default: 30
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        pv_max_power_normal:
+          name: PV Max Power Limit (Normal) (kW)
+          description: PV max power limit (kW) to restore when not forcing battery-only discharge.
+          default: 25
+          selector:
+            number:
+              min: 0
+              max: 50
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        daytime_topup_max_soc:
+          name: Daytime Top-up Max SoC (%)
+          description: Maximum SoC allowed for daytime top-up charging.
+          default: 50
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+
+    forecast_holdoff:
+      name: |
+        # Forecast-based Holdoff
+      description: Morning charge holdoff using PV + price forecast.
+      icon: mdi:weather-sunset
+      collapsed: true
+      input:
+        standby_holdoff_enabled:
+          name: Enable Charge Holdoff
+          description: Toggle to enable or disable the morning charge holdoff logic.
+          default: true
+          selector:
+            boolean: {}
+        slow_charge_holdoff:
+          name: Hold Off Slow Charge (instead of no-charge)
+          description: When holdoff is active, cap PV charge to a slow rate instead of full power.
+          default: false
+          selector:
+            boolean: {}
+        slow_charge_limit_kw:
+          name: Slow Charge Limit (kW)
+          description: PV charge cap (kW) to apply during holdoff when slow charge is enabled.
+          default: 2
+          selector:
+            number:
+              min: 0
+              max: 20
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        pv_forecast_holdoff_kwh:
+          name: PV Forecast Holdoff (kWh)
+          description: PV forecast (kWh) that triggers the morning holdoff on charging.
+          default: 120
+          selector:
+            number:
+              min: 0
+              max: 1000
+              step: 1
+              unit_of_measurement: kWh
+              mode: box
+        negative_price_forecast_lookahead_hours:
+          name: Negative Price Forecast Lookahead (hours)
+          description: Hours to look ahead in the price forecast for negative pricing.
+          default: 12
+          selector:
+            number:
+              min: 1
+              max: 48
+              step: 1
+              unit_of_measurement: h
+              mode: box
+        standby_holdoff_end_time:
+          name: Holdoff End Time
+          description: End time for the morning charge holdoff window.
+          default: "11:00:00"
+          selector:
+            time: {}
+
+    stability_hysteresis:
+      name: |
+        # Stability & Hysteresis
+      description: Buffers and thresholds to reduce flapping and oscillation.
+      icon: mdi:tune-vertical
+      collapsed: true
+      input:
+        soc_hysteresis:
+          name: SoC Hysteresis (%)
+          description: SoC buffer (%) to prevent rapid mode flapping.
+          default: 3
+          selector:
+            number:
+              min: 0
+              max: 20
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        min_change_threshold:
+          name: Min Change Threshold (kW)
+          description: Minimum delta (kW) before updating import/export limits.
+          default: 0.15
+          selector:
+            number:
+              min: 0
+              max: 5
+              step: 0.05
+              unit_of_measurement: kW
+              mode: box
+        min_grid_transfer_kw:
+          name: Min Grid Transfer (kW)
+          description: Minimum grid transfer to avoid oscillation when near zero flow.
+          default: 0.5
+          selector:
+            number:
+              min: 0
+              max: 5
+              step: 0.1
+              unit_of_measurement: kW
+              mode: box
+        export_hysteresis_percent:
+          name: Export Hysteresis Percent
+          description: Multiplier applied to stop export after start threshold to reduce flapping.
+          default: 0.9
+          selector:
+            number:
+              min: 0.5
+              max: 1
+              step: 0.01
+              mode: box
+        price_hysteresis:
+          name: Price Hysteresis ($/kWh)
+          description: Price buffer ($/kWh) before changing modes/limits.
+          default: 0.02
+          selector:
+            number:
+              min: 0
+              max: 1
+              step: 0.01
+              unit_of_measurement: $/kWh
+              mode: box
+        forecast_safety_margin:
+          name: Forecast Safety Margin
+          description: Multiplier on forecast need to keep a safety buffer.
+          default: 1.2
+          selector:
+            number:
+              min: 1
+              max: 3
+              step: 0.1
+              mode: box
+        export_soc_span_day:
+          name: Export SoC Span Day (%)
+          description: SoC span (%) used for daytime export scaling.
+          default: 20
+          selector:
+            number:
+              min: 1
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
+        sun_elevation_evening_threshold:
+          name: Sun Elevation Evening Threshold (deg)
+          description: Sun elevation (degrees) that marks evening/night for logic.
+          default: 10
+          selector:
+            number:
+              min: -90
+              max: 90
+              step: 1
+              unit_of_measurement: "deg"
+              mode: box
+        min_mode_hold_minutes:
+          name: Minimum Mode Hold Time (minutes)
+          description: Minimum minutes to hold an EMS mode before switching (unless safety override).
+          default: 15
+          selector:
+            number:
+              min: 0
+              max: 60
+              step: 1
+              mode: slider
+
+mode: single
+
+trigger:
+  - platform: time_pattern
+    minutes: "/5"
+    id: tick
+  - platform: time
+    at: !input daily_summary_time
+    id: daily_summary
+  - platform: time
+    at: !input morning_summary_time
+    id: morning_summary
+  - platform: state
+    entity_id:
+      - !input price_sensor
+      - !input feedin_sensor
+      - !input battery_soc_sensor
+      - !input pv_power_sensor
+      - !input consumed_power_sensor
+    id: fast_recalc
+
+condition: []
+
+action:
+  - variables:
+      # --- entity inputs
+      notification_service: !input notification_service
+      auto_enable_ha_control: !input auto_enable_ha_control
+
+      automated_export_flag_entity: !input automated_export_flag
+
+      export_session_start_entity: !input export_session_start
+      import_session_start_entity: !input import_session_start
+      last_export_notification_entity: !input last_export_notification
+      last_import_notification_entity: !input last_import_notification
+      reason_text_entity: !input reason_text_helper
+
+      ha_control_switch_entity: !input ha_control_switch
+      ems_mode_select_entity: !input ems_mode_select
+
+      grid_export_limit_entity: !input grid_export_limit
+      grid_import_limit_entity: !input grid_import_limit
+      pv_max_power_limit_entity: !input pv_max_power_limit
+      pcs_export_limit_entity: !input pcs_export_limit
+      pcs_import_limit_entity: !input pcs_import_limit
+      ess_max_charging_limit_entity: !input ess_max_charging_limit
+      ess_max_discharging_limit_entity: !input ess_max_discharging_limit
+
+      price_sensor_entity: !input price_sensor
+      feedin_sensor_entity: !input feedin_sensor
+      price_forecast_sensor_entity: !input price_forecast_sensor
+      forecast_remaining_sensor_entity: !input forecast_remaining_sensor
+      forecast_today_sensor_entity: !input forecast_today_sensor
+
+      pv_power_sensor_entity: !input pv_power_sensor
+      load_power_sensor_entity: !input consumed_power_sensor
+      battery_soc_sensor_entity: !input battery_soc_sensor
+      rated_capacity_sensor_entity: !input rated_capacity_sensor
+
+      sun_entity_id: !input sun_entity
+
+      daily_export_energy_sensor: !input daily_export_energy
+      daily_import_energy_sensor: !input daily_import_energy
+      daily_load_energy_sensor: !input daily_load_energy
+      daily_battery_charge_energy_sensor: !input daily_battery_charge_energy
+      daily_battery_discharge_energy_sensor: !input daily_battery_discharge_energy
+      daily_pv_energy_sensor: !input daily_pv_energy
+
+      total_export_energy_sensor: !input total_export_energy
+      total_import_energy_sensor: !input total_import_energy
+
+      # --- settings inputs
+      # export tiers
+      export_threshold_low_value: !input export_threshold_low
+      export_threshold_medium_value: !input export_threshold_medium
+      export_threshold_high_value: !input export_threshold_high
+      export_spike_threshold_value: !input export_spike_threshold
+      export_limit_low_kw: !input export_limit_low
+      export_limit_medium_kw: !input export_limit_medium
+      export_limit_high_kw: !input export_limit_high
+
+      # import tiers
+      import_threshold_low_value: !input import_threshold_low
+      import_threshold_medium_value: !input import_threshold_medium
+      import_threshold_high_value: !input import_threshold_high
+      import_limit_low_kw: !input import_limit_low
+      import_limit_medium_kw: !input import_limit_medium
+      import_limit_high_kw: !input import_limit_high
+
+      # reserves
+      min_soc_daytime: !input min_soc_floor
+      night_reserve_soc_pct: !input night_reserve_soc
+      night_reserve_buffer_pct: !input night_reserve_buffer
+      sunrise_reserve_soc_pct: !input sunrise_reserve_soc
+      sunrise_safety_factor_multiplier: !input sunrise_safety_factor
+      sunrise_buffer_percent: !input sunrise_buffer_percent
+      sunrise_export_relax_percent: !input sunrise_export_relax_percent
+      paid_import_soc_cap_pct: !input max_battery_soc
+
+      # cheap topup
+      max_price_threshold_value: !input max_price_threshold
+      target_battery_charge_kw: !input target_battery_charge
+      cap_total_import_kw: !input cap_total_import
+      pv_max_power_normal_kw: !input pv_max_power_normal
+      daytime_topup_max_soc_pct: !input daytime_topup_max_soc
+
+      # holdoff
+      standby_holdoff_enabled: !input standby_holdoff_enabled
+      slow_charge_holdoff_enabled: !input slow_charge_holdoff
+      slow_charge_limit_kw_value: !input slow_charge_limit_kw
+      pv_forecast_holdoff_kwh_threshold: !input pv_forecast_holdoff_kwh
+      negative_price_forecast_lookahead_hours: !input negative_price_forecast_lookahead_hours
+      standby_holdoff_end_time: !input standby_holdoff_end_time
+
+      # stability
+      soc_hysteresis_percent: !input soc_hysteresis
+      min_change_threshold_kw: !input min_change_threshold
+      min_grid_transfer_kw: !input min_grid_transfer_kw
+      export_hysteresis_percent_value: !input export_hysteresis_percent
+      price_hysteresis_value: !input price_hysteresis
+      forecast_safety_margin_multiplier: !input forecast_safety_margin
+      export_soc_span_day_percent: !input export_soc_span_day
+      sun_elevation_evening_threshold_deg: !input sun_elevation_evening_threshold
+      min_mode_hold_minutes_value: !input min_mode_hold_minutes
+
+      # --- current values
+      current_buy_price: "{{ states(price_sensor_entity)|float(0) }}"
+      current_feed_in_price: "{{ states(feedin_sensor_entity)|float(0) }}"
+      current_battery_soc_pct: "{{ states(battery_soc_sensor_entity)|float(0) }}"
+      current_pv_power_w: "{{ states(pv_power_sensor_entity)|float(0) }}"
+      current_load_power_w: "{{ states(load_power_sensor_entity)|float(0) }}"
+      battery_capacity_kwh: "{{ states(rated_capacity_sensor_entity)|float(48) }}"
+      pv_forecast_remaining_kwh: "{{ states(forecast_remaining_sensor_entity)|float(0) }}"
+      pv_forecast_today_kwh: "{{ states(forecast_today_sensor_entity)|float(0) }}"
+
+      current_ems_mode: "{{ states(ems_mode_select_entity) }}"
+      current_export_limit_kw: "{{ states(grid_export_limit_entity)|float(0) }}"
+      current_import_limit_kw: "{{ states(grid_import_limit_entity)|float(0) }}"
+
+      auto_export_enabled: "{{ is_state(automated_export_flag_entity,'on') }}"
+
+      # --- parse forecast min buy price next N hours from Amber 'forecasts' attribute
+      forecast_min_buy_price: >-
+        {% set f = state_attr(price_forecast_sensor_entity,'forecasts') %}
+        {% if f is not iterable %}
+          999
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% set end_ts = now_ts + (negative_price_forecast_lookahead_hours|int(12) * 3600) %}
+          {% set mins = namespace(v=999) %}
+          {% for row in f %}
+            {% set st = row.start_time if row.start_time is defined else row.time if row.time is defined else none %}
+            {% set p  = row.per_kwh if row.per_kwh is defined else row.price if row.price is defined else none %}
+            {% if st and p is not none %}
+              {% set ts = as_timestamp(st) %}
+              {% if ts >= now_ts and ts <= end_ts %}
+                {% if p|float(999) < mins.v %}
+                  {% set mins.v = p|float(999) %}
+                {% endif %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {{ mins.v }}
+        {% endif %}
+
+      # --- solar / evening segmentation
+      sun_elevation_degrees: "{{ state_attr(sun_entity_id,'elevation')|float(-90) }}"
+      is_daylight_now: "{{ sun_elevation_degrees > 0 }}"
+      is_evening_or_night: "{{ sun_elevation_degrees <= (sun_elevation_evening_threshold_deg|float(10)) }}"
+      day_segment: >-
+        {% if is_daylight_now %} solar {% else %}
+          {% if now().hour < 12 %} pre_solar {% else %} post_solar {% endif %}
+        {% endif %}
+
+      # --- reserve-to-sunrise SoC (priority #1)
+      next_rising_time: "{{ state_attr(sun_entity_id,'next_rising') }}"
+      next_setting_time: "{{ state_attr(sun_entity_id,'next_setting') }}"
+      battery_soc_required_to_sunrise_pct: >-
+        {% if next_rising_time is none or next_setting_time is none %}
+          {{ night_reserve_soc_pct|float(30) + night_reserve_buffer_pct|float(10) }}
+        {% else %}
+          {% set load_kw = (current_load_power_w|float(0)) / (1000 if (current_load_power_w|float(0)) > 1000 else 1) %}
+          {% set cap_kwh = battery_capacity_kwh|float(0) %}
+          {% set target_ts = as_timestamp(next_rising_time) + 3600 %}
+          {% set start_ts = as_timestamp(now()) if is_state(sun_entity_id,'below_horizon') else as_timestamp(next_setting_time) %}
+          {% set hours_left = (target_ts - start_ts) / 3600.0 %}
+          {% if cap_kwh <= 0 or target_ts <= 0 or hours_left <= 0 %}
+            {{ night_reserve_soc_pct|float(30) + night_reserve_buffer_pct|float(10) }}
+          {% else %}
+            {% set reserve_kwh = cap_kwh * (sunrise_reserve_soc_pct|float(10) / 100.0) %}
+            {% set energy_needed_kwh = load_kw * hours_left * (sunrise_safety_factor_multiplier|float(1.0)) * (forecast_safety_margin_multiplier|float(1.2)) %}
+            {% set required_soc = ((reserve_kwh + energy_needed_kwh) / cap_kwh) * 100.0 %}
+            {{ [[required_soc, 100] | min, 0] | max }}
+          {% endif %}
+        {% endif %}
+      hours_until_sunrise: >-
+        {% if next_rising_time is none %}
+          6
+        {% else %}
+          {% set target_ts = as_timestamp(next_rising_time) + 3600 %}
+          {% set start_ts = as_timestamp(now()) %}
+          {% set hours = (target_ts - start_ts) / 3600.0 %}
+          {{ [hours, 0] | max }}
+        {% endif %}
+      sunrise_target_soc_pct: >-
+        {% set base = battery_soc_required_to_sunrise_pct | default(night_reserve_soc_pct + night_reserve_buffer_pct) %}
+        {{ (base | float(0)) + (sunrise_buffer_percent|float(0)) }}
+
+      night_target_soc_pct: "{{ [ (night_reserve_soc_pct|float(30) + night_reserve_buffer_pct|float(10)), sunrise_target_soc_pct|float(0) ] | max | round(1) }}"
+      required_soc_pct: >-
+        {% if is_daylight_now %}
+          {{ min_soc_daytime|float(20) }}
+        {% else %}
+          {{ night_target_soc_pct|float(0) }}
+        {% endif %}
+
+      export_min_soc_pct: >-
+        {% set relaxed = required_soc_pct - (sunrise_export_relax_percent|float(0)) %}
+        {{ [relaxed, sunrise_reserve_soc_pct|float(10)] | max | round(1) }}
+
+      # --- state store in reason helper (MODE=<..>;TS=<epoch>;...)
+      stored_state_line: "{{ states(reason_text_entity) }}"
+      stored_mode_value: >-
+        {% set m = stored_state_line | regex_findall_index('MODE=([^;]+)',0) %}
+        {{ m if m else '' }}
+      stored_timestamp: >-
+        {% set t = stored_state_line | regex_findall_index('TS=([0-9]+)',0) %}
+        {{ (t|int(0)) if t else 0 }}
+      mode_change_allowed: "{{ (as_timestamp(now()) - (stored_timestamp|int(0))) >= (min_mode_hold_minutes_value|int(15) * 60) }}"
+      safety_override_active: "{{ current_battery_soc_pct < (required_soc_pct - soc_hysteresis_percent|float(3)) }}"
+
+      # --- export tier + hysteresis
+      base_export_limit_kw: >-
+        {% if current_feed_in_price >= (export_spike_threshold_value|float(3.0)) %}
+          {{ export_limit_high_kw|float(25) }}
+        {% elif current_feed_in_price >= (export_threshold_high_value|float(1.0)) %}
+          {{ export_limit_high_kw|float(25) }}
+        {% elif current_feed_in_price >= (export_threshold_medium_value|float(0.2)) %}
+          {{ export_limit_medium_kw|float(12) }}
+        {% elif current_feed_in_price >= (export_threshold_low_value|float(0.1)) %}
+          {{ export_limit_low_kw|float(5) }}
+        {% else %}
+          0
+        {% endif %}
+
+      # scale export by SoC above export_min_soc_pct across export_soc_span_day_percent
+      export_soc_scale: >-
+        {% set start = export_min_soc_pct|float(0) + (soc_hysteresis_percent|float(3)) %}
+        {% set span = export_soc_span_day_percent|float(20) %}
+        {% if current_battery_soc_pct <= start %}
+          0
+        {% elif span <= 0 %}
+          1
+        {% else %}
+          {% set s = (current_battery_soc_pct - start) / span %}
+          {{ [ [s,0]|max, 1 ] | min }}
+        {% endif %}
+
+      currently_exporting: "{{ current_export_limit_kw > (min_grid_transfer_kw|float(0.5)) and current_ems_mode in ['Command Discharging (PV First)','Command Discharging (ESS First)'] }}"
+      export_start_fit_threshold: "{{ (export_threshold_low_value|float(0.1)) + (price_hysteresis_value|float(0.02)) }}"
+      export_stop_fit_threshold: "{{ (export_threshold_low_value|float(0.1)) * (export_hysteresis_percent_value|float(0.9)) - (price_hysteresis_value|float(0.02)) }}"
+      export_fit_ok: >-
+        {% if current_feed_in_price >= export_start_fit_threshold %} true
+        {% elif current_feed_in_price <= export_stop_fit_threshold %} false
+        {% else %} {{ currently_exporting }}
+        {% endif %}
+
+      # never-loss export rule (conservative): battery export only if FIT positive and fits tier logic
+      export_allowed_now: "{{ auto_export_enabled and (current_feed_in_price > 0) and export_fit_ok and (current_battery_soc_pct > (export_min_soc_pct + soc_hysteresis_percent|float(3))) and (current_buy_price > import_threshold_low_value|float(0.0)) }}"
+
+      target_export_limit_kw: >-
+        {% if export_allowed_now %}
+          {% set k = (base_export_limit_kw|float(0)) * (export_soc_scale|float(0)) %}
+          {{ k }}
+        {% elif is_daylight_now and (current_feed_in_price > 0) %}
+          25
+        {% else %}
+          0.1
+        {% endif %}
+
+      # --- import tier (negative)
+      negative_price_import_kw: >-
+        {% if current_buy_price <= (import_threshold_high_value|float(-0.30)) %}
+          {{ import_limit_high_kw|float(30) }}
+        {% elif current_buy_price <= (import_threshold_medium_value|float(-0.15)) %}
+          {{ import_limit_medium_kw|float(30) }}
+        {% elif current_buy_price <= (import_threshold_low_value|float(0.0)) %}
+          {{ import_limit_low_kw|float(30) }}
+        {% else %}
+          0
+        {% endif %}
+
+      negative_price_now: "{{ current_buy_price <= (import_threshold_low_value|float(0.0)) }}"
+      cheap_paid_import_now: "{{ (current_buy_price <= max_price_threshold_value|float(0.015)) and not negative_price_now }}"
+      allow_paid_topup: "{{ cheap_paid_import_now and is_daylight_now and (current_battery_soc_pct < (daytime_topup_max_soc_pct|float(50))) and (current_battery_soc_pct < (sunrise_target_soc_pct - soc_hysteresis_percent|float(3))) and (forecast_min_buy_price|float(999) > (import_threshold_low_value|float(0.0))) }}"
+
+      # Protect reserve: if under required at night, allow paid import up to cap (even if not cheap)
+      protect_reserve_import: "{{ (not is_daylight_now) and (current_battery_soc_pct < (required_soc_pct - soc_hysteresis_percent|float(3))) and (current_battery_soc_pct < (paid_import_soc_cap_pct|float(50))) }}"
+
+      target_import_limit_kw: >-
+        {% if negative_price_now and current_battery_soc_pct < 100 %}
+          {{ [negative_price_import_kw|float(0), cap_total_import_kw|float(30)] | min }}
+        {% elif allow_paid_topup %}
+          {{ [target_battery_charge_kw|float(0), cap_total_import_kw|float(30)] | min }}
+        {% elif protect_reserve_import %}
+          {{ [target_battery_charge_kw|float(0), cap_total_import_kw|float(30)] | min }}
+        {% else %}
+          0.1
+        {% endif %}
+
+      # --- holdoff: morning + lots of PV + negative expected soon => avoid charging early
+      before_holdoff_end: "{{ now() < today_at(standby_holdoff_end_time) }}"
+      holdoff_active_now: "{{ standby_holdoff_enabled and is_daylight_now and before_holdoff_end and (pv_forecast_today_kwh >= pv_forecast_holdoff_kwh_threshold|float(0)) and (forecast_min_buy_price|float(999) <= (import_threshold_low_value|float(0.0))) }}"
+
+      # --- PV cap (night battery-only)
+      battery_only_night_mode: "{{ (not is_daylight_now) and (not negative_price_now) and (target_import_limit_kw|float(0) <= 0.2) and (target_export_limit_kw|float(0) <= 0.2) }}"
+      target_pv_limit_kw: >-
+        {% if battery_only_night_mode %}
+          0.1
+        {% else %}
+          {{ pv_max_power_normal_kw|float(25) }}
+        {% endif %}
+
+      # --- choose mode
+      target_ems_mode: >-
+        {% if negative_price_now and (target_import_limit_kw|float(0) > 0.2) %}
+          Command Charging (Grid First)
+        {% elif holdoff_active_now %}
+          Command Discharging (PV First)
+        {% elif export_allowed_now and (target_export_limit_kw|float(0) > 0.2) %}
+          Command Discharging (PV First)
+        {% elif allow_paid_topup or protect_reserve_import %}
+          Command Charging (PV First)
+        {% elif battery_only_night_mode %}
+          Maximum Self Consumption
+        {% elif is_daylight_now %}
+          Command Charging (PV First)
+        {% else %}
+          Maximum Self Consumption
+        {% endif %}
+
+      # --- ESS charge/discharge caps (optional entities)
+      # Holdoff behaviour: block charging unless slow-charge enabled
+      target_ess_charge_kw: >-
+        {% if holdoff_active_now %}
+          {% if slow_charge_holdoff_enabled %}
+            {{ slow_charge_limit_kw_value|float(2) }}
+          {% else %}
+            0.1
+          {% endif %}
+        {% elif target_ems_mode in ['Command Charging (Grid First)','Command Charging (PV First)'] %}
+          25
+        {% else %}
+          25
+        {% endif %}
+
+      target_ess_discharge_kw: >-
+        {% if safety_override_active %}
+          0.1
+        {% elif target_ems_mode in ['Command Discharging (PV First)','Command Discharging (ESS First)'] %}
+          {{ [target_export_limit_kw|float(0), 0.1] | max }}
+        {% else %}
+          25
+        {% endif %}
+
+      # --- clamp tiny transfers
+      final_export_limit_kw: "{{ (target_export_limit_kw|float(0)) if (target_export_limit_kw|float(0)) >= (min_grid_transfer_kw|float(0.5)) else 0.1 }}"
+      final_import_limit_kw: "{{ (target_import_limit_kw|float(0)) if (target_import_limit_kw|float(0)) >= (min_grid_transfer_kw|float(0.5)) else 0.1 }}"
+
+      # --- build reason/state line (parseable)
+      state_log_line: >-
+        MODE={{ target_ems_mode }};
+        TS={{ as_timestamp(now())|int }};
+        SEG={{ day_segment }};
+        current_buy_price={{ current_buy_price|round(3) }};
+        current_feed_in_price={{ current_feed_in_price|round(3) }};
+        current_battery_soc_pct={{ current_battery_soc_pct|round(1) }};
+        req={{ required_soc_pct|round(1) }};
+        sunrise={{ sunrise_target_soc_pct|round(1) }};
+        fcmin={{ forecast_min_buy_price|round(3) }};
+        exp={{ final_export_limit_kw|round(2) }};
+        imp={{ final_import_limit_kw|round(2) }};
+        holdoff={{ holdoff_active_now }};
+
+  # --- summaries
+  - choose:
+      - conditions: "{{ trigger.id == 'morning_summary' and (notification_service|trim != '') and (is_state((!input notify_morning_summary), 'on') or (!input notify_morning_summary)) }}"
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              message: >-
+                Morning PV forecast:
+                Today={{ states(forecast_today_sensor_entity)|float(0)|round(1) }}kWh, Remaining={{ states(forecast_remaining_sensor_entity)|float(0)|round(1) }}kWh
+                Min buy next {{ negative_price_forecast_lookahead_hours }}h={{ forecast_min_buy_price|round(3) }}, Current buy={{ current_buy_price|round(3) }}, FIT={{ current_feed_in_price|round(3) }}.
+      - conditions: "{{ trigger.id == 'daily_summary' and (notification_service|trim != '') and (is_state((!input notify_daily_summary), 'on') or (!input notify_daily_summary)) }}"
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              message: >-
+                Daily summary:
+                PV={{ states(daily_pv_energy_sensor)|float(0)|round(2) }}kWh
+                Load={{ states(daily_load_energy_sensor)|float(0)|round(2) }}kWh
+                Grid import={{ states(daily_import_energy_sensor)|float(0)|round(2) }}kWh, export={{ states(daily_export_energy_sensor)|float(0)|round(2) }}kWh
+                Battery charge={{ states(daily_battery_charge_energy_sensor)|float(0)|round(2) }}kWh, discharge={{ states(daily_battery_discharge_energy_sensor)|float(0)|round(2) }}kWh
+                Current SoC={{ current_battery_soc_pct|round(1) }}%, sunrise target={{ sunrise_target_soc_pct|round(1) }}%.
+    default: []
+
+  # --- core control tick
+  - choose:
+      - conditions: "{{ trigger.id in ['tick','fast_recalc'] }}"
+        sequence:
+          # enable HA control if requested
+          - choose:
+              - conditions: "{{ auto_enable_ha_control }}"
+                sequence:
+                  - service: switch.turn_on
+                    target:
+                      entity_id: !input ha_control_switch
+
+          # decide if mode change allowed
+          - variables:
+              do_mode_change: "{{ (current_ems_mode != target_ems_mode) and (mode_change_allowed or safety_override_active) }}"
+              do_reason_write: true
+
+          # write reason/state line (always)
+          - service: input_text.set_value
+            target:
+              entity_id: !input reason_text_helper
+            data:
+              value: "{{ state_log_line }}"
+
+          # apply mode (min-hold)
+          - choose:
+              - conditions: "{{ do_mode_change }}"
+                sequence:
+                  - service: select.select_option
+                    target:
+                      entity_id: !input ems_mode_select
+                    data:
+                      option: "{{ target_ems_mode }}"
+
+          # apply grid/pcs limits (min-delta)
+          - choose:
+              - conditions: "{{ (current_export_limit_kw - (final_export_limit_kw|float(0))) | abs >= (min_change_threshold_kw|float(0.15)) }}"
+                sequence:
+                  - service: number.set_value
+                    target: { entity_id: !input grid_export_limit }
+                    data: { value: "{{ final_export_limit_kw|float(0) }}" }
+                  - service: number.set_value
+                    target: { entity_id: !input pcs_export_limit }
+                    data: { value: "{{ final_export_limit_kw|float(0) }}" }
+
+          - choose:
+              - conditions: "{{ (current_import_limit_kw - (final_import_limit_kw|float(0))) | abs >= (min_change_threshold_kw|float(0.15)) }}"
+                sequence:
+                  - service: number.set_value
+                    target: { entity_id: !input grid_import_limit }
+                    data: { value: "{{ final_import_limit_kw|float(0) }}" }
+                  - service: number.set_value
+                    target: { entity_id: !input pcs_import_limit }
+                    data: { value: "{{ final_import_limit_kw|float(0) }}" }
+
+          # PV limit (night battery-only protection)
+          - choose:
+              - conditions: "{{ (states(pv_max_power_limit_entity)|float(0) - (target_pv_limit_kw|float(0))) | abs >= 0.1 }}"
+                sequence:
+                  - service: number.set_value
+                    target: { entity_id: !input pv_max_power_limit }
+                    data: { value: "{{ target_pv_limit_kw|float(0) }}" }
+
+          # Optional ESS caps (only if entity provided)
+          - choose:
+              - conditions: "{{ ess_max_charging_limit_entity|trim != '' }}"
+                sequence:
+                  - choose:
+                      - conditions: "{{ (states(ess_max_charging_limit_entity)|float(0) - (target_ess_charge_kw|float(0))) | abs >= (min_change_threshold_kw|float(0.15)) }}"
+                        sequence:
+                          - service: number.set_value
+                            target: { entity_id: "{{ ess_max_charging_limit_entity }}" }
+                            data: { value: "{{ target_ess_charge_kw|float(0) }}" }
+
+          - choose:
+              - conditions: "{{ ess_max_discharging_limit_entity|trim != '' }}"
+                sequence:
+                  - choose:
+                      - conditions: "{{ (states(ess_max_discharging_limit_entity)|float(0) - (target_ess_discharge_kw|float(0))) | abs >= (min_change_threshold_kw|float(0.15)) }}"
+                        sequence:
+                          - service: number.set_value
+                            target: { entity_id: "{{ ess_max_discharging_limit_entity }}" }
+                            data: { value: "{{ target_ess_discharge_kw|float(0) }}" }
+
+          # session tracking + dedup notifications (uses total sensors if available; else daily)
+          - variables:
+              export_total_kwh: >-
+                {% if total_export_energy_sensor %}
+                  {{ states(total_export_energy_sensor)|float(0) }}
+                {% else %}
+                  {{ states(daily_export_energy_sensor)|float(0) }}
+                {% endif %}
+              import_total_kwh: >-
+                {% if total_import_energy_sensor %}
+                  {{ states(total_import_energy_sensor)|float(0) }}
+                {% else %}
+                  {{ states(daily_import_energy_sensor)|float(0) }}
+                {% endif %}
+              should_export_now: "{{ final_export_limit_kw|float(0) > (min_grid_transfer_kw|float(0.5)) and target_ems_mode in ['Command Discharging (PV First)','Command Discharging (ESS First)'] }}"
+              should_import_now: "{{ final_import_limit_kw|float(0) > (min_grid_transfer_kw|float(0.5)) and target_ems_mode in ['Command Charging (Grid First)','Command Charging (PV First)'] }}"
+              was_exporting: "{{ currently_exporting }}"
+              was_importing: "{{ (current_import_limit_kw > (min_grid_transfer_kw|float(0.5))) and current_ems_mode in ['Command Charging (Grid First)','Command Charging (PV First)'] }}"
+
+          # export start
+          - choose:
+              - conditions: "{{ should_export_now and not was_exporting }}"
+                sequence:
+                  - service: input_number.set_value
+                    target: { entity_id: !input export_session_start }
+                    data: { value: "{{ export_total_kwh|float(0) }}" }
+                  - choose:
+                      - conditions: "{{ notification_service|trim != '' }}"
+                        sequence:
+                          - variables:
+                              msg: "Export START | FIT={{ current_feed_in_price|round(3) }} | SoC={{ current_battery_soc_pct|round(1) }}% | cap={{ final_export_limit_kw|round(2) }}kW"
+                              last: "{{ states(last_export_notification_entity) }}"
+                          - condition: template
+                            value_template: "{{ last != msg }}"
+                          - service: input_text.set_value
+                            target: { entity_id: !input last_export_notification }
+                            data: { value: "{{ msg }}" }
+                          - service: "{{ notification_service }}"
+                            data: { message: "{{ msg }}" }
+
+          # export stop
+          - choose:
+              - conditions: "{{ (not should_export_now) and was_exporting }}"
+                sequence:
+                  - variables:
+                      start: "{{ states(export_session_start_entity)|float(0) }}"
+                      delta: "{{ (export_total_kwh|float(0) - start)|round(2) }}"
+                  - choose:
+                      - conditions: "{{ notification_service|trim != '' }}"
+                        sequence:
+                          - variables:
+                              msg: "Export STOP | kWh={{ delta }} | FIT={{ current_feed_in_price|round(3) }}"
+                              last: "{{ states(last_export_notification_entity) }}"
+                          - condition: template
+                            value_template: "{{ last != msg }}"
+                          - service: input_text.set_value
+                            target: { entity_id: !input last_export_notification }
+                            data: { value: "{{ msg }}" }
+                          - service: "{{ notification_service }}"
+                            data: { message: "{{ msg }}" }
+
+          # import start
+          - choose:
+              - conditions: "{{ should_import_now and not was_importing }}"
+                sequence:
+                  - service: input_number.set_value
+                    target: { entity_id: !input import_session_start }
+                    data: { value: "{{ import_total_kwh|float(0) }}" }
+                  - choose:
+                      - conditions: "{{ notification_service|trim != '' }}"
+                        sequence:
+                          - variables:
+                              msg: "Import START | buy={{ current_buy_price|round(3) }} | SoC={{ current_battery_soc_pct|round(1) }}% | cap={{ final_import_limit_kw|round(2) }}kW"
+                              last: "{{ states(last_import_notification_entity) }}"
+                          - condition: template
+                            value_template: "{{ last != msg }}"
+                          - service: input_text.set_value
+                            target: { entity_id: !input last_import_notification }
+                            data: { value: "{{ msg }}" }
+                          - service: "{{ notification_service }}"
+                            data: { message: "{{ msg }}" }
+
+          # import stop
+          - choose:
+              - conditions: "{{ (not should_import_now) and was_importing }}"
+                sequence:
+                  - variables:
+                      start: "{{ states(import_session_start_entity)|float(0) }}"
+                      delta: "{{ (import_total_kwh|float(0) - start)|round(2) }}"
+                  - choose:
+                      - conditions: "{{ notification_service|trim != '' }}"
+                        sequence:
+                          - variables:
+                              msg: "Import STOP | kWh={{ delta }} | buy={{ current_buy_price|round(3) }}"
+                              last: "{{ states(last_import_notification_entity) }}"
+                          - condition: template
+                            value_template: "{{ last != msg }}"
+                          - service: input_text.set_value
+                            target: { entity_id: !input last_import_notification }
+                            data: { value: "{{ msg }}" }
+                          - service: "{{ notification_service }}"
+                            data: { message: "{{ msg }}" }
+    default: []
