@@ -1159,6 +1159,8 @@ action:
         {% else %}
           {{ forecast_remaining < (battery_fill_need_kwh * forecast_safety_margin) }}
         {% endif %}
+      export_blocked_effective: >
+        {{ export_blocked_for_forecast and not (export_solar_override or export_spike_active | default(false)) }}
 
       grid_limit_base: >
         {% if current_price <= max_price_threshold
@@ -1233,7 +1235,7 @@ action:
         {% endif %}
 
       export_reason: >
-        {% if price_is_negative or feedin_is_negative or export_blocked_for_forecast %}
+        {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
           Export blocked (price/forecast)
         {% elif battery_soc <= export_min_soc %}
           Export blocked (SoC below sunrise target)
@@ -1294,7 +1296,7 @@ action:
       desired_export_limit: >
         {% if standby_holdoff_active %}
           0
-        {% elif price_is_negative or feedin_is_negative or export_blocked_for_forecast %}
+        {% elif price_is_negative or feedin_is_negative or export_blocked_effective %}
           0
         {% elif battery_soc <= export_min_soc %}
           0
