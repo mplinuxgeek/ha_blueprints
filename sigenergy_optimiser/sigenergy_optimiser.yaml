@@ -250,6 +250,20 @@ blueprint:
           selector:
             entity:
               domain: number
+        ess_max_charging_limit:
+          name: ESS Max Charging Limit (Optional)
+          description: Number entity that caps ESS/grid charging power. Set to allow full-rate imports when price is negative.
+          default: ""
+          selector:
+            entity:
+              domain: number
+        ess_max_discharging_limit:
+          name: ESS Max Discharging Limit (Optional)
+          description: Number entity that caps ESS discharging power. Set to export cap when exporting, very low when importing.
+          default: ""
+          selector:
+            entity:
+              domain: number
 
     sigenergy_sensors:
       name: |
@@ -963,6 +977,8 @@ action:
       pv_max_power_limit_entity: !input pv_max_power_limit
       pcs_export_limit_entity: !input pcs_export_limit
       pcs_import_limit_entity: !input pcs_import_limit
+      ess_max_charging_limit_entity: !input ess_max_charging_limit
+      ess_max_discharging_limit_entity: !input ess_max_discharging_limit
       forecast_remaining_sensor_entity: !input forecast_remaining_sensor
       forecast_today_sensor_entity: !input forecast_today_sensor
       solar_power_now_sensor_entity: !input solar_power_now_sensor
@@ -1377,6 +1393,20 @@ action:
           {{ pv_max_power_normal }}
         {% endif %}
 
+      desired_ess_charge_limit: >
+        {% if desired_import_limit | float(0) > 0 %}
+          {{ [cap_total_import | float(30), import_limit_high | float(30), desired_import_limit | float(0)] | max }}
+        {% else %}
+          {{ cap_total_import | float(30) }}
+        {% endif %}
+
+      desired_ess_discharge_limit: >
+        {% if desired_export_limit | float(0) > 0 %}
+          {{ desired_export_limit }}
+        {% else %}
+          0.1
+        {% endif %}
+
       reason_should_log: >
         {% set export_diff = (desired_export_limit | float - current_export_limit) | abs %}
         {% set import_diff = (desired_import_limit | float - current_import_limit) | abs %}
@@ -1386,7 +1416,7 @@ action:
            or pv_diff > 0 }}
 
       outcome_reason: >
-        {{ export_reason | default('n/a') }}; {{ import_reason | default('n/a') }}; PV {{ (desired_pv_max_power_limit | default(pv_max_power_normal)) | round(1) }} kW
+        {{ export_reason | default('n/a') }}; {{ import_reason | default('n/a') }}; PV Limit {{ (desired_pv_max_power_limit | default(pv_max_power_normal)) | round(1) }} kW
 
       daily_export_kwh: "{{ states(daily_export_energy_entity) | float(0) }}"
       export_session_start_kwh: "{{ states(export_session_start_entity) | float(0) }}"
@@ -1649,6 +1679,28 @@ action:
         {% else %}
           0.1
         {% endif %}
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ effective_ha_control_enabled and ess_max_charging_limit_entity | default('') }}"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: "{{ ess_max_charging_limit_entity }}"
+            data:
+              value: "{{ desired_ess_charge_limit }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ effective_ha_control_enabled and ess_max_discharging_limit_entity | default('') }}"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: "{{ ess_max_discharging_limit_entity }}"
+            data:
+              value: "{{ desired_ess_discharge_limit }}"
 
   - choose:
       - conditions:
