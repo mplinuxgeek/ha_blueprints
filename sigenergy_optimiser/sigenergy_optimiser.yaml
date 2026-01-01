@@ -1401,8 +1401,10 @@ action:
       desired_ess_charge_limit: >
         {% if desired_import_limit | float(0) > 0 %}
           {{ [cap_total_import | float(30), import_limit_high | float(30), desired_import_limit | float(0)] | max }}
-        {% else %}
+        {% elif desired_export_limit | float(0) > 0 %}
           {{ cap_total_import | float(30) }}
+        {% else %}
+          0.01
         {% endif %}
 
       desired_ess_discharge_limit: >
@@ -1410,9 +1412,9 @@ action:
           {% set cover_load = [load_kw, min_grid_transfer_kw | float(0.5)] | max %}
           {{ cover_load }}
         {% elif desired_export_limit | float(0) > 0 %}
-          {{ desired_export_limit }}
+          {{ [desired_export_limit, min_grid_transfer_kw | float(0.5)] | max }}
         {% else %}
-          0.1
+          0.01
         {% endif %}
 
       reason_should_log: >
