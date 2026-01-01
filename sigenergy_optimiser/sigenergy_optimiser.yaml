@@ -1120,7 +1120,7 @@ action:
            and forecast_today >= pv_forecast_holdoff_kwh
            and negative_price_forecast_ahead
            and now() < cutoff
-           and current_price > import_threshold_medium }}
+           and current_price > import_threshold_low }}
 
       export_min_soc: >
         {{ effective_min_soc | float }}
