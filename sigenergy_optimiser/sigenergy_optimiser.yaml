@@ -1564,11 +1564,28 @@ action:
           - service: input_boolean.turn_off
             target:
               entity_id: !input automated_export_flag
-          - action: number.set_value
-            target:
-              entity_id: !input grid_export_limit
-            data:
-              value: "{{ desired_export_limit }}"
+
+  - action: number.set_value
+    target:
+      entity_id: !input grid_export_limit
+    data:
+      value: >
+        {% if desired_export_limit > 0 %}
+          {{ desired_export_limit }}
+        {% else %}
+          0.01
+        {% endif %}
+
+  - action: number.set_value
+    target:
+      entity_id: !input pcs_export_limit
+    data:
+      value: >
+        {% if desired_export_limit > 0 %}
+          {{ desired_export_limit }}
+        {% else %}
+          0.01
+        {% endif %}
 
   - choose:
       - conditions:
@@ -1657,25 +1674,8 @@ action:
                 {% if desired_import_limit > 0 %}
                   {{ desired_import_limit }}
                 {% else %}
-                  0.1
+                  0.01
                 {% endif %}
-
-  - action: number.set_value
-    target:
-      entity_id: !input pcs_export_limit
-    data:
-      value: >
-        {% if desired_export_limit > 0 %}
-          {{ desired_export_limit }}
-        {% else %}
-          0
-        {% endif %}
-
-  - action: number.set_value
-    target:
-      entity_id: !input grid_export_limit
-    data:
-      value: "{{ desired_export_limit }}"
 
   - action: number.set_value
     target:
@@ -1685,7 +1685,7 @@ action:
         {% if desired_import_limit > 0 %}
           {{ desired_import_limit }}
         {% else %}
-          0.1
+          0.01
         {% endif %}
 
   - choose:
