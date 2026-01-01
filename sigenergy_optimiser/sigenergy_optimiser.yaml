@@ -1765,5 +1765,5 @@ action:
             data:
               value: "{{ outcome_reason | default('No reason captured') | string | truncate(95, True, '') }}"
 
-mode: queued
-max: 5
+mode: single
+max_exceeded: silent
