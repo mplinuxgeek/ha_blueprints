@@ -876,6 +876,17 @@ blueprint:
               step: 1
               unit_of_measurement: "%"
               mode: box
+        export_discharge_window_hours:
+          name: Export Discharge Window (hours)
+          description: Hours to spread battery headroom over when setting a safe export cap (higher = less aggressive discharge).
+          default: 3
+          selector:
+            number:
+              min: 1
+              max: 12
+              step: 0.5
+              unit_of_measurement: h
+              mode: box
         sun_elevation_evening_threshold:
           name: Sun Elevation Evening Threshold
           description: Sun elevation (degrees) that marks evening/night for logic.
@@ -963,6 +974,7 @@ action:
       price_hysteresis: !input price_hysteresis
       forecast_safety_margin: !input forecast_safety_margin
       export_soc_span_day: !input export_soc_span_day
+      export_discharge_window_hours: !input export_discharge_window_hours
       sun_elevation_evening_threshold: !input sun_elevation_evening_threshold
 
       pv_power_sensor_entity: !input pv_power_sensor
@@ -1253,7 +1265,8 @@ action:
               Export override (exporting excess PV)
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
-              {% set hours_div = [hours, 2] | min %}
+              {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}
+              {% set hours_div = [hours, discharge_window] | min %}
               {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}
               {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}
               {% set boost = [2.0, 1 + ((tier_cap / export_limit_high) * 0.5)] | min %}
@@ -1319,7 +1332,8 @@ action:
               {% endif %}
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
-              {% set hours_div = [hours, 2] | min %}
+              {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}
+              {% set hours_div = [hours, discharge_window] | min %}
               {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}
               {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}
               {% set boost = [2.0, 1 + ((tier_cap / export_limit_high) * 0.5)] | min %}
@@ -1764,6 +1778,9 @@ action:
               entity_id: !input reason_text_helper
             data:
               value: "{{ outcome_reason | default('No reason captured') | string | truncate(95, True, '') }}"
+
+  # Final cooldown to rate-limit successive triggers
+  - delay: "00:00:05"
 
 mode: single
 max_exceeded: silent
