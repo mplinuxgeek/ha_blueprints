@@ -1709,23 +1709,27 @@ action:
                               entity_id: !input last_import_notification
                             data:
                               value: "stopped"
-          - action: number.set_value
-            target:
-              entity_id: !input grid_import_limit
-            data:
-              value: >
-                {% if desired_import_limit > 0 %}
-                  {{ desired_import_limit }}
-                {% else %}
-                  0.01
-                {% endif %}
+  - action: number.set_value
+    target:
+      entity_id: !input grid_import_limit
+    data:
+      value: >
+        {% if standby_holdoff_active %}
+          0.01
+        {% elif desired_import_limit > 0 %}
+          {{ desired_import_limit }}
+        {% else %}
+          0.01
+        {% endif %}
 
   - action: number.set_value
     target:
       entity_id: !input pcs_import_limit
     data:
       value: >
-        {% if desired_import_limit > 0 %}
+        {% if standby_holdoff_active %}
+          0.01
+        {% elif desired_import_limit > 0 %}
           {{ desired_import_limit }}
         {% else %}
           0.01
