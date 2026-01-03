@@ -193,6 +193,13 @@ blueprint:
           selector:
             entity:
               domain: input_text
+        min_soc_to_sunrise_helper:
+          name: Min SoC to Sunrise Helper
+          description: Input number to store the latest calculated minimum SoC needed to reach sunrise (default `input_number.battery_min_soc_to_last_till_sunrise`).
+          default: input_number.battery_min_soc_to_last_till_sunrise
+          selector:
+            entity:
+              domain: input_number
 
     ems_limits:
       name: |
@@ -876,17 +883,6 @@ blueprint:
               step: 1
               unit_of_measurement: "%"
               mode: box
-        export_discharge_window_hours:
-          name: Export Discharge Window (hours)
-          description: Hours to spread battery headroom over when setting a safe export cap (higher = less aggressive discharge).
-          default: 3
-          selector:
-            number:
-              min: 1
-              max: 12
-              step: 0.5
-              unit_of_measurement: h
-              mode: box
         sun_elevation_evening_threshold:
           name: Sun Elevation Evening Threshold
           description: Sun elevation (degrees) that marks evening/night for logic.
@@ -974,7 +970,6 @@ action:
       price_hysteresis: !input price_hysteresis
       forecast_safety_margin: !input forecast_safety_margin
       export_soc_span_day: !input export_soc_span_day
-      export_discharge_window_hours: !input export_discharge_window_hours
       sun_elevation_evening_threshold: !input sun_elevation_evening_threshold
 
       pv_power_sensor_entity: !input pv_power_sensor
@@ -1009,6 +1004,7 @@ action:
       last_export_notification_entity: !input last_export_notification
       last_import_notification_entity: !input last_import_notification
       reason_text_entity: !input reason_text_helper
+      min_soc_to_sunrise_helper_entity: !input min_soc_to_sunrise_helper
 
       pv_power: "{{ states(pv_power_sensor_entity) | float(0) }}"
       consumed_power: "{{ states(consumed_power_sensor_entity) | float(0) }}"
@@ -1032,7 +1028,29 @@ action:
       available_discharge_energy: "{{ states(available_discharge_sensor_entity) | float(0) }}"
       ha_control_enabled: "{{ is_state(ha_control_switch_entity, 'on') }}"
       pv_kw: "{{ (pv_power | float(0)) / (1000 if (pv_power | float(0)) > 1000 else 1) }}"
-      load_kw: "{{ (consumed_power | float(0)) / (1000 if (consumed_power | float(0)) > 1000 else 1) }}"
+      load_kw_instant: "{{ (consumed_power | float(0)) / (1000 if (consumed_power | float(0)) > 1000 else 1) }}"
+      load_kw_sunrise: >
+        {% set avg_candidates = [
+          state_attr(consumed_power_sensor_entity, '1h_mean'),
+          state_attr(consumed_power_sensor_entity, 'mean_1h'),
+          state_attr(consumed_power_sensor_entity, 'last_1h_mean'),
+          state_attr(consumed_power_sensor_entity, 'mean')
+        ] %}
+        {% set avg_w = none %}
+        {% for cand in avg_candidates %}
+          {% if cand is not none %}
+            {% set try = cand | float(none) %}
+            {% if try is not none %}
+              {% set avg_w = try %}
+              {% break %}
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+        {% if avg_w is none %}
+          {% set avg_w = consumed_power | float(0) %}
+        {% endif %}
+        {{ (avg_w | float(0)) / (1000 if (avg_w | float(0)) > 1000 else 1) }}
+      load_kw: "{{ load_kw_instant }}"
       solar_power_now_kw: "{{ (solar_power_now | float(0)) / 1000 }}"
       solar_potential_kw: "{{ [pv_kw, solar_power_now_kw] | max }}"
       battery_capacity_kwh: >
@@ -1080,7 +1098,7 @@ action:
               next_rising is none or next_setting is none %}
           {{ night_reserve_soc + night_reserve_buffer }}
         {% else %}
-          {% set load_kw = load_s | float(0) %}
+          {% set load_kw = load_kw_sunrise | float(0) %}
           {% set cap_raw = cap_s | float(0) %}
           {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}
           {% set cap_kwh = (cap_raw / 1000.0) if cap_uom in ['Wh','wH'] else cap_raw %}
@@ -1269,10 +1287,10 @@ action:
               {% set hours_div = [hours, discharge_window] | min %}
               {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}
               {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}
-              {% set boost = [2.0, 1 + ((tier_cap / export_limit_high) * 0.5)] | min %}
+              {% set boost = [1.5, 1 + ((tier_cap / export_limit_high) * 0.3)] | min %}
               {% set safe_kw = safe_kw_base * boost %}
               {% set safe_cap = [safe_kw, tier_cap] | min %}
-              {% set raw_limit = tier_cap * scale_soc %}
+              {% set raw_limit = tier_cap * scale_soc * 0.9 %}
               {% set final_limit = [raw_limit, safe_cap] | min %}
               {% if final_limit == 0 %}
                 Export blocked (zero cap)
@@ -1336,10 +1354,10 @@ action:
               {% set hours_div = [hours, discharge_window] | min %}
               {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}
               {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}
-              {% set boost = [2.0, 1 + ((tier_cap / export_limit_high) * 0.5)] | min %}
+              {% set boost = [1.5, 1 + ((tier_cap / export_limit_high) * 0.3)] | min %}
               {% set safe_kw = safe_kw_base * boost %}
               {% set safe_cap = [safe_kw, tier_cap] | min %}
-              {% set raw_limit = tier_cap * scale_soc %}
+              {% set raw_limit = tier_cap * scale_soc * 0.9 %}
               {% set final_limit = [raw_limit, safe_cap] | min %}
               {% set limit = [0, final_limit] | max | round(1) %}
               {% if limit < min_grid_transfer_kw %}
@@ -1458,6 +1476,17 @@ action:
       daily_pv_kwh: "{{ states(daily_pv_energy_entity) | float(0) }}"
       last_export_notification_state: "{{ states(last_export_notification_entity) | default('stopped') }}"
       last_import_notification_state: "{{ states(last_import_notification_entity) | default('stopped') }}"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ min_soc_to_sunrise_helper_entity not in ['','none', None] }}"
+        sequence:
+          - action: input_number.set_value
+            target:
+              entity_id: !input min_soc_to_sunrise_helper
+            data:
+              value: "{{ battery_soc_required_to_sunrise | float(0) }}"
 
   - choose:
       - conditions:
