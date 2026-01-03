@@ -1241,7 +1241,7 @@ action:
 
       desired_import_limit: >
         {% if standby_holdoff_active %}
-          {% set limit = (load_kw_instant | float(0)) * 1.1 %}
+          {% set limit = 0.01 %}
         {% elif price_is_negative %}
           {% set limit = import_limit_negative %}
         {% elif feedin_price >= export_threshold_low %}
