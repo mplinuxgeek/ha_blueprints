@@ -908,7 +908,6 @@ trigger:
       - !input daily_export_energy
       - !input daily_import_energy
       - !input sun_entity
-      - !input price_forecast_sensor
   - platform: time
     at: !input daily_summary_time
     id: daily_summary
@@ -1413,8 +1412,8 @@ action:
 
       desired_pv_max_power_limit: >
         {% set slow_holdoff = slow_charge_holdoff | bool(false) %}
-        {% set cover_load_kw = ((load_kw_instant | float(0)) * 1.2) | float %}
-        {% set cover_load_kw = cover_load_kw | round(0, 'ceil') %}
+        {% set cover_load_kw = (load_kw_instant | float(0)) * 1.2 %}
+        {% set cover_load_kw = cover_load_kw | round(0, 'ceil') | int %}
         {% set cover_load_kw = [cover_load_kw, pv_max_power_normal | float(25)] | min %}
         {% if standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
           {{ [cover_load_kw, 0.1] | max }}
