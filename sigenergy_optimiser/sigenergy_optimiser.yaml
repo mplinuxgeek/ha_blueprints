@@ -1813,5 +1813,6 @@ action:
   # Final cooldown to rate-limit successive triggers
   - delay: "00:00:05"
 
-mode: single
-max_exceeded: silent
+mode: queued
+max: 5
+#max_exceeded: silent
