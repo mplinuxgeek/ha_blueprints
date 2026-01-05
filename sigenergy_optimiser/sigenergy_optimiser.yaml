@@ -1391,8 +1391,6 @@ action:
         {% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
           {% if battery_soc < (sunrise_soc_target | float(0)) %}
             Command Charging (PV First)
-          {% elif battery_soc > (export_min_soc + soc_hysteresis) %}
-            Command Discharging (ESS First)
           {% else %}
             Maximum Self Consumption
           {% endif %}
@@ -1453,8 +1451,7 @@ action:
 
       desired_ess_discharge_limit: >
         {% if standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
-          {% set cover_load = [load_kw, min_grid_transfer_kw | float(0.5)] | max %}
-          {{ cover_load }}
+          0.01
         {% elif desired_export_limit | float(0) > 0 %}
           {{ [desired_export_limit, min_grid_transfer_kw | float(0.5)] | max }}
         {% else %}
