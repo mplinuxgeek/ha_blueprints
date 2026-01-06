@@ -13,7 +13,6 @@ blueprint:
     - input_text: `input_text.sigenergy_last_export_notification`
     - input_text: `input_text.sigenergy_last_import_notification`
     - input_text: `input_text.sigenergy_reason`
-    - switch: `switch.sigen_plant_remote_ems_controled_by_home_assistant` (enables HA control)
 
     ## Battery protection (Priority #1)
     - Dynamic sunrise calculation: estimates SoC needed based on current load until sunrise + buffer
@@ -27,6 +26,7 @@ blueprint:
     - SoC-based scaling: gradual ramp-up as battery fills above required sunrise level
     - EMS hysteresis: uses start/stop around the low FIT threshold to prevent flapping
     - PCS limits: follow export/import limits directly
+    - Price spike boost: optional price spike sensor drives full export when spike is on and the Amber demand window is off
     - Mode: Command Discharging (PV First) - prioritizes solar over battery
 
     ## Import optimization
@@ -78,6 +78,7 @@ blueprint:
         price_sensor: sensor.amber_general_price
         feedin_sensor: sensor.amber_feed_in_price
         demand_window_sensor: binary_sensor.amber_demand_window
+        price_spike_sensor: binary_sensor.amber_price_spike
         forecast_remaining_sensor: sensor.solcast_pv_forecast_forecast_remaining_today
         forecast_today_sensor: sensor.solcast_pv_forecast_forecast_today
         price_forecast_sensor: sensor.amber_general_forecast
@@ -394,6 +395,13 @@ blueprint:
           name: Demand Window Sensor
           description: Binary sensor that blocks export when `on` (default `binary_sensor.amber_demand_window`).
           default: binary_sensor.amber_demand_window
+          selector:
+            entity:
+              domain: binary_sensor
+        price_spike_sensor:
+          name: Price Spike Sensor
+          description: Binary sensor indicating a price spike; when `on` and above the spike threshold, export at max (default `binary_sensor.amber_price_spike`).
+          default: binary_sensor.amber_price_spike
           selector:
             entity:
               domain: binary_sensor
@@ -923,6 +931,7 @@ trigger:
       - !input price_sensor
       - !input feedin_sensor
       - !input demand_window_sensor
+      - !input price_spike_sensor
       - !input forecast_remaining_sensor
       - !input forecast_today_sensor
       - !input daily_export_energy
@@ -999,6 +1008,7 @@ action:
       price_sensor_entity: !input price_sensor
       feedin_sensor_entity: !input feedin_sensor
       demand_window_sensor_entity: !input demand_window_sensor
+      price_spike_sensor_entity: !input price_spike_sensor
       ems_mode_select_entity: !input ems_mode_select
       grid_export_limit_entity: !input grid_export_limit
       grid_import_limit_entity: !input grid_import_limit
@@ -1036,7 +1046,12 @@ action:
       price_valid: "{{ price_state not in ['unknown','unavailable','none',''] }}"
       current_price: "{{ price_state | float(999) if price_valid else 999 }}"
       feedin_price: "{{ states(feedin_sensor_entity) | float(-999) }}"
-      export_spike_active: "{{ feedin_price >= (export_spike_threshold | float(0)) }}"
+      price_spike_active: "{{ is_state(price_spike_sensor_entity, 'on') }}"
+      demand_window_active: "{{ is_state(demand_window_sensor_entity, 'on') }}"
+      export_spike_active: >
+        {{ price_spike_active
+           and not demand_window_active
+           and feedin_price >= (export_spike_threshold | float(0)) }}
       solar_power_now: "{{ states(solar_power_now_sensor_entity) | float(0) }}"
       current_mode: "{{ states(ems_mode_select_entity) }}"
       current_export_limit: "{{ states(grid_export_limit_entity) | float(0) }}"
@@ -1103,9 +1118,6 @@ action:
           {{ ns.found }}
         {% endif %}
       negative_price_forecast_bool: "{{ negative_price_forecast_ahead | bool(false) }}"
-
-      demand_window_active: "{{ is_state(demand_window_sensor_entity, 'on') }}"
-
       price_is_negative: "{{ price_valid and current_price < 0 }}"
       feedin_is_negative: "{{ feedin_price < 0 }}"
       is_evening_or_night: "{{ sun_elevation < sun_elevation_evening_threshold }}"
