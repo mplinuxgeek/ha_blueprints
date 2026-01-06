@@ -77,6 +77,7 @@ blueprint:
         available_discharge_sensor: sensor.sigen_plant_available_max_discharging_capacity
         price_sensor: sensor.amber_general_price
         feedin_sensor: sensor.amber_feed_in_price
+        demand_window_sensor: binary_sensor.amber_demand_window
         forecast_remaining_sensor: sensor.solcast_pv_forecast_forecast_remaining_today
         forecast_today_sensor: sensor.solcast_pv_forecast_forecast_today
         price_forecast_sensor: sensor.amber_general_forecast
@@ -389,6 +390,13 @@ blueprint:
           selector:
             entity:
               domain: sensor
+        demand_window_sensor:
+          name: Demand Window Sensor
+          description: Binary sensor that blocks export when `on` (default `binary_sensor.amber_demand_window`).
+          default: binary_sensor.amber_demand_window
+          selector:
+            entity:
+              domain: binary_sensor
         solar_power_now_sensor:
           name: PV Forecast Power Now
           description: PV power now estimate (e.g., `sensor.solcast_pv_forecast_power_now`) to confirm generation potential.
@@ -914,6 +922,7 @@ trigger:
       - !input battery_soc_sensor
       - !input price_sensor
       - !input feedin_sensor
+      - !input demand_window_sensor
       - !input forecast_remaining_sensor
       - !input forecast_today_sensor
       - !input daily_export_energy
@@ -989,6 +998,7 @@ action:
       sun_entity_id: !input sun_entity
       price_sensor_entity: !input price_sensor
       feedin_sensor_entity: !input feedin_sensor
+      demand_window_sensor_entity: !input demand_window_sensor
       ems_mode_select_entity: !input ems_mode_select
       grid_export_limit_entity: !input grid_export_limit
       grid_import_limit_entity: !input grid_import_limit
@@ -1093,6 +1103,8 @@ action:
           {{ ns.found }}
         {% endif %}
       negative_price_forecast_bool: "{{ negative_price_forecast_ahead | bool(false) }}"
+
+      demand_window_active: "{{ is_state(demand_window_sensor_entity, 'on') }}"
 
       price_is_negative: "{{ price_valid and current_price < 0 }}"
       feedin_is_negative: "{{ feedin_price < 0 }}"
@@ -1201,7 +1213,8 @@ action:
           {{ forecast_remaining < (battery_fill_need_kwh * forecast_safety_margin) }}
         {% endif %}
       export_blocked_effective: >
-        {{ export_blocked_for_forecast and not (export_solar_override or export_spike_active | default(false)) }}
+        {% set forecast_block = export_blocked_for_forecast and not (export_solar_override or export_spike_active | default(false)) %}
+        {{ demand_window_active or forecast_block }}
 
       grid_limit_base: >
         {% if current_price <= max_price_threshold
@@ -1272,7 +1285,9 @@ action:
         {% endif %}
 
       export_reason: >
-        {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
+        {% if demand_window_active %}
+          Export blocked (demand window)
+        {% elif price_is_negative or feedin_is_negative or export_blocked_effective %}
           Export blocked (price/forecast)
         {% elif battery_soc <= export_min_soc %}
           Export blocked (SoC below sunrise target)
@@ -1332,7 +1347,9 @@ action:
         {% endif %}
 
       desired_export_limit: >
-        {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
+        {% if demand_window_active %}
+          0
+        {% elif price_is_negative or feedin_is_negative or export_blocked_effective %}
           0
         {% elif battery_soc <= export_min_soc %}
           0
@@ -1386,7 +1403,9 @@ action:
         {% set currently_discharging = current_mode in
           ['Command Discharging (PV First)', 'Command Discharging (ESS First)'] %}
         {% set currently_charging = current_mode in ['Command Charging (PV First)', 'Command Charging (Grid First)'] %}
-        {% if export_solar_override %}
+        {% if demand_window_active %}
+          Maximum Self Consumption
+        {% elif export_solar_override %}
           Maximum Self Consumption
         {% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
           {% if battery_soc < (sunrise_soc_target | float(0)) %}
