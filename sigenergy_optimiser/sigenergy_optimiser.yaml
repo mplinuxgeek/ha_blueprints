@@ -1224,6 +1224,8 @@ action:
           {{ export_limit_low + (frac * (export_limit_medium - export_limit_low)) }}
         {% endif %}
 
+      export_high_price: "{{ feedin_price >= export_threshold_high }}"
+
       export_blocked_for_forecast: >
         {% if is_evening_or_night %}
           {{ false }}
