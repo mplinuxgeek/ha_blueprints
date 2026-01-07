@@ -1194,7 +1194,9 @@ action:
            and current_price > import_threshold_low }}
 
       export_min_soc: >
-        {{ effective_min_soc | float }}
+        {% set sunrise_need = battery_soc_required_to_sunrise | float(0) %}
+        {% set base = effective_min_soc | float(0) %}
+        {{ [base, sunrise_need] | max }}
 
       export_start_low: "{{ export_threshold_low }}"
       export_stop_low: "{{ export_threshold_low * export_hysteresis_percent }}"
