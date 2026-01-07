@@ -1307,6 +1307,7 @@ action:
         {% endif %}
 
       export_reason: >
+        {% set spike = export_spike_active | default(false) %}
         {% if price_is_negative %}
           Export blocked (negative buy price)
         {% elif feedin_is_negative %}
@@ -1315,6 +1316,8 @@ action:
           Export blocked (forecast short to sunrise target)
         {% elif export_high_price %}
           Exporting (FIT above high threshold)
+        {% elif spike %}
+          Export spike (full export)
         {% elif battery_soc <= export_min_soc %}
           Export blocked (SoC below sunrise target)
         {% else %}
@@ -1325,9 +1328,7 @@ action:
           {% if tier_cap <= 0 %}
             Export blocked (price low)
           {% else %}
-            {% if export_spike_active | default(false) %}
-              Export spike (full export)
-            {% elif export_solar_override %}
+            {% if export_solar_override %}
               Export override (exporting excess PV)
             {% else %}
               {% set hours = hours_to_sunrise | float(1) %}
@@ -1376,15 +1377,17 @@ action:
 
       desired_export_limit: >
         {% set high_price = export_high_price %}
+        {% set spike = export_spike_active | default(false) %}
+        {% set bypass_min_soc = high_price or spike %}
         {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
           0
-        {% elif (not high_price) and battery_soc <= export_min_soc %}
+        {% elif (not bypass_min_soc) and battery_soc <= export_min_soc %}
           0
         {% else %}
           {% set tier_cap = export_tier_limit | float(0) %}
           {% if tier_cap <= 0 %}
             0
-          {% elif high_price %}
+          {% elif high_price or spike %}
             {% set limit = [tier_cap, export_limit_high] | min | round(1) %}
             {% if limit < min_grid_transfer_kw %}
               0
@@ -1395,9 +1398,7 @@ action:
             {% set diff = battery_soc - export_min_soc %}
             {% set span = export_soc_span_dynamic %}
             {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
-            {% if export_spike_active | default(false) %}
-              {{ [tier_cap, export_limit_high] | min | round(1) }}
-            {% elif export_solar_override %}
+            {% if export_solar_override %}
               {% set excess_kw = [pv_kw - load_kw, solar_power_now_kw, 0] | max %}
               {% set override_cap = [excess_kw, export_limit_high] | min %}
               {% set limit = [0, override_cap] | max | round(1) %}
