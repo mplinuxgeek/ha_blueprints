@@ -1430,7 +1430,7 @@ action:
             Maximum Self Consumption
           {% endif %}
         {% elif export_solar_override %}
-          Maximum Self Consumption
+          Command Discharging (PV First)
         {% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
           {% if battery_soc < (sunrise_soc_target | float(0)) %}
             Command Charging (PV First)
