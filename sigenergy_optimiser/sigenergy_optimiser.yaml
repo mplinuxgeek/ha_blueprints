@@ -1153,6 +1153,12 @@ action:
         {% set base = battery_soc_required_to_sunrise | default(night_reserve_soc + night_reserve_buffer) %}
         {{ (base | float(0)) + (sunrise_buffer_percent | float(0)) }}
 
+      sunrise_fill_need_kwh: >
+        {% set cap = battery_capacity_kwh | float(0) %}
+        {% set gap = (sunrise_soc_target | float(0)) - (battery_soc | float(0)) %}
+        {% set need = cap * (gap / 100) %}
+        {{ [need, 0] | max }}
+
       hours_to_sunrise: >
         {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
         {% if next_rising is none %}
@@ -1220,7 +1226,7 @@ action:
         {% if is_evening_or_night %}
           {{ false }}
         {% else %}
-          {{ forecast_remaining < (battery_fill_need_kwh * forecast_safety_margin) }}
+          {{ forecast_remaining < (sunrise_fill_need_kwh * forecast_safety_margin) }}
         {% endif %}
       export_blocked_effective: >
         {% set forecast_block = export_blocked_for_forecast and not (export_solar_override or export_spike_active | default(false)) %}
@@ -1245,7 +1251,7 @@ action:
           {% else %}
             {% if battery_soc < daytime_topup_max_soc
                   and current_price <= max_price_threshold
-                  and forecast_remaining < (battery_fill_need_kwh * forecast_safety_margin) %}
+                  and forecast_remaining < (sunrise_fill_need_kwh * forecast_safety_margin) %}
               {% set target_total_kw = consumed_power + target_battery_charge %}
               {% set needed_from_grid_kw = target_total_kw - pv_power %}
               {{ [0, [needed_from_grid_kw, cap_total_import] | min] | max | round(1) }}
@@ -1297,8 +1303,12 @@ action:
         {% endif %}
 
       export_reason: >
-        {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
-          Export blocked (price/forecast)
+        {% if price_is_negative %}
+          Export blocked (negative buy price)
+        {% elif feedin_is_negative %}
+          Export blocked (negative FIT)
+        {% elif export_blocked_effective %}
+          Export blocked (forecast short to sunrise target)
         {% elif battery_soc <= export_min_soc %}
           Export blocked (SoC below sunrise target)
         {% else %}
