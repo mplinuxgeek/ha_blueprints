@@ -493,8 +493,8 @@ blueprint:
               unit_of_measurement: $/kWh
               mode: box
         export_limit_low:
-          name: Export Limit Low
-          description: Export power cap (kW) when feed-in price is at the low tier (grid export after serving your load).
+          name: Discharge/Export Limit Low
+          description: Discharge power cap (kW) when feed-in price is at the low tier (grid export after serving your load).
           default: 5
           selector:
             number:
@@ -504,8 +504,8 @@ blueprint:
               unit_of_measurement: kW
               mode: box
         export_limit_medium:
-          name: Export Limit Medium
-          description: Export power cap (kW) when feed-in price is at the medium tier (grid export after serving your load).
+          name: Discharge/Export Limit Medium
+          description: Discharge power cap (kW) when feed-in price is at the medium tier (grid export after serving your load).
           default: 12
           selector:
             number:
@@ -515,8 +515,8 @@ blueprint:
               unit_of_measurement: kW
               mode: box
         export_limit_high:
-          name: Export Limit High
-          description: Export power cap (kW) when feed-in price is at the high tier (grid export after serving your load).
+          name: Discharge/Export Limit High
+          description: Discharge power cap (kW) when feed-in price is at the high tier (grid export after serving your load).
           default: 25
           selector:
             number:
@@ -943,10 +943,6 @@ trigger:
   - platform: time
     at: !input morning_summary_time
     id: morning_summary
-  - platform: homeassistant
-    event: start
-  - platform: time_pattern
-    minutes: "/5"
 
 condition: []
 
