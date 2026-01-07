@@ -1151,7 +1151,9 @@ action:
 
       sunrise_soc_target: >
         {% set base = battery_soc_required_to_sunrise | default(night_reserve_soc + night_reserve_buffer) %}
-        {{ (base | float(0)) + (sunrise_buffer_percent | float(0)) }}
+        {% set target = (base | float(0)) + (sunrise_buffer_percent | float(0)) %}
+        {% set target = [target, max_battery_soc | float(100)] | min %}
+        {{ [target, sunrise_reserve_soc | float(0)] | max }}
 
       sunrise_fill_need_kwh: >
         {% set cap = battery_capacity_kwh | float(0) %}
