@@ -26,7 +26,7 @@ blueprint:
     - SoC-based scaling: gradual ramp-up as battery fills above required sunrise level
     - EMS hysteresis: uses start/stop around the low FIT threshold to prevent flapping
     - PCS limits: follow export/import limits directly
-    - Price spike boost: optional price spike sensor drives full export when spike is on and the Amber demand window is off
+    - Price spike boost: optional price spike sensor drives full export when spike is on (demand window no longer blocks export)
     - Mode: Command Discharging (PV First) - prioritizes solar over battery
 
     ## Import optimization
@@ -1049,9 +1049,7 @@ action:
       price_spike_active: "{{ is_state(price_spike_sensor_entity, 'on') }}"
       demand_window_active: "{{ is_state(demand_window_sensor_entity, 'on') }}"
       export_spike_active: >
-        {{ price_spike_active
-           and not demand_window_active
-           and feedin_price >= (export_spike_threshold | float(0)) }}
+        {{ price_spike_active and feedin_price >= (export_spike_threshold | float(0)) }}
       solar_power_now: "{{ states(solar_power_now_sensor_entity) | float(0) }}"
       current_mode: "{{ states(ems_mode_select_entity) }}"
       current_export_limit: "{{ states(grid_export_limit_entity) | float(0) }}"
@@ -1226,7 +1224,7 @@ action:
         {% endif %}
       export_blocked_effective: >
         {% set forecast_block = export_blocked_for_forecast and not (export_solar_override or export_spike_active | default(false)) %}
-        {{ demand_window_active or forecast_block }}
+        {{ forecast_block }}
 
       grid_limit_base: >
         {% if current_price <= max_price_threshold
@@ -1276,7 +1274,9 @@ action:
         {% endif %}
 
       desired_import_limit: >
-        {% if standby_holdoff_active %}
+        {% if demand_window_active %}
+          {% set limit = 0 %}
+        {% elif standby_holdoff_active %}
           {% set limit = 0.01 %}
         {% elif price_is_negative %}
           {% set limit = import_limit_negative %}
@@ -1297,9 +1297,7 @@ action:
         {% endif %}
 
       export_reason: >
-        {% if demand_window_active %}
-          Export blocked (demand window)
-        {% elif price_is_negative or feedin_is_negative or export_blocked_effective %}
+        {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
           Export blocked (price/forecast)
         {% elif battery_soc <= export_min_soc %}
           Export blocked (SoC below sunrise target)
@@ -1340,14 +1338,16 @@ action:
         {% endif %}
 
       import_reason: >
-        {% if standby_holdoff_active %}
+        {% if demand_window_active %}
+          Import blocked (demand window)
+        {% elif standby_holdoff_active %}
           Import blocked (holdoff)
         {% elif not price_valid %}
           Import blocked (price unavailable)
         {% elif price_is_negative %}
           Importing (price is negative)
         {% elif feedin_price >= export_threshold_low %}
-          Import blocked (FIT higher than buy)
+          Import blocked (FIT above export threshold)
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
           Import blocked (price/SoC above cheap threshold)
         {% elif grid_limit_base <= 0 %}
@@ -1359,9 +1359,7 @@ action:
         {% endif %}
 
       desired_export_limit: >
-        {% if demand_window_active %}
-          0
-        {% elif price_is_negative or feedin_is_negative or export_blocked_effective %}
+        {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
           0
         {% elif battery_soc <= export_min_soc %}
           0
@@ -1416,7 +1414,11 @@ action:
           ['Command Discharging (PV First)', 'Command Discharging (ESS First)'] %}
         {% set currently_charging = current_mode in ['Command Charging (PV First)', 'Command Charging (Grid First)'] %}
         {% if demand_window_active %}
-          Maximum Self Consumption
+          {% if desired_export_limit | float > 0 %}
+            Command Discharging (PV First)
+          {% else %}
+            Maximum Self Consumption
+          {% endif %}
         {% elif export_solar_override %}
           Maximum Self Consumption
         {% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
