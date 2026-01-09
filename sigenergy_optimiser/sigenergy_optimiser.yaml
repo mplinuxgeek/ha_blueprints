@@ -1263,7 +1263,7 @@ action:
       grid_limit_base: >
         {% if current_price <= max_price_threshold
               and current_price >= 0
-              and battery_soc < max_battery_soc %}
+              and battery_soc < daytime_topup_max_soc %}
           {% if forecast_today >= pv_forecast_holdoff_kwh
                 and negative_price_forecast_ahead
                 and battery_soc >= (sunrise_soc_target | float(0)) %}
