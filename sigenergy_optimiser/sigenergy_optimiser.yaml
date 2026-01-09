@@ -1430,6 +1430,10 @@ action:
               {% set raw_limit = tier_cap * scale_soc * 0.9 %}
               {% set final_limit = [raw_limit, safe_cap] | min %}
               {% set limit = [0, final_limit] | max | round(1) %}
+              {% if not high_price and not spike %}
+                {% set pv_surplus = [pv_kw - load_kw, 0] | max %}
+                {% set limit = [limit, pv_surplus] | min %}
+              {% endif %}
               {% if limit < min_grid_transfer_kw %}
                 0
               {% else %}
