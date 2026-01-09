@@ -1397,7 +1397,13 @@ action:
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
           Import blocked (price/SoC above cheap threshold)
         {% elif grid_limit_base <= 0 %}
-          Import blocked (price not cheap enough or no top-up needed)
+          {% if current_price > max_price_threshold %}
+            Import blocked (price above cheap threshold)
+          {% elif battery_soc >= daytime_topup_max_soc %}
+            Import blocked (top-up SoC reached)
+          {% else %}
+            Import blocked (no top-up needed)
+          {% endif %}
         {% elif desired_import_limit > 0 %}
           Import enabled {{ desired_import_limit }} kW
         {% else %}
