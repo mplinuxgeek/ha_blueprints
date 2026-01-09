@@ -1873,6 +1873,118 @@ action:
   - choose:
       - conditions:
           - condition: template
+            value_template: "{{ notification_available }}"
+          - condition: template
+            value_template: >
+              {% set is_batt = trigger is defined and trigger.entity_id == battery_soc_sensor_entity %}
+              {% if not is_batt %}
+                false
+              {% else %}
+                {% set curr_state = trigger.to_state.state if trigger.to_state is defined and trigger.to_state else none %}
+                {% set prev_state = trigger.from_state.state if trigger.from_state is defined and trigger.from_state else none %}
+                {% set invalid = ['unknown','unavailable','none',''] %}
+                {% if curr_state in invalid %}
+                  false
+                {% else %}
+                  {% set curr = curr_state | float(0) %}
+                  {% set prev = prev_state | float(9999) if prev_state not in invalid and prev_state is not none else 9999 %}
+                  {% set reserve = sunrise_reserve_soc | float(0) %}
+                  {{ prev >= reserve and curr < reserve }}
+                {% endif %}
+              {% endif %}
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "⚠️ Battery below reserve SoC"
+              message: "Battery below reserve ({{ sunrise_reserve_soc | round(0) }}%): {{ battery_soc | round(0) }}%"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ notification_available }}"
+          - condition: template
+            value_template: >
+              {% set is_batt = trigger is defined and trigger.entity_id == battery_soc_sensor_entity %}
+              {% if not is_batt %}
+                false
+              {% else %}
+                {% set curr_state = trigger.to_state.state if trigger.to_state is defined and trigger.to_state else none %}
+                {% set prev_state = trigger.from_state.state if trigger.from_state is defined and trigger.from_state else none %}
+                {% set invalid = ['unknown','unavailable','none',''] %}
+                {% if curr_state in invalid %}
+                  false
+                {% else %}
+                  {% set curr = curr_state | float(0) %}
+                  {% set prev = prev_state | float(9999) if prev_state not in invalid and prev_state is not none else 9999 %}
+                  {{ prev > 1 and curr <= 1 }}
+                {% endif %}
+              {% endif %}
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "🪫 Battery Empty!"
+              message: "Battery SoC: {{ battery_soc | round(0) }}%"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ notification_available }}"
+          - condition: template
+            value_template: >
+              {% set is_batt = trigger is defined and trigger.entity_id == battery_soc_sensor_entity %}
+              {% if not is_batt %}
+                false
+              {% else %}
+                {% set curr_state = trigger.to_state.state if trigger.to_state is defined and trigger.to_state else none %}
+                {% set prev_state = trigger.from_state.state if trigger.from_state is defined and trigger.from_state else none %}
+                {% set invalid = ['unknown','unavailable','none',''] %}
+                {% if curr_state in invalid %}
+                  false
+                {% else %}
+                  {% set curr = curr_state | float(0) %}
+                  {% set prev = prev_state | float(0) if prev_state not in invalid and prev_state is not none else 0 %}
+                  {{ prev < 99 and curr >= 99 }}
+                {% endif %}
+              {% endif %}
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "🔋 Battery Full!"
+              message: "Battery SoC: {{ battery_soc | round(0) }}%"
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ notification_available }}"
+          - condition: template
+            value_template: >
+              {% set is_spike = trigger is defined and trigger.entity_id == price_spike_sensor_entity %}
+              {{ is_spike and trigger.to_state is not none and trigger.to_state.state == 'on' }}
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "📈 Price Spike Active"
+              message: >
+                Buy: ${{ current_price | round(3) }}/kWh
+                FIT: ${{ feedin_price | round(3) }}/kWh
+
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ notification_available }}"
+          - condition: template
+            value_template: >
+              {% set is_demand = trigger is defined and trigger.entity_id == demand_window_sensor_entity %}
+              {{ is_demand and trigger.to_state is not none and trigger.to_state.state == 'on' }}
+        sequence:
+          - service: "{{ notification_service }}"
+            data:
+              title: "⏱️ Demand Window In Effect"
+              message: "Demand window active; import is blocked until it ends."
+
+  - choose:
+      - conditions:
+          - condition: template
             value_template: "{{ trigger is defined and trigger.id == 'daily_summary' and notify_daily_summary and notification_available }}"
         sequence:
           - service: "{{ notification_service }}"
