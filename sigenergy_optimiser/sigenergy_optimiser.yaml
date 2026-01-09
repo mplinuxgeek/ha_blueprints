@@ -1560,9 +1560,13 @@ action:
         {% set import_diff = (desired_import_limit | float - current_import_limit) | abs %}
         {% set pv_diff = (desired_pv_max_power_limit | float - current_pv_max_power_limit) | abs %}
         {% set mode_changed = (current_mode != desired_ems_mode) %}
+        {% set desired_reason = (outcome_reason | default('No reason captured') | string | truncate(95, True, '')) %}
+        {% set current_reason = states(reason_text_entity) | default('') %}
+        {% set reason_changed = desired_reason != current_reason %}
         {{ (effective_ha_control_enabled and (export_diff >= min_change_threshold or import_diff >= min_change_threshold or mode_changed))
            or pv_diff > 0
-           or (trigger is defined and trigger.entity_id == demand_window_sensor_entity) }}
+           or (trigger is defined and trigger.entity_id == demand_window_sensor_entity)
+           or (effective_ha_control_enabled and reason_changed) }}
 
       outcome_reason: >
         {% set reasons = [
