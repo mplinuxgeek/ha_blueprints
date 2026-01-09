@@ -25,7 +25,6 @@ blueprint:
     - Tiered export limits scaling with FIT between low/medium/high thresholds
     - SoC-based scaling: gradual ramp-up as battery fills above required sunrise level
     - EMS hysteresis: uses start/stop around the low FIT threshold to prevent flapping
-    - PCS limits: follow export/import limits directly
     - Price spike boost: optional price spike sensor drives full export when spike is on (demand window no longer blocks export)
     - Mode: Command Discharging (PV First) - prioritizes solar over battery
 
@@ -34,7 +33,6 @@ blueprint:
     - No SoC scaling on negative prices: charge at full tier rate when being paid
     - Smart top-up: gentle charge at very low prices, with forecast-aware daytime gating
     - Mode: Command Charging (Grid First) for negative prices, (PV First) for cheap top-up
-    - PCS limits: follow export/import limits directly
 
     ## Anti-flapping & stability
     - Price hysteresis on mode switching
@@ -62,8 +60,6 @@ blueprint:
         ha_control_switch: switch.sigen_plant_remote_ems_controled_by_home_assistant
         grid_export_limit: number.sigen_plant_grid_export_limitation
         grid_import_limit: number.sigen_plant_grid_import_limitation
-        pcs_export_limit: number.sigen_plant_pcs_export_limitation
-        pcs_import_limit: number.sigen_plant_pcs_import_limitation
         export_session_start: input_number.sigenergy_export_session_start_kwh
         import_session_start: input_number.sigenergy_import_session_start_kwh
         last_export_notification: input_text.sigenergy_last_export_notification
@@ -242,20 +238,6 @@ blueprint:
           name: PV Max Power Limit
           description: PV max power limit number entity (default `number.sigen_plant_pv_max_power_limit`).
           default: number.sigen_plant_pv_max_power_limit
-          selector:
-            entity:
-              domain: number
-        pcs_export_limit:
-          name: PCS Export Limitation
-          description: PCS export limit number entity (default `number.sigen_plant_pcs_export_limitation`).
-          default: number.sigen_plant_pcs_export_limitation
-          selector:
-            entity:
-              domain: number
-        pcs_import_limit:
-          name: PCS Import Limitation
-          description: PCS import limit number entity (default `number.sigen_plant_pcs_import_limitation`).
-          default: number.sigen_plant_pcs_import_limitation
           selector:
             entity:
               domain: number
@@ -1009,8 +991,6 @@ action:
       grid_export_limit_entity: !input grid_export_limit
       grid_import_limit_entity: !input grid_import_limit
       pv_max_power_limit_entity: !input pv_max_power_limit
-      pcs_export_limit_entity: !input pcs_export_limit
-      pcs_import_limit_entity: !input pcs_import_limit
       ess_max_charging_limit_entity: !input ess_max_charging_limit
       ess_max_discharging_limit_entity: !input ess_max_discharging_limit
       forecast_remaining_sensor_entity: !input forecast_remaining_sensor
@@ -1051,8 +1031,6 @@ action:
       current_export_limit: "{{ states(grid_export_limit_entity) | float(0) }}"
       current_import_limit: "{{ states(grid_import_limit_entity) | float(0) }}"
       current_pv_max_power_limit: "{{ states(pv_max_power_limit_entity) | float(0) }}"
-      current_pcs_export_limit: "{{ states(pcs_export_limit_entity) | float(0) }}"
-      current_pcs_import_limit: "{{ states(pcs_import_limit_entity) | float(0) }}"
       forecast_remaining: "{{ states(forecast_remaining_sensor_entity) | float(0) }}"
       forecast_today: "{{ states(forecast_today_sensor_entity) | float(0) }}"
       available_discharge_energy: "{{ states(available_discharge_sensor_entity) | float(0) }}"
@@ -1555,10 +1533,19 @@ action:
         {% set pv_diff = (desired_pv_max_power_limit | float - current_pv_max_power_limit) | abs %}
         {% set mode_changed = (current_mode != desired_ems_mode) %}
         {{ (effective_ha_control_enabled and (export_diff >= min_change_threshold or import_diff >= min_change_threshold or mode_changed))
-           or pv_diff > 0 }}
+           or pv_diff > 0
+           or (trigger is defined and trigger.entity_id == demand_window_sensor_entity) }}
 
       outcome_reason: >
-        {{ export_reason | default('n/a') }}; {{ import_reason | default('n/a') }}; PV Limit {{ (desired_pv_max_power_limit | default(pv_max_power_normal)) | round(1) }} kW
+        {% set reasons = [
+          export_reason | default('n/a'),
+          import_reason | default('n/a'),
+          'PV Limit ' ~ ((desired_pv_max_power_limit | default(pv_max_power_normal)) | round(1)) ~ ' kW'
+        ] %}
+        {% if demand_window_active %}
+          {% set reasons = reasons + ['Demand window active'] %}
+        {% endif %}
+        {{ reasons | join('; ') }}
 
       daily_export_kwh: "{{ states(daily_export_energy_entity) | float(0) }}"
       export_session_start_kwh: "{{ states(export_session_start_entity) | float(0) }}"
@@ -1721,17 +1708,6 @@ action:
           0.01
         {% endif %}
 
-  - action: number.set_value
-    target:
-      entity_id: !input pcs_export_limit
-    data:
-      value: >
-        {% if desired_export_limit > 0 %}
-          {{ desired_export_limit }}
-        {% else %}
-          0.01
-        {% endif %}
-
   - choose:
       - conditions:
           - condition: template
@@ -1814,19 +1790,6 @@ action:
   - action: number.set_value
     target:
       entity_id: !input grid_import_limit
-    data:
-      value: >
-        {% if standby_holdoff_active %}
-          0.01
-        {% elif desired_import_limit > 0 %}
-          {{ desired_import_limit }}
-        {% else %}
-          0.01
-        {% endif %}
-
-  - action: number.set_value
-    target:
-      entity_id: !input pcs_import_limit
     data:
       value: >
         {% if standby_holdoff_active %}
