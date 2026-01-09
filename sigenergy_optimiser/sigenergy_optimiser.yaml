@@ -1185,7 +1185,7 @@ action:
         {% else %}
           {{ min_soc_floor }}
         {% endif %}
-      export_sunrise_guard_active: "{{ is_state(sun_entity_id, 'below_horizon') }}"
+      export_sunrise_guard_active: "{{ is_evening_or_night }}"
       export_solar_override: >
         {{ feedin_price > 0
            and battery_soc >= max_battery_soc
