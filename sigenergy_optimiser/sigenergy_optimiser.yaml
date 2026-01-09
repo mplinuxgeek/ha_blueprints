@@ -1090,6 +1090,24 @@ action:
           {{ ns.found }}
         {% endif %}
       negative_price_forecast_bool: "{{ negative_price_forecast_ahead | bool(false) }}"
+      negative_price_before_cutoff: >
+        {% set fc = state_attr(price_forecast_sensor_entity,'forecasts') %}
+        {% set cutoff_dt = today_at(standby_holdoff_end_time) %}
+        {% if fc is not iterable or cutoff_dt is none or now() >= cutoff_dt %}
+          {{ false }}
+        {% else %}
+          {% set cutoff_ts = as_timestamp(cutoff_dt) %}
+          {% set ns = namespace(found=false) %}
+          {% for f in fc %}
+            {% if f is mapping and 'per_kwh' in f and 'start_time' in f %}
+              {% set ts = as_timestamp(f.start_time) %}
+              {% if ts is not none and ts <= cutoff_ts and (f.per_kwh | float(0)) < 0 %}
+                {% set ns.found = true %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.found }}
+        {% endif %}
       price_is_negative: "{{ price_valid and current_price < 0 }}"
       feedin_is_negative: "{{ feedin_price < 0 }}"
       is_evening_or_night: "{{ sun_elevation < sun_elevation_evening_threshold }}"
@@ -1174,7 +1192,7 @@ action:
         {% set cutoff = today_at(standby_holdoff_end_time) %}
         {{ standby_holdoff_enabled
            and forecast_today >= pv_forecast_holdoff_kwh
-           and negative_price_forecast_ahead
+           and negative_price_before_cutoff
            and now() < cutoff
            and current_price > import_threshold_low }}
 
