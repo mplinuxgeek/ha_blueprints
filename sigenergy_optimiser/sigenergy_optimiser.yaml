@@ -1183,10 +1183,13 @@ action:
         {% endif %}
       export_sunrise_guard_active: "{{ is_evening_or_night }}"
       export_solar_override: >
+        {% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
+        {% set forecast_ok = (forecast_remaining | float(0)) >= (battery_fill_need_kwh * 1.25) or (battery_fill_need_kwh | float(0)) <= 0 %}
         {{ feedin_price > 0
            and battery_soc >= max_battery_soc
            and not is_evening_or_night
-           and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) }}
+           and surplus_pv
+           and forecast_ok }}
 
       standby_holdoff_active: >
         {% set cutoff = today_at(standby_holdoff_end_time) %}
@@ -1246,7 +1249,11 @@ action:
         {{ pv_over_load and (start_ok or continue_ok) }}
 
       export_blocked_for_forecast: >
-        {{ false }}
+        {% if is_evening_or_night %}
+          {{ false }}
+        {% else %}
+          {{ forecast_remaining < (battery_fill_need_kwh * 1.25) }}
+        {% endif %}
       export_forecast_guard: >
         {% set need = sunrise_fill_need_kwh | float(0) %}
         {% set required = need * 1.25 %}
@@ -1352,6 +1359,8 @@ action:
           Export blocked (negative buy price)
         {% elif feedin_is_negative %}
           Export blocked (negative FIT)
+        {% elif export_blocked_for_forecast %}
+          Export blocked (forecast short to fill battery)
         {% elif export_forecast_guard %}
           Export blocked (forecast < reserve +25%)
         {% elif export_blocked_effective %}
