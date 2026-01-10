@@ -1247,6 +1247,14 @@ action:
 
       export_blocked_for_forecast: >
         {{ false }}
+      export_forecast_guard: >
+        {% set need = sunrise_fill_need_kwh | float(0) %}
+        {% set required = need * 1.25 %}
+        {% if is_evening_or_night or need <= 0 %}
+          {{ false }}
+        {% else %}
+          {{ forecast_remaining < required }}
+        {% endif %}
       export_blocked_effective: >
         {% set forecast_block = export_blocked_for_forecast and not (export_solar_override or export_spike_active | default(false)) %}
         {{ forecast_block }}
@@ -1344,6 +1352,8 @@ action:
           Export blocked (negative buy price)
         {% elif feedin_is_negative %}
           Export blocked (negative FIT)
+        {% elif export_forecast_guard %}
+          Export blocked (forecast < reserve +25%)
         {% elif export_blocked_effective %}
           Export blocked (forecast short to sunrise target)
         {% elif export_high_price %}
@@ -1426,7 +1436,7 @@ action:
         {% set high_price = export_high_price %}
         {% set spike = export_spike_active | default(false) %}
         {% set bypass_min_soc = high_price or spike or solar_surplus_bypass %}
-        {% if price_is_negative or feedin_is_negative or export_blocked_effective %}
+        {% if price_is_negative or feedin_is_negative or export_blocked_effective or export_forecast_guard %}
           0
         {% elif (not bypass_min_soc) and battery_soc <= export_min_soc %}
           0
