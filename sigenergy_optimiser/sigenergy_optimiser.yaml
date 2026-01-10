@@ -1252,7 +1252,9 @@ action:
         {% if is_evening_or_night %}
           {{ false }}
         {% else %}
-          {{ forecast_remaining < (battery_fill_need_kwh * 1.25) }}
+          {% set est_load_kwh = (load_kw | float(0)) * (hours_to_sunset | float(0)) %}
+          {% set net_fc = (forecast_remaining | float(0)) - est_load_kwh %}
+          {{ net_fc < (battery_fill_need_kwh * 1.25) }}
         {% endif %}
       export_forecast_guard: >
         {% set need = sunrise_fill_need_kwh | float(0) %}
@@ -1263,8 +1265,7 @@ action:
           {{ forecast_remaining < required }}
         {% endif %}
       export_blocked_effective: >
-        {% set forecast_block = export_blocked_for_forecast and not (export_solar_override or export_spike_active | default(false)) %}
-        {{ forecast_block }}
+        {{ export_blocked_for_forecast }}
 
       forecast_remaining_after_load: >
         {% set est_load_kwh = (load_kw | float(0)) * (hours_to_sunset | float(0)) %}
