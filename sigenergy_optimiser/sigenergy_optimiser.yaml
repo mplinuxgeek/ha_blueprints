@@ -914,11 +914,7 @@ trigger:
       - !input feedin_sensor
       - !input demand_window_sensor
       - !input price_spike_sensor
-      - !input forecast_remaining_sensor
       - !input forecast_today_sensor
-      - !input daily_export_energy
-      - !input daily_import_energy
-      - !input sun_entity
   - platform: time
     at: !input daily_summary_time
     id: daily_summary
@@ -1486,7 +1482,7 @@ action:
               {% set raw_limit = tier_cap * scale_soc * 0.9 %}
               {% set final_limit = [raw_limit, safe_cap] | min %}
               {% set limit = [0, final_limit] | max | round(1) %}
-              {% if not high_price and not spike %}
+              {% if (not is_evening_or_night) and (not high_price and not spike) %}
                 {% set pv_surplus = [pv_kw - load_kw, 0] | max %}
                 {% set limit = [limit, pv_surplus] | min %}
               {% endif %}
