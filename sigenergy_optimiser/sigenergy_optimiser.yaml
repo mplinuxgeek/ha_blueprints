@@ -1405,7 +1405,11 @@ action:
             Import blocked (no top-up needed)
           {% endif %}
         {% elif desired_import_limit > 0 %}
-          Import enabled {{ desired_import_limit }} kW
+          {% if price_is_negative %}
+            Import enabled {{ desired_import_limit }} kW (negative price)
+          {% else %}
+            Import enabled {{ desired_import_limit }} kW (cheap top-up)
+          {% endif %}
         {% else %}
           Import blocked (no condition)
         {% endif %}
@@ -1495,6 +1499,8 @@ action:
           Command Charging (Grid First)
         {% elif feedin_is_negative %}
           Maximum Self Consumption
+        {% elif desired_import_limit | float > 0 %}
+          Command Charging (PV First)
         {% elif desired_export_limit | float > 0 %}
           Command Discharging (PV First)
         {% elif (not export_blocked_for_forecast) and battery_soc > (export_min_soc + soc_hysteresis) %}
