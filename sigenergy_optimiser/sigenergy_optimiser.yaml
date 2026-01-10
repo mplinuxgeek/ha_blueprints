@@ -1279,8 +1279,13 @@ action:
               {% set forecast_short = net_forecast_for_charge < (sunrise_fill_need_kwh * forecast_safety_margin) %}
               {% set pv_surplus_kw = [pv_kw - load_kw, 0] | max %}
               {% set needs_charge_rate = pv_surplus_kw < (target_battery_charge | float(0)) %}
-              {% if forecast_short or needs_charge_rate %}
-                {% set target_total_kw = consumed_power + target_battery_charge %}
+              {% set prevent_discharge = battery_soc >= daytime_topup_max_soc and pv_kw < load_kw %}
+              {% if forecast_short or needs_charge_rate or prevent_discharge %}
+                {% if prevent_discharge %}
+                  {% set target_total_kw = consumed_power %}
+                {% else %}
+                  {% set target_total_kw = consumed_power + target_battery_charge %}
+                {% endif %}
                 {% set needed_from_grid_kw = target_total_kw - pv_power %}
                 {{ [0, [needed_from_grid_kw, cap_total_import] | min] | max | round(1) }}
               {% else %}
