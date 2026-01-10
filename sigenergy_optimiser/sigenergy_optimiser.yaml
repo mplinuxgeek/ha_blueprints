@@ -914,7 +914,6 @@ trigger:
       - !input feedin_sensor
       - !input demand_window_sensor
       - !input price_spike_sensor
-      - !input forecast_today_sensor
   - platform: time
     at: !input daily_summary_time
     id: daily_summary
