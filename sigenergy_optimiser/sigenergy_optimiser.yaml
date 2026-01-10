@@ -1410,8 +1410,11 @@ action:
             Import blocked (no top-up needed)
           {% endif %}
         {% elif desired_import_limit > 0 %}
+          {% set cheap_supplement = (battery_soc >= daytime_topup_max_soc) and (pv_kw < load_kw) and (current_price <= max_price_threshold) %}
           {% if price_is_negative %}
             Import enabled {{ desired_import_limit }} kW (negative price)
+          {% elif cheap_supplement %}
+            Import enabled {{ desired_import_limit }} kW (cheap grid supplement)
           {% else %}
             Import enabled {{ desired_import_limit }} kW (cheap top-up)
           {% endif %}
