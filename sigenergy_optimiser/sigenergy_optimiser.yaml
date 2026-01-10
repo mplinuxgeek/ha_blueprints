@@ -1497,10 +1497,10 @@ action:
           {% endif %}
         {% elif price_is_negative and current_price <= import_threshold_low %}
           Command Charging (Grid First)
-        {% elif feedin_is_negative %}
-          Maximum Self Consumption
         {% elif desired_import_limit | float > 0 %}
           Command Charging (PV First)
+        {% elif feedin_is_negative %}
+          Maximum Self Consumption
         {% elif desired_export_limit | float > 0 %}
           Command Discharging (PV First)
         {% elif (not export_blocked_for_forecast) and battery_soc > (export_min_soc + soc_hysteresis) %}
