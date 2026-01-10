@@ -1487,6 +1487,8 @@ action:
           {% else %}
             Maximum Self Consumption
           {% endif %}
+        {% elif desired_import_limit | float > 0 and not price_is_negative %}
+          Command Charging (PV First)
         {% elif export_solar_override %}
           Command Discharging (PV First)
         {% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
@@ -1497,8 +1499,6 @@ action:
           {% endif %}
         {% elif price_is_negative and current_price <= import_threshold_low %}
           Command Charging (Grid First)
-        {% elif desired_import_limit | float > 0 %}
-          Command Charging (PV First)
         {% elif feedin_is_negative %}
           Maximum Self Consumption
         {% elif desired_export_limit | float > 0 %}
