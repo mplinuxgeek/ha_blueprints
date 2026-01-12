@@ -49,21 +49,9 @@ blueprint:
       selector:
         entity:
           domain: number
-    pcs_export_limit:
-      name: PCS Export Limitation
-      default: number.sigen_plant_pcs_export_limitation
-      selector:
-        entity:
-          domain: number
     grid_import_limit:
       name: Grid Import Limitation
       default: number.sigen_plant_grid_import_limitation
-      selector:
-        entity:
-          domain: number
-    pcs_import_limit:
-      name: PCS Import Limitation
-      default: number.sigen_plant_pcs_import_limitation
       selector:
         entity:
           domain: number
@@ -188,9 +176,7 @@ variables:
   ess_max_charging_entity: !input ess_max_charging_limit
   ess_max_discharging_entity: !input ess_max_discharging_limit
   grid_export_limit_entity: !input grid_export_limit
-  pcs_export_limit_entity: !input pcs_export_limit
   grid_import_limit_entity: !input grid_import_limit
-  pcs_import_limit_entity: !input pcs_import_limit
   pv_max_power_limit_entity: !input pv_max_power_limit
   rated_charge_sensor_entity: !input rated_charge_sensor
   rated_discharge_sensor_entity: !input rated_discharge_sensor
@@ -254,17 +240,7 @@ action:
                       value: "{{ computed_export_limit }}"
                   - service: number.set_value
                     target:
-                      entity_id: "{{ pcs_export_limit_entity }}"
-                    data:
-                      value: "{{ computed_export_limit }}"
-                  - service: number.set_value
-                    target:
                       entity_id: "{{ grid_import_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ pcs_import_limit_entity }}"
                     data:
                       value: !input block_flow_limit_value
                   - service: number.set_value
@@ -298,17 +274,7 @@ action:
                       value: !input block_flow_limit_value
                   - service: number.set_value
                     target:
-                      entity_id: "{{ pcs_export_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
                       entity_id: "{{ grid_import_limit_entity }}"
-                    data:
-                      value: "{{ computed_import_limit }}"
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ pcs_import_limit_entity }}"
                     data:
                       value: "{{ computed_import_limit }}"
                   - service: number.set_value
@@ -342,17 +308,7 @@ action:
                       value: !input block_flow_limit_value
                   - service: number.set_value
                     target:
-                      entity_id: "{{ pcs_export_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
                       entity_id: "{{ grid_import_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ pcs_import_limit_entity }}"
                     data:
                       value: !input block_flow_limit_value
                   - service: number.set_value
