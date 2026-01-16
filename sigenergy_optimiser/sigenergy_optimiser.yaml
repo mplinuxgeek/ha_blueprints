@@ -1215,6 +1215,8 @@ action:
         {% endif %}
 
       export_tier_limit: >
+        {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
+        {% set pv_safeguard = not full_export_override and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) %}
         {% if export_spike_active | default(false) %}
           {{ export_limit_high }}
         {% elif export_solar_override %}
@@ -1226,11 +1228,19 @@ action:
         {% elif feedin_price >= export_threshold_high %}
           {{ export_limit_high }}
         {% elif feedin_price >= export_threshold_medium %}
-          {% set frac = (feedin_price - export_threshold_medium) / (export_threshold_high - export_threshold_medium) %}
-          {{ export_limit_medium + (frac * (export_limit_high - export_limit_medium)) }}
+          {% if pv_safeguard %}
+            0
+          {% else %}
+            {% set frac = (feedin_price - export_threshold_medium) / (export_threshold_high - export_threshold_medium) %}
+            {{ export_limit_medium + (frac * (export_limit_high - export_limit_medium)) }}
+          {% endif %}
         {% else %}
-          {% set frac = (feedin_price - export_threshold_low) / (export_threshold_medium - export_threshold_low) %}
-          {{ export_limit_low + (frac * (export_limit_medium - export_limit_low)) }}
+          {% if pv_safeguard %}
+            0
+          {% else %}
+            {% set frac = (feedin_price - export_threshold_low) / (export_threshold_medium - export_threshold_low) %}
+            {{ export_limit_low + (frac * (export_limit_medium - export_limit_low)) }}
+          {% endif %}
         {% endif %}
 
       export_high_price: "{{ feedin_price >= export_threshold_high }}"
@@ -1246,7 +1256,9 @@ action:
         {{ pv_over_load and (start_ok or continue_ok) }}
 
       export_blocked_for_forecast: >
-        {% if is_evening_or_night %}
+        {% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
+        {% set allow_full_export = battery_soc >= max_battery_soc and not is_evening_or_night and surplus_pv %}
+        {% if is_evening_or_night or allow_full_export %}
           {{ false }}
         {% else %}
           {% set est_load_kwh = (load_kw | float(0)) * (hours_to_sunset | float(0)) %}
