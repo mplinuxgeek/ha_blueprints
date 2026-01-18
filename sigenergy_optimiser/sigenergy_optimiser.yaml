@@ -458,6 +458,12 @@ blueprint:
           default: false
           selector:
             boolean: {}
+        allow_positive_fit_battery_discharging:
+          name: Allow positive FIT battery discharge
+          description: When enabled, allow the battery to discharge during the positive FIT override; otherwise lock ESS discharging to 0.01 kW.
+          default: false
+          selector:
+            boolean: {}
         export_threshold_high:
           name: Export Threshold High FIT Price
           description: Feed-in price ($/kWh) for full/high export tier.
@@ -943,6 +949,7 @@ action:
       export_threshold_low: !input export_threshold_low
       export_threshold_medium: !input export_threshold_medium
       allow_low_medium_export_positive_fit: !input allow_low_medium_export_positive_fit
+      allow_positive_fit_battery_discharging: !input allow_positive_fit_battery_discharging
       export_threshold_high: !input export_threshold_high
       export_limit_low: !input export_limit_low
       export_limit_medium: !input export_limit_medium
@@ -1609,7 +1616,13 @@ action:
         {% endif %}
 
       desired_ess_discharge_limit: >
-        {% if standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
+        {% if positive_fit_override %}
+          {% if allow_positive_fit_battery_discharging %}
+            {{ export_limit_high | float(25) }}
+          {% else %}
+            0.01
+          {% endif %}
+        {% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}
           0.01
         {% elif desired_export_limit | float(0) > 0 %}
           {{ [desired_export_limit, min_grid_transfer_kw | float(0.5)] | max }}
