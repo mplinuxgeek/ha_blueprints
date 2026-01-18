@@ -452,6 +452,12 @@ blueprint:
               step: 0.01
               unit_of_measurement: $/kWh
               mode: box
+        allow_medium_export_positive_fit:
+          name: Allow positive FIT medium export override
+          description: Ignore the PV forecast guard for low/medium tiers whenever the FIT price is positive.
+          default: false
+          selector:
+            boolean: {}
         export_threshold_high:
           name: Export Threshold High FIT Price
           description: Feed-in price ($/kWh) for full/high export tier.
@@ -936,6 +942,7 @@ action:
       slow_charge_limit_kw: !input slow_charge_limit_kw
       export_threshold_low: !input export_threshold_low
       export_threshold_medium: !input export_threshold_medium
+      allow_medium_export_positive_fit: !input allow_medium_export_positive_fit
       export_threshold_high: !input export_threshold_high
       export_limit_low: !input export_limit_low
       export_limit_medium: !input export_limit_medium
@@ -1216,7 +1223,8 @@ action:
 
       export_tier_limit: >
         {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
-        {% set pv_safeguard = not full_export_override and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) %}
+        {% set positive_fit_override = allow_medium_export_positive_fit and feedin_price > 0 %}
+        {% set pv_safeguard = not full_export_override and not positive_fit_override and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) %}
         {% if export_spike_active | default(false) %}
           {{ export_limit_high }}
         {% elif export_solar_override %}
