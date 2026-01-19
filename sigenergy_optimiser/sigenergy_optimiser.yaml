@@ -1239,8 +1239,6 @@ action:
           {{ export_limit_high }}
         {% elif battery_soc >= 99 and feedin_price > 0 %}
           {{ export_limit_high }}
-        {% elif positive_fit_override and feedin_price > 0 %}
-          {{ export_limit_high }}
         {% elif feedin_price < export_threshold_low %}
           0
         {% elif feedin_price >= export_threshold_high %}
