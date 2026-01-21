@@ -85,6 +85,7 @@ blueprint:
         pv_max_power_normal: 25
         morning_dump_enabled: false
         morning_dump_hours_before_sunrise: 2
+        export_guard_relax_soc: 90
         reason_text_helper: input_text.sigenergy_reason
         export_threshold_low: 0.1
         export_threshold_medium: 0.2
@@ -943,6 +944,17 @@ blueprint:
               step: 1
               unit_of_measurement: "deg"
               mode: box
+        export_guard_relax_soc:
+          name: Export Guard Relax SoC
+          description: Above this SoC the forecast-based export guard is ignored so export can discharge harder.
+          default: 90
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
 
 trigger:
   - platform: state
@@ -1017,6 +1029,7 @@ action:
       export_soc_span_day: !input export_soc_span_day
       export_discharge_window_hours: !input export_discharge_window_hours
       sun_elevation_evening_threshold: !input sun_elevation_evening_threshold
+      export_guard_relax_soc: !input export_guard_relax_soc
 
       pv_power_sensor_entity: !input pv_power_sensor
       consumed_power_sensor_entity: !input consumed_power_sensor
@@ -1331,7 +1344,9 @@ action:
         {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
         {% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
         {% set allow_full_export = battery_soc >= max_battery_soc and not is_evening_or_night and surplus_pv %}
-        {% if is_evening_or_night or allow_full_export or not forecast_available %}
+        {% if battery_soc >= (export_guard_relax_soc | float(90)) %}
+          {{ false }}
+        {% elif is_evening_or_night or allow_full_export or not forecast_available %}
           {{ false }}
         {% else %}
           {% set est_load_kwh = (load_kw | float(0)) * (hours_to_sunset | float(0)) %}
@@ -1341,7 +1356,9 @@ action:
       export_forecast_guard: >
         {% set need = sunrise_fill_need_kwh | float(0) %}
         {% set required = need * 1.25 %}
-        {% if is_evening_or_night or need <= 0 %}
+        {% if battery_soc >= (export_guard_relax_soc | float(90)) %}
+          {{ false }}
+        {% elif is_evening_or_night or need <= 0 %}
           {{ false }}
         {% else %}
           {{ forecast_remaining < required }}
