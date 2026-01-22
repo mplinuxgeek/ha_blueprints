@@ -1071,7 +1071,8 @@ action:
       battery_soc: "{{ [0, [battery_soc_raw, 100] | min] | max }}"
       sun_elevation: "{{ state_attr(sun_entity_id, 'elevation') | float(0) }}"
       price_state: "{{ states(price_sensor_entity) }}"
-      price_valid: "{{ price_state not in ['unknown','unavailable','none',''] }}"
+      price_estimate_attr: "{{ state_attr(price_sensor_entity, 'estimate') | default(false) }}"
+      price_valid: "{{ price_state not in ['unknown','unavailable','none',''] and not (price_estimate_attr | bool(false)) }}"
       current_price: "{{ price_state | float(999) if price_valid else 999 }}"
       feedin_price: "{{ states(feedin_sensor_entity) | float(-999) }}"
       price_spike_active: "{{ is_state(price_spike_sensor_entity, 'on') }}"
@@ -1227,20 +1228,29 @@ action:
           {{ [hours, 0] | max }}
         {% endif %}
 
-      sunrise_target_ts: >
+      sunrise_actual_ts: >
         {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
         {% if next_rising is none %}
-          {{ as_timestamp(now()) }}
+          {{ none }}
         {% else %}
-          {{ as_timestamp(next_rising) + 3600 }}
+          {{ as_timestamp(next_rising) }}
+        {% endif %}
+
+      morning_dump_end_ts: >
+        {% set sunrise_ts = sunrise_actual_ts %}
+        {% if sunrise_ts is none %}
+          {{ none }}
+        {% else %}
+          {{ sunrise_ts + 3600 }}
         {% endif %}
 
       morning_dump_start_ts: >
         {% set offset = (morning_dump_hours_before_sunrise | float(2)) * 3600 %}
-        {% if sunrise_target_ts is none %}
+        {% set sunrise_ts = sunrise_actual_ts %}
+        {% if sunrise_ts is none %}
           {{ none }}
         {% else %}
-          {{ sunrise_target_ts - offset }}
+          {{ sunrise_ts - offset }}
         {% endif %}
 
       morning_dump_active: >
@@ -1248,7 +1258,7 @@ action:
           false
         {% else %}
           {% set start_ts = morning_dump_start_ts %}
-          {% set end_ts = sunrise_target_ts %}
+          {% set end_ts = morning_dump_end_ts %}
           {% set now_ts = as_timestamp(now()) %}
           {{ start_ts is not none and end_ts is not none and now_ts >= start_ts and now_ts <= end_ts }}
         {% endif %}

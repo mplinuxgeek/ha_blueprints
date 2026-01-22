@@ -1,0 +1,1009 @@
+{
+  "trace": {
+    "last_step": "trigger/0",
+    "run_id": "f7929c050f2e27a5eee15824963e1fee",
+    "state": "stopped",
+    "script_execution": "failed_single",
+    "timestamp": {
+      "start": "2026-01-22T01:31:56.480563+00:00",
+      "finish": "2026-01-22T01:31:56.480595+00:00"
+    },
+    "domain": "automation",
+    "item_id": "1766998580122",
+    "trigger": "state of sensor.sigen_plant_consumed_power",
+    "trace": {
+      "trigger/0": [
+        {
+          "path": "trigger/0",
+          "timestamp": "2026-01-22T01:31:56.480582+00:00",
+          "changed_variables": {
+            "this": {
+              "entity_id": "automation.sigenergy_solar_import_export_control",
+              "state": "on",
+              "attributes": {
+                "id": "1766998580122",
+                "last_triggered": "2026-01-22T01:31:56.471017+00:00",
+                "mode": "single",
+                "current": 1,
+                "friendly_name": "SigEnergy Solar Import & Export Control"
+              },
+              "last_changed": "2026-01-21T21:01:13.502170+00:00",
+              "last_reported": "2026-01-22T01:31:56.471029+00:00",
+              "last_updated": "2026-01-22T01:31:56.471029+00:00",
+              "context": {
+                "id": "01KFHN8R5P2FK6E6AMJ3FSKFXQ",
+                "parent_id": "01KFHN8R5MQR11D66N5QGWJ19Q",
+                "user_id": null
+              }
+            },
+            "trigger": {
+              "id": "0",
+              "idx": "0",
+              "alias": null,
+              "platform": "state",
+              "entity_id": "sensor.sigen_plant_consumed_power",
+              "from_state": {
+                "entity_id": "sensor.sigen_plant_consumed_power",
+                "state": "1.285000",
+                "attributes": {
+                  "state_class": "measurement",
+                  "unit_of_measurement": "kW",
+                  "device_class": "power",
+                  "icon": "mdi:home-lightning-bolt",
+                  "friendly_name": "Sigen Plant Consumed Power"
+                },
+                "last_changed": "2026-01-22T01:31:46.172517+00:00",
+                "last_reported": "2026-01-22T01:31:46.172517+00:00",
+                "last_updated": "2026-01-22T01:31:46.172517+00:00",
+                "context": {
+                  "id": "01KFHN8E3W7P187CAKKJMMEF3X",
+                  "parent_id": null,
+                  "user_id": null
+                }
+              },
+              "to_state": {
+                "entity_id": "sensor.sigen_plant_consumed_power",
+                "state": "1.306000",
+                "attributes": {
+                  "state_class": "measurement",
+                  "unit_of_measurement": "kW",
+                  "device_class": "power",
+                  "icon": "mdi:home-lightning-bolt",
+                  "friendly_name": "Sigen Plant Consumed Power"
+                },
+                "last_changed": "2026-01-22T01:31:56.468611+00:00",
+                "last_reported": "2026-01-22T01:31:56.468611+00:00",
+                "last_updated": "2026-01-22T01:31:56.468611+00:00",
+                "context": {
+                  "id": "01KFHN8R5MYVG8HVH3AQSNXJSX",
+                  "parent_id": null,
+                  "user_id": null
+                }
+              },
+              "for": null,
+              "attribute": null,
+              "description": "state of sensor.sigen_plant_consumed_power"
+            }
+          }
+        }
+      ]
+    },
+    "config": {
+      "mode": "single",
+      "max_exceeded": "silent",
+      "triggers": [
+        {
+          "platform": "state",
+          "entity_id": [
+            "sensor.sigen_plant_pv_power",
+            "sensor.sigen_plant_consumed_power",
+            "sensor.sigen_plant_battery_state_of_charge",
+            "sensor.amber_general_price",
+            "sensor.amber_feed_in_price",
+            "binary_sensor.amber_demand_window",
+            "binary_sensor.amber_price_spike"
+          ]
+        },
+        {
+          "platform": "time",
+          "at": "23:55:00",
+          "id": "daily_summary"
+        },
+        {
+          "platform": "time",
+          "at": "07:30:00",
+          "id": "morning_summary"
+        }
+      ],
+      "actions": [
+        {
+          "variables": {
+            "notification_service": "notify.mobile_app_dave_s_pixel",
+            "notification_available": "{{ notification_service is not none and notification_service != '' }}",
+            "auto_enable_ha_control": true,
+            "notify_daily_summary": true,
+            "daily_summary_time": "23:55:00",
+            "notify_morning_summary": true,
+            "morning_summary_time": "07:30:00",
+            "slow_charge_holdoff": true,
+            "slow_charge_limit_kw": 2,
+            "export_threshold_low": 0.01,
+            "export_threshold_medium": 0.4,
+            "allow_low_medium_export_positive_fit": false,
+            "allow_positive_fit_battery_discharging": false,
+            "export_threshold_high": 2,
+            "export_limit_low": 5,
+            "export_limit_medium": 12,
+            "export_limit_high": 24,
+            "export_spike_threshold": 12,
+            "import_threshold_low": 0,
+            "import_threshold_medium": -0.15,
+            "import_threshold_high": -0.3,
+            "import_limit_low": 21,
+            "import_limit_medium": 21,
+            "import_limit_high": 21,
+            "min_soc_floor": 1,
+            "night_reserve_soc": 20,
+            "night_reserve_buffer": 1,
+            "max_battery_soc": 50,
+            "sunrise_reserve_soc": 1,
+            "sunrise_safety_factor": 1,
+            "sunrise_buffer_percent": 0,
+            "sunrise_export_relax_percent": 12,
+            "max_price_threshold": 0.015,
+            "target_battery_charge": 2,
+            "cap_total_import": 30,
+            "pv_max_power_normal": 25,
+            "daytime_topup_max_soc": 50,
+            "standby_holdoff_enabled": true,
+            "pv_forecast_holdoff_kwh": 120,
+            "negative_price_forecast_lookahead_hours": 12,
+            "standby_holdoff_end_time": "12:00:00",
+            "morning_dump_enabled": false,
+            "morning_dump_hours_before_sunrise": 2,
+            "soc_hysteresis": 3,
+            "min_change_threshold": 0.15,
+            "min_grid_transfer_kw": 0.5,
+            "export_hysteresis_percent": 0.9,
+            "price_hysteresis": 0.02,
+            "forecast_safety_margin": 1.2,
+            "export_soc_span_day": 20,
+            "export_discharge_window_hours": 3,
+            "sun_elevation_evening_threshold": 10,
+            "export_guard_relax_soc": 90,
+            "pv_power_sensor_entity": "sensor.sigen_plant_pv_power",
+            "consumed_power_sensor_entity": "sensor.sigen_plant_consumed_power",
+            "battery_soc_sensor_entity": "sensor.sigen_plant_battery_state_of_charge",
+            "sun_entity_id": "sun.sun",
+            "price_sensor_entity": "sensor.amber_general_price",
+            "feedin_sensor_entity": "sensor.amber_feed_in_price",
+            "demand_window_sensor_entity": "binary_sensor.amber_demand_window",
+            "price_spike_sensor_entity": "binary_sensor.amber_price_spike",
+            "ems_mode_select_entity": "select.sigen_plant_remote_ems_control_mode",
+            "grid_export_limit_entity": "number.sigen_plant_grid_export_limitation",
+            "grid_import_limit_entity": "number.sigen_plant_grid_import_limitation",
+            "pv_max_power_limit_entity": "number.sigen_plant_pv_max_power_limit",
+            "ess_max_charging_limit_entity": "",
+            "ess_max_discharging_limit_entity": "",
+            "forecast_remaining_sensor_entity": "sensor.solcast_pv_forecast_forecast_remaining_today",
+            "forecast_today_sensor_entity": "sensor.solcast_pv_forecast_forecast_today",
+            "solar_power_now_sensor_entity": "sensor.solcast_pv_forecast_power_now",
+            "available_discharge_sensor_entity": "sensor.sigen_plant_available_max_discharging_capacity",
+            "ha_control_switch_entity": "switch.sigen_plant_remote_ems_controled_by_home_assistant",
+            "price_forecast_sensor_entity": "sensor.amber_general_forecast",
+            "rated_capacity_sensor_entity": "sensor.sigen_plant_rated_energy_capacity",
+            "daily_export_energy_entity": "sensor.sigen_plant_daily_grid_export_energy",
+            "export_session_start_entity": "input_number.input_number_sigenergy_export_session_start_kwh",
+            "daily_import_energy_entity": "sensor.sigen_plant_daily_grid_import_energy",
+            "import_session_start_entity": "input_number.input_number_sigenergy_import_session_start_kwh",
+            "daily_load_energy_entity": "sensor.sigen_plant_daily_load_consumption",
+            "daily_battery_charge_energy_entity": "sensor.sigen_plant_daily_battery_charge_energy",
+            "daily_battery_discharge_energy_entity": "sensor.sigen_plant_daily_battery_discharge_energy",
+            "daily_pv_energy_entity": "sensor.sigen_plant_daily_pv_energy",
+            "last_export_notification_entity": "input_text.input_text_sigenergy_last_export_notification",
+            "last_import_notification_entity": "input_text.input_text_sigenergy_last_import_notification",
+            "reason_text_entity": "input_text.sigenergy_reason",
+            "min_soc_to_sunrise_helper_entity": "input_number.battery_min_soc_to_last_till_sunrise",
+            "pv_power": "{{ states(pv_power_sensor_entity) | float(0) }}",
+            "consumed_power": "{{ states(consumed_power_sensor_entity) | float(0) }}",
+            "battery_soc_raw": "{{ states(battery_soc_sensor_entity) | float(0) }}",
+            "battery_soc": "{{ [0, [battery_soc_raw, 100] | min] | max }}",
+            "sun_elevation": "{{ state_attr(sun_entity_id, 'elevation') | float(0) }}",
+            "price_state": "{{ states(price_sensor_entity) }}",
+            "price_valid": "{{ price_state not in ['unknown','unavailable','none',''] }}",
+            "current_price": "{{ price_state | float(999) if price_valid else 999 }}",
+            "feedin_price": "{{ states(feedin_sensor_entity) | float(-999) }}",
+            "price_spike_active": "{{ is_state(price_spike_sensor_entity, 'on') }}",
+            "demand_window_active": "{{ is_state(demand_window_sensor_entity, 'on') }}",
+            "export_spike_active": "{{ price_spike_active and feedin_price >= (export_spike_threshold | float(0)) }}\n",
+            "positive_fit_override": "{{ allow_low_medium_export_positive_fit and feedin_price > 0 }}",
+            "solar_power_now": "{{ states(solar_power_now_sensor_entity) | float(0) }}",
+            "current_mode": "{{ states(ems_mode_select_entity) }}",
+            "current_export_limit": "{{ states(grid_export_limit_entity) | float(0) }}",
+            "current_import_limit": "{{ states(grid_import_limit_entity) | float(0) }}",
+            "current_pv_max_power_limit": "{{ states(pv_max_power_limit_entity) | float(0) }}",
+            "forecast_remaining": "{{ states(forecast_remaining_sensor_entity) | float(0) }}",
+            "forecast_today": "{{ states(forecast_today_sensor_entity) | float(0) }}",
+            "available_discharge_energy": "{{ states(available_discharge_sensor_entity) | float(0) }}",
+            "ha_control_enabled": "{{ is_state(ha_control_switch_entity, 'on') }}",
+            "pv_kw": "{{ (pv_power | float(0)) / (1000 if (pv_power | float(0)) > 1000 else 1) }}",
+            "load_kw_instant": "{{ (consumed_power | float(0)) / (1000 if (consumed_power | float(0)) > 1000 else 1) }}",
+            "load_kw_sunrise": "{% set avg_candidates = [\n  state_attr(consumed_power_sensor_entity, '1h_mean'),\n  state_attr(consumed_power_sensor_entity, 'mean_1h'),\n  state_attr(consumed_power_sensor_entity, 'last_1h_mean'),\n  state_attr(consumed_power_sensor_entity, 'mean')\n] %} {% set avg_w = none %} {% for cand in avg_candidates %}\n  {% if cand is not none %}\n    {% set try = cand | float(none) %}\n    {% if try is not none %}\n      {% set avg_w = try %}\n      {% break %}\n    {% endif %}\n  {% endif %}\n{% endfor %} {% if avg_w is none %}\n  {% set avg_w = consumed_power | float(0) %}\n{% endif %} {{ (avg_w | float(0)) / (1000 if (avg_w | float(0)) > 1000 else 1) }}\n",
+            "load_kw": "{{ load_kw_instant }}",
+            "solar_power_now_kw": "{{ (solar_power_now | float(0)) / 1000 }}",
+            "solar_potential_kw": "{{ [pv_kw, solar_power_now_kw] | max }}",
+            "battery_capacity_kwh": "{% set cap_raw = states(rated_capacity_sensor_entity) | float(0) %} {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %} {% set uom = cap_uom | lower if cap_uom is string else '' %} {% set cap_kwh = cap_raw if 'kwh' in uom else (cap_raw / 1000 if 'wh' in uom else cap_raw) %} {{ cap_kwh if cap_kwh > 0 else 0.001 }}\n",
+            "battery_fill_need_kwh": "{% set need_unclamped = battery_capacity_kwh - (available_discharge_energy | float(0)) %} {{ [battery_capacity_kwh, [need_unclamped, 0] | max] | min }}\n",
+            "negative_price_forecast_ahead": "{% set fc = state_attr(price_forecast_sensor_entity,'forecasts') %} {% if fc is not iterable %}\n  {{ false }}\n{% else %}\n  {% set ns = namespace(found=false) %}\n  {% set now_ts = as_timestamp(now()) %}\n  {% set cutoff = now_ts + (negative_price_forecast_lookahead_hours | float(12)) * 3600 %}\n  {% for f in fc %}\n    {% if f is mapping and 'per_kwh' in f and 'start_time' in f %}\n      {% set ts = as_timestamp(f.start_time) %}\n      {% if ts is not none and ts <= cutoff and (f.per_kwh | float(0)) < 0 %}\n        {% set ns.found = true %}\n      {% endif %}\n    {% endif %}\n  {% endfor %}\n  {{ ns.found }}\n{% endif %}\n",
+            "negative_price_forecast_bool": "{{ negative_price_forecast_ahead | bool(false) }}",
+            "negative_price_before_cutoff": "{% set fc = state_attr(price_forecast_sensor_entity,'forecasts') %} {% set cutoff_dt = today_at(standby_holdoff_end_time) %} {% if fc is not iterable or cutoff_dt is none or now() >= cutoff_dt %}\n  {{ false }}\n{% else %}\n  {% set cutoff_ts = as_timestamp(cutoff_dt) %}\n  {% set ns = namespace(found=false) %}\n  {% for f in fc %}\n    {% if f is mapping and 'per_kwh' in f and 'start_time' in f %}\n      {% set ts = as_timestamp(f.start_time) %}\n      {% if ts is not none and ts <= cutoff_ts and (f.per_kwh | float(0)) < 0 %}\n        {% set ns.found = true %}\n      {% endif %}\n    {% endif %}\n  {% endfor %}\n  {{ ns.found }}\n{% endif %}\n",
+            "price_is_negative": "{{ price_valid and current_price < 0 }}",
+            "feedin_is_negative": "{{ feedin_price < 0 }}",
+            "is_evening_or_night": "{{ sun_elevation < sun_elevation_evening_threshold }}",
+            "morning_holdoff_window": "{{ standby_holdoff_enabled and negative_price_forecast_bool and now() < today_at(standby_holdoff_end_time) }}",
+            "battery_soc_required_to_sunrise": "{% set load_s = states(consumed_power_sensor_entity) %} {% set cap_s = states(rated_capacity_sensor_entity) %} {% set next_rising = state_attr(sun_entity_id,'next_rising') %} {% set next_setting = state_attr(sun_entity_id,'next_setting') %} {% if load_s in ['unknown','unavailable','none',''] or\n      cap_s in ['unknown','unavailable','none',''] or\n      next_rising is none or next_setting is none %}\n  {{ night_reserve_soc + night_reserve_buffer }}\n{% else %}\n  {% set load_kw = load_kw_sunrise | float(0) %}\n  {% set cap_raw = cap_s | float(0) %}\n  {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}\n  {% set cap_kwh = (cap_raw / 1000.0) if cap_uom in ['Wh','wH'] else cap_raw %}\n  {% set target_ts = as_timestamp(next_rising) + 3600 %}\n  {% set start_ts = as_timestamp(now()) if is_state(sun_entity_id,'below_horizon')\n                  else as_timestamp(next_setting) %}\n  {% set hours_left = (target_ts - start_ts) / 3600.0 %}\n  {% if cap_kwh <= 0 or target_ts <= 0 or hours_left <= 0 %}\n    {{ night_reserve_soc + night_reserve_buffer }}\n  {% else %}\n    {% set reserve_kwh = cap_kwh * (sunrise_reserve_soc / 100.0) %}\n    {% set energy_needed_kwh = load_kw * hours_left * sunrise_safety_factor %}\n    {% set required_soc = ((reserve_kwh + energy_needed_kwh) / cap_kwh) * 100.0 %}\n    {{ [[required_soc, 100] | min, 0] | max }}\n  {% endif %}\n{% endif %}\n",
+            "sunrise_soc_target": "{% set base = battery_soc_required_to_sunrise | default(night_reserve_soc + night_reserve_buffer) %} {% set target = (base | float(0)) + (sunrise_buffer_percent | float(0)) %} {% set target = [target, max_battery_soc | float(100)] | min %} {{ [target, sunrise_reserve_soc | float(0)] | max }}\n",
+            "sunrise_fill_need_kwh": "{% set cap = battery_capacity_kwh | float(0) %} {% set gap = (sunrise_soc_target | float(0)) - (battery_soc | float(0)) %} {% set need = cap * (gap / 100) %} {{ [need, 0] | max }}\n",
+            "hours_to_sunrise": "{% set next_rising = state_attr(sun_entity_id,'next_rising') %} {% if next_rising is none %}\n  6\n{% else %}\n  {% set target_ts = as_timestamp(next_rising) + 3600 %}\n  {% set start_ts = as_timestamp(now()) %}\n  {% set hours = (target_ts - start_ts) / 3600.0 %}\n  {{ [hours, 0] | max }}\n{% endif %}\n",
+            "hours_to_sunset": "{% set next_setting = state_attr(sun_entity_id,'next_setting') %} {% if next_setting is none %}\n  0\n{% else %}\n  {% set now_ts = as_timestamp(now()) %}\n  {% set set_ts = as_timestamp(next_setting) %}\n  {% set hours = (set_ts - now_ts) / 3600.0 %}\n  {{ [hours, 0] | max }}\n{% endif %}\n",
+            "sunrise_target_ts": "{% set next_rising = state_attr(sun_entity_id,'next_rising') %} {% if next_rising is none %}\n  {{ as_timestamp(now()) }}\n{% else %}\n  {{ as_timestamp(next_rising) + 3600 }}\n{% endif %}\n",
+            "morning_dump_start_ts": "{% set offset = (morning_dump_hours_before_sunrise | float(2)) * 3600 %} {% if sunrise_target_ts is none %}\n  {{ none }}\n{% else %}\n  {{ sunrise_target_ts - offset }}\n{% endif %}\n",
+            "morning_dump_active": "{% if not morning_dump_enabled %}\n  false\n{% else %}\n  {% set start_ts = morning_dump_start_ts %}\n  {% set end_ts = sunrise_target_ts %}\n  {% set now_ts = as_timestamp(now()) %}\n  {{ start_ts is not none and end_ts is not none and now_ts >= start_ts and now_ts <= end_ts }}\n{% endif %}\n",
+            "effective_min_soc": "{% if is_evening_or_night %}\n  {% set relaxed = (sunrise_soc_target | float(0)) - (sunrise_export_relax_percent | float(0)) %}\n  {{ [[relaxed, 100] | min, sunrise_reserve_soc] | max }}\n{% else %}\n  {{ min_soc_floor }}\n{% endif %}\n",
+            "export_sunrise_guard_active": "{{ is_evening_or_night }}",
+            "export_solar_override": "{% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %} {% set forecast_ok = (forecast_remaining | float(0)) >= (battery_fill_need_kwh * 1.25) or (battery_fill_need_kwh | float(0)) <= 0 %} {{ feedin_price > 0\n   and battery_soc >= max_battery_soc\n   and not is_evening_or_night\n   and surplus_pv\n   and forecast_ok }}\n",
+            "standby_holdoff_active": "{% set cutoff = today_at(standby_holdoff_end_time) %} {{ standby_holdoff_enabled\n   and forecast_today >= pv_forecast_holdoff_kwh\n   and negative_price_before_cutoff\n   and now() < cutoff\n   and current_price > import_threshold_low }}\n",
+            "export_min_soc": "{% set base = min_soc_floor | float(0) if not export_sunrise_guard_active else effective_min_soc | float(0) %} {% if export_sunrise_guard_active %}\n  {% set sunrise_need = battery_soc_required_to_sunrise | float(0) %}\n  {{ [base, sunrise_need] | max }}\n{% else %}\n  {{ base }}\n{% endif %}\n",
+            "export_start_low": "{{ export_threshold_low }}",
+            "export_stop_low": "{{ export_threshold_low * export_hysteresis_percent }}",
+            "export_soc_span_dynamic": "{% if is_evening_or_night %}\n  {% set span = ((hours_to_sunrise | float(6)) * consumed_power / battery_capacity_kwh) * 100 %}\n  {{ [25, [span, 4] | max] | min }}\n{% else %}\n  {{ export_soc_span_day }}\n{% endif %}\n",
+            "export_tier_limit": "{% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %} {% set forecast_available = (forecast_remaining | float(0)) > 0 %} {% set pv_safeguard = not full_export_override and not positive_fit_override and forecast_available and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) %} {% if export_spike_active | default(false) %}\n  {{ export_limit_high }}\n{% elif export_solar_override %}\n  {{ export_limit_high }}\n{% elif battery_soc >= 99 and feedin_price > 0 %}\n  {{ export_limit_high }}\n{% elif feedin_price < export_threshold_low %}\n  0\n{% elif feedin_price >= export_threshold_high %}\n  {{ export_limit_high }}\n{% elif feedin_price >= export_threshold_medium %}\n  {% if pv_safeguard %}\n    0\n  {% else %}\n    {% set frac = (feedin_price - export_threshold_medium) / (export_threshold_high - export_threshold_medium) %}\n    {{ export_limit_medium + (frac * (export_limit_high - export_limit_medium)) }}\n  {% endif %}\n{% else %}\n  {% if pv_safeguard %}\n    0\n  {% else %}\n    {% set frac = (feedin_price - export_threshold_low) / (export_threshold_medium - export_threshold_low) %}\n    {{ export_limit_low + (frac * (export_limit_medium - export_limit_low)) }}\n  {% endif %}\n{% endif %}\n",
+            "export_high_price": "{{ feedin_price >= export_threshold_high }}",
+            "solar_surplus_bypass": "{% set cap = battery_capacity_kwh | float(0) %} {% set start_thresh = cap * 2 %} {% set stop_thresh = cap * 1.25 %} {% set pv_over_load = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %} {% set start_ok = forecast_remaining >= start_thresh %} {% set continue_ok = forecast_remaining >= stop_thresh\n                      and current_mode in ['Command Discharging (PV First)','Command Discharging (ESS First)'] %}\n{{ pv_over_load and (start_ok or continue_ok) }}\n",
+            "export_blocked_for_forecast": "{% set forecast_available = (forecast_remaining | float(0)) > 0 %} {% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %} {% set allow_full_export = battery_soc >= max_battery_soc and not is_evening_or_night and surplus_pv %} {% if battery_soc >= (export_guard_relax_soc | float(90)) %}\n  {{ false }}\n{% elif is_evening_or_night or allow_full_export or not forecast_available %}\n  {{ false }}\n{% else %}\n  {% set est_load_kwh = (load_kw | float(0)) * (hours_to_sunset | float(0)) %}\n  {% set net_fc = (forecast_remaining | float(0)) - est_load_kwh %}\n  {{ net_fc < (battery_fill_need_kwh * 1.25) }}\n{% endif %}\n",
+            "export_forecast_guard": "{% set need = sunrise_fill_need_kwh | float(0) %} {% set required = need * 1.25 %} {% if battery_soc >= (export_guard_relax_soc | float(90)) %}\n  {{ false }}\n{% elif is_evening_or_night or need <= 0 %}\n  {{ false }}\n{% else %}\n  {{ forecast_remaining < required }}\n{% endif %}\n",
+            "export_blocked_effective": "{{ export_blocked_for_forecast }}\n",
+            "morning_dump_limit": "{% if not morning_dump_active %}\n  0\n{% else %}\n  {% set tier_cap = export_limit_high | float(25) %}\n  {% if tier_cap <= 0 %}\n    0\n  {% else %}\n    {% set diff = battery_soc - export_min_soc %}\n    {% if diff <= 0 %}\n      0\n    {% else %}\n      {% set span = export_soc_span_dynamic %}\n      {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}\n      {% set hours = hours_to_sunrise | float(1) %}\n      {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}\n      {% set hours_div = [hours, discharge_window] | min %}\n      {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}\n      {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}\n      {% set export_high_ref = export_limit_high | float(25) %}\n      {% set ratio = 1 if export_high_ref <= 0 else (tier_cap / export_high_ref) %}\n      {% set boost = [1.5, 1 + (ratio * 0.3)] | min %}\n      {% set safe_kw = safe_kw_base * boost %}\n      {% set safe_cap = [safe_kw, tier_cap] | min %}\n      {% set raw_limit = tier_cap * scale_soc * 0.9 %}\n      {% set final_limit = [raw_limit, safe_cap] | min %}\n      {% set limit = [0, final_limit] | max | round(1) %}\n      {% if limit < min_grid_transfer_kw %}\n        0\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% endif %}\n  {% endif %}\n{% endif %}\n",
+            "forecast_remaining_after_load": "{% set est_load_kwh = (load_kw | float(0)) * (hours_to_sunset | float(0)) %} {% set net = (forecast_remaining | float(0)) - est_load_kwh %} {{ [net, 0] | max }}\n",
+            "grid_limit_base": "{% if current_price <= max_price_threshold\n      and current_price >= 0\n      and battery_soc < daytime_topup_max_soc %}\n  {% if forecast_today >= pv_forecast_holdoff_kwh\n        and negative_price_forecast_ahead\n        and battery_soc >= (sunrise_soc_target | float(0)) %}\n    0\n  {% elif is_evening_or_night %}\n    {% if battery_soc < (sunrise_soc_target | float(0)) %}\n      {% set target_total_kw = consumed_power + target_battery_charge %}\n      {% set needed_from_grid_kw = target_total_kw - pv_power %}\n      {{ [0, [needed_from_grid_kw, cap_total_import] | min] | max | round(1) }}\n    {% else %}\n      0\n    {% endif %}\n  {% else %}\n    {% if battery_soc < daytime_topup_max_soc\n          and current_price <= max_price_threshold %}\n      {% set net_forecast_for_charge = forecast_remaining_after_load | float(0) %}\n      {% set forecast_short = net_forecast_for_charge < (sunrise_fill_need_kwh * forecast_safety_margin) %}\n      {% set pv_surplus_kw = [pv_kw - load_kw, 0] | max %}\n      {% set needs_charge_rate = pv_surplus_kw < (target_battery_charge | float(0)) %}\n      {% set prevent_discharge = battery_soc >= daytime_topup_max_soc and pv_kw < load_kw %}\n      {% if forecast_short or needs_charge_rate or prevent_discharge %}\n        {% if prevent_discharge %}\n          {% set target_total_kw = consumed_power %}\n        {% else %}\n          {% set target_total_kw = consumed_power + target_battery_charge %}\n        {% endif %}\n        {% set needed_from_grid_kw = target_total_kw - pv_power %}\n        {{ [0, [needed_from_grid_kw, cap_total_import] | min] | max | round(1) }}\n      {% else %}\n        0\n      {% endif %}\n    {% else %}\n      0\n    {% endif %}\n  {% endif %}\n{% else %}\n  0\n{% endif %}\n",
+            "import_limit_negative": "{% if price_is_negative %}\n  {% if current_price <= import_threshold_high %}\n    {% set requested_limit = import_limit_high %}\n  {% elif current_price <= import_threshold_medium %}\n    {% set requested_limit = import_limit_medium %}\n  {% elif current_price <= import_threshold_low %}\n    {% set requested_limit = import_limit_low %}\n  {% else %}\n    {% set requested_limit = 0 %}\n  {% endif %}\n  {{ [requested_limit, cap_total_import] | min }}\n{% else %}\n  0\n{% endif %}\n",
+            "desired_import_limit": "{% if demand_window_active %}\n  {% set limit = 0 %}\n{% elif morning_dump_active %}\n  {% set limit = 0 %}\n{% elif standby_holdoff_active %}\n  {% set limit = 0.01 %}\n{% elif price_is_negative %}\n  {% set limit = import_limit_negative %}\n{% elif feedin_price >= export_threshold_low %}\n  {% set limit = 0 %}\n{% else %}\n  {% set limit = grid_limit_base %}\n{% endif %} {% if current_price > max_price_threshold\n      and battery_soc >= (sunrise_soc_target | float(0)) %}\n  {% set limit = 0 %}\n{% endif %} {% set limit = [0, limit] | max | round(1) %} {% if limit < min_grid_transfer_kw %}\n  0\n{% else %}\n  {{ limit }}\n{% endif %}\n",
+            "export_reason": "{% set spike = export_spike_active | default(false) %} {% if price_is_negative %}\n  Export blocked (negative buy price)\n{% elif feedin_is_negative %}\n  Export blocked (negative FIT)\n{% elif morning_dump_active %}\n  Morning dump active (pre-sunrise export)\n{% elif export_blocked_for_forecast %}\n  Export blocked (forecast short to fill battery)\n{% elif export_forecast_guard %}\n  Export blocked (forecast < reserve +25%)\n{% elif export_blocked_effective %}\n  Export blocked (forecast short to sunrise target)\n{% elif export_high_price %}\n  Exporting (FIT above high threshold)\n{% elif spike %}\n  Export spike (full export)\n{% elif solar_surplus_bypass %}\n  Exporting (solar forecast surplus)\n{% elif battery_soc <= export_min_soc %}\n  Export blocked (SoC below sunrise target)\n{% else %}\n  {% set diff = battery_soc - export_min_soc %}\n  {% set span = export_soc_span_dynamic %}\n  {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}\n  {% set tier_cap = export_tier_limit | float(0) %}\n  {% if tier_cap <= 0 %}\n    Export blocked (price low)\n  {% else %}\n    {% if export_solar_override %}\n      Export override (exporting excess PV)\n    {% else %}\n      {% set hours = hours_to_sunrise | float(1) %}\n      {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}\n      {% set hours_div = [hours, discharge_window] | min %}\n      {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}\n      {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}\n      {% set boost = [1.5, 1 + ((tier_cap / export_limit_high) * 0.3)] | min %}\n      {% set safe_kw = safe_kw_base * boost %}\n      {% set safe_cap = [safe_kw, tier_cap] | min %}\n      {% set raw_limit = tier_cap * scale_soc * 0.9 %}\n      {% set final_limit = [raw_limit, safe_cap] | min %}\n      {% if final_limit == 0 %}\n        Export blocked (zero cap)\n      {% elif final_limit == safe_cap %}\n        Export limited (safe cap)\n      {% elif final_limit == raw_limit %}\n        Export limited (price/SoC)\n      {% else %}\n        Export limited (composite)\n      {% endif %}\n    {% endif %}\n  {% endif %}\n{% endif %}\n",
+            "import_reason": "{% if demand_window_active %}\n  Import blocked (demand window)\n{% elif standby_holdoff_active %}\n  Import blocked (holdoff)\n{% elif not price_valid %}\n  Import blocked (price unavailable)\n{% elif price_is_negative %}\n  Importing (price is negative)\n{% elif feedin_price >= export_threshold_low %}\n  Import blocked (FIT above export threshold)\n{% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}\n  Import blocked (price/SoC above cheap threshold)\n{% elif grid_limit_base <= 0 %}\n  {% if current_price > max_price_threshold %}\n    Import blocked (price above cheap threshold)\n  {% elif battery_soc >= daytime_topup_max_soc %}\n    Import blocked (top-up SoC reached)\n  {% else %}\n    Import blocked (no top-up needed)\n  {% endif %}\n{% elif desired_import_limit > 0 %}\n  {% set cheap_supplement = (battery_soc >= daytime_topup_max_soc) and (pv_kw < load_kw) and (current_price <= max_price_threshold) %}\n  {% if price_is_negative %}\n    Import enabled {{ desired_import_limit }} kW (negative price)\n  {% elif cheap_supplement %}\n    Import enabled {{ desired_import_limit }} kW (cheap grid supplement)\n  {% else %}\n    Import enabled {{ desired_import_limit }} kW (cheap top-up)\n  {% endif %}\n{% else %}\n  Import blocked (no condition)\n{% endif %}\n",
+            "desired_export_limit": "{% set high_price = export_high_price %} {% set spike = export_spike_active | default(false) %} {% set bypass_min_soc = high_price or spike or solar_surplus_bypass or positive_fit_override %} {% if price_is_negative or feedin_is_negative %}\n  0\n{% elif not morning_dump_active and (export_blocked_effective or export_forecast_guard) %}\n  0\n{% elif morning_dump_active %}\n  {{ morning_dump_limit }}\n{% elif (not bypass_min_soc) and battery_soc <= export_min_soc %}\n  0\n{% else %}\n  {% set tier_cap = export_tier_limit | float(0) %}\n  {% if tier_cap <= 0 %}\n    0\n  {% elif high_price or spike %}\n    {% set limit = [tier_cap, export_limit_high] | min | round(1) %}\n    {% if limit < min_grid_transfer_kw %}\n      0\n    {% else %}\n      {{ limit }}\n    {% endif %}\n  {% elif positive_fit_override %}\n    {% set limit = tier_cap | round(1) %}\n    {% if limit < min_grid_transfer_kw %}\n      0\n    {% else %}\n      {{ limit }}\n    {% endif %}\n  {% else %}\n    {% set diff = battery_soc - export_min_soc %}\n    {% set span = export_soc_span_dynamic %}\n    {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}\n    {% if export_solar_override %}\n      {% set excess_kw = [pv_kw - load_kw, 0] | max %}\n      {% set override_cap = [excess_kw, export_limit_high, export_tier_limit] | min %}\n      {% set limit = [0, override_cap] | max | round(1) %}\n      {% if limit < min_grid_transfer_kw %}\n        0\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% else %}\n      {% set hours = hours_to_sunrise | float(1) %}\n      {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}\n      {% set hours_div = [hours, discharge_window] | min %}\n      {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}\n      {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}\n      {% set boost = [1.5, 1 + ((tier_cap / export_limit_high) * 0.3)] | min %}\n      {% set safe_kw = safe_kw_base * boost %}\n      {% set safe_cap = [safe_kw, tier_cap] | min %}\n      {% set raw_limit = tier_cap * scale_soc * 0.9 %}\n      {% set final_limit = [raw_limit, safe_cap] | min %}\n      {% set limit = [0, final_limit] | max | round(1) %}\n      {% if (not is_evening_or_night) and (not high_price and not spike) %}\n        {% set pv_surplus = [pv_kw - load_kw, 0] | max %}\n        {% set limit = [limit, pv_surplus] | min %}\n      {% endif %}\n      {% if limit < min_grid_transfer_kw %}\n        0\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% endif %}\n  {% endif %}\n{% endif %}\n",
+            "needs_ha_control_switch": "{{ auto_enable_ha_control and (not ha_control_enabled) and\n   (feedin_is_negative or (desired_export_limit | float > 0) or (desired_import_limit | float > 0)\n    or (current_mode != desired_ems_mode)) }}\n",
+            "effective_ha_control_enabled": "{{ ha_control_enabled or needs_ha_control_switch }}",
+            "desired_ems_mode": "{% set currently_discharging = current_mode in\n  ['Command Discharging (PV First)', 'Command Discharging (ESS First)'] %}\n{% set currently_charging = current_mode in ['Command Charging (PV First)', 'Command Charging (Grid First)'] %} {% if demand_window_active %}\n  {% if desired_export_limit | float > 0 %}\n    Command Discharging (PV First)\n  {% else %}\n    Maximum Self Consumption\n  {% endif %}\n{% elif desired_import_limit | float > 0 and not price_is_negative %}\n  Command Charging (PV First)\n{% elif export_solar_override %}\n  Command Discharging (PV First)\n{% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}\n  {% if battery_soc < (sunrise_soc_target | float(0)) %}\n    Command Charging (PV First)\n  {% else %}\n    Maximum Self Consumption\n  {% endif %}\n{% elif price_is_negative and current_price <= import_threshold_low %}\n  Command Charging (Grid First)\n{% elif feedin_is_negative %}\n  Maximum Self Consumption\n{% elif desired_export_limit | float > 0 %}\n  Command Discharging (PV First)\n{% elif (not export_blocked_for_forecast) and battery_soc > (export_min_soc + soc_hysteresis) %}\n  {% if currently_discharging and feedin_price >= (export_stop_low | float) %}\n    Command Discharging (PV First)\n  {% elif feedin_price >= (export_start_low | float) %}\n    Command Discharging (PV First)\n  {% else %}\n    Maximum Self Consumption\n  {% endif %}\n{% elif grid_limit_base > 0 and feedin_price < (export_threshold_low - price_hysteresis) and battery_soc < (max_battery_soc - soc_hysteresis) %}\n  Command Charging (PV First)\n{% elif currently_charging and grid_limit_base > 0 and feedin_price < (export_threshold_low + price_hysteresis) and battery_soc < max_battery_soc %}\n  Command Charging (PV First)\n{% else %}\n  Maximum Self Consumption\n{% endif %}\n",
+            "battery_only_mode": "{{ desired_ems_mode == 'Maximum Self Consumption'\n   and (desired_export_limit | float(0)) == 0\n   and (desired_import_limit | float(0)) == 0\n   and (is_evening_or_night or standby_holdoff_active) }}\n",
+            "desired_pv_max_power_limit": "{% set slow_holdoff = slow_charge_holdoff | bool(false) %} {% set cover_load_kw = (load_kw_instant | float(0)) * 1.2 %} {% set cover_load_kw = cover_load_kw | round(0, 'ceil') | int %} {% set cover_load_kw = [cover_load_kw, pv_max_power_normal | float(25)] | min %} {% if standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}\n  {{ [cover_load_kw, 0.1] | max }}\n{% elif battery_only_mode %}\n  {{ [cover_load_kw, 0.1] | max }}\n{% elif morning_dump_active %}\n  {{ pv_max_power_normal }}\n{% elif morning_holdoff_window and slow_holdoff %}\n  {% set load_kw = (consumed_power | float(0)) / 1000 %}\n  {% set cap = load_kw + (slow_charge_limit_kw | float(2)) %}\n  {% set cap = [cap, pv_max_power_normal | float(25)] | min %}\n  {{ [cap, 0.1] | max }}\n{% else %}\n  {{ pv_max_power_normal }}\n{% endif %}\n",
+            "desired_ess_charge_limit": "{% if desired_import_limit | float(0) > 0 %}\n  {{ [cap_total_import | float(30), import_limit_high | float(30), desired_import_limit | float(0)] | max }}\n{% elif desired_export_limit | float(0) > 0 %}\n  {{ cap_total_import | float(30) }}\n{% else %}\n  0.01\n{% endif %}\n",
+            "desired_ess_discharge_limit": "{% if positive_fit_override %}\n  {% if allow_positive_fit_battery_discharging %}\n    {{ export_limit_high | float(25) }}\n  {% else %}\n    0.01\n  {% endif %}\n{% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}\n  0.01\n{% elif desired_export_limit | float(0) > 0 %}\n  {{ [desired_export_limit, min_grid_transfer_kw | float(0.5)] | max }}\n{% else %}\n  0.01\n{% endif %}\n",
+            "reason_should_log": "{% set export_diff = (desired_export_limit | float - current_export_limit) | abs %} {% set import_diff = (desired_import_limit | float - current_import_limit) | abs %} {% set pv_diff = (desired_pv_max_power_limit | float - current_pv_max_power_limit) | abs %} {% set mode_changed = (current_mode != desired_ems_mode) %} {% set desired_reason = (outcome_reason | default('No reason captured') | string | truncate(95, True, '')) %} {% set current_reason = states(reason_text_entity) | default('') %} {% set reason_changed = desired_reason != current_reason %} {{ (effective_ha_control_enabled and (export_diff >= min_change_threshold or import_diff >= min_change_threshold or mode_changed))\n   or pv_diff > 0\n   or (trigger is defined and trigger.entity_id == demand_window_sensor_entity)\n   or (effective_ha_control_enabled and reason_changed) }}\n",
+            "outcome_reason": "{% set reasons = [\n  export_reason | default('n/a'),\n  import_reason | default('n/a'),\n  'PV Limit ' ~ ((desired_pv_max_power_limit | default(pv_max_power_normal)) | round(1)) ~ ' kW'\n] %} {% if demand_window_active %}\n  {% set reasons = reasons + ['Demand window active'] %}\n{% endif %} {{ reasons | join('; ') }}\n",
+            "daily_export_kwh": "{{ states(daily_export_energy_entity) | float(0) }}",
+            "export_session_start_kwh": "{{ states(export_session_start_entity) | float(0) }}",
+            "export_session_kwh": "{% set diff = daily_export_kwh - export_session_start_kwh %} {{ [diff, 0] | max | round(3) }}\n",
+            "daily_import_kwh": "{{ states(daily_import_energy_entity) | float(0) }}",
+            "import_session_start_kwh": "{{ states(import_session_start_entity) | float(0) }}",
+            "import_session_kwh": "{% set diff = daily_import_kwh - import_session_start_kwh %} {{ [diff, 0] | max | round(3) }}\n",
+            "daily_load_kwh": "{{ states(daily_load_energy_entity) | float(0) }}",
+            "daily_battery_charge_kwh": "{{ states(daily_battery_charge_energy_entity) | float(0) }}",
+            "daily_battery_discharge_kwh": "{{ states(daily_battery_discharge_energy_entity) | float(0) }}",
+            "daily_pv_kwh": "{{ states(daily_pv_energy_entity) | float(0) }}",
+            "last_export_notification_state": "{{ states(last_export_notification_entity) | default('stopped') }}",
+            "last_import_notification_state": "{{ states(last_import_notification_entity) | default('stopped') }}"
+          }
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ min_soc_to_sunrise_helper_entity not in ['','none', None] }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "action": "input_number.set_value",
+                  "target": {
+                    "entity_id": "input_number.battery_min_soc_to_last_till_sunrise"
+                  },
+                  "data": {
+                    "value": "{{ battery_soc_required_to_sunrise | float(0) }}"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ needs_ha_control_switch }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "target": {
+                    "entity_id": "switch.sigen_plant_remote_ems_controled_by_home_assistant"
+                  },
+                  "action": "switch.turn_on"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ effective_ha_control_enabled and current_mode != desired_ems_mode }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "action": "select.select_option",
+                  "target": {
+                    "entity_id": "select.sigen_plant_remote_ems_control_mode"
+                  },
+                  "data": {
+                    "option": "{{ desired_ems_mode }}"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{% set diff = (desired_export_limit | float - current_export_limit) | abs %} {{ effective_ha_control_enabled and (diff >= (min_change_threshold | float) or \n   (current_export_limit == 0 and desired_export_limit > 0) or\n   (current_export_limit > 0 and desired_export_limit == 0)) }}\n"
+                }
+              ],
+              "sequence": [
+                {
+                  "choose": [
+                    {
+                      "conditions": [
+                        {
+                          "condition": "template",
+                          "value_template": "{{ notification_available }}"
+                        },
+                        {
+                          "condition": "template",
+                          "value_template": "{{ current_export_limit == 0 and desired_export_limit > 0 }}"
+                        }
+                      ],
+                      "sequence": [
+                        {
+                          "target": {
+                            "entity_id": "switch.sigen_plant_remote_ems_controled_by_home_assistant"
+                          },
+                          "action": "switch.turn_on"
+                        },
+                        {
+                          "target": {
+                            "entity_id": "input_boolean.input_boolean_sigenergy_automated_export"
+                          },
+                          "action": "input_boolean.turn_on"
+                        },
+                        {
+                          "action": "input_number.set_value",
+                          "target": {
+                            "entity_id": "input_number.input_number_sigenergy_export_session_start_kwh"
+                          },
+                          "data": {
+                            "value": "{{ daily_export_kwh }}"
+                          }
+                        },
+                        {
+                          "action": "logbook.log",
+                          "data": {
+                            "name": "SigEnergy Export",
+                            "message": "Export ENABLED → {{ desired_export_limit }} kW FIT={{ feedin_price | round(3) }} $/kWh SoC={{ battery_soc | round(0) }}% Mode={{ desired_ems_mode }}\n",
+                            "entity_id": "number.sigen_plant_grid_export_limitation"
+                          }
+                        },
+                        {
+                          "choose": [
+                            {
+                              "conditions": [
+                                {
+                                  "condition": "template",
+                                  "value_template": "{{ last_export_notification_state != 'started' }}"
+                                }
+                              ],
+                              "sequence": [
+                                {
+                                  "data": {
+                                    "title": "⚡ SigEnergy: Export Started",
+                                    "message": "💰 Earning ${{ feedin_price | round(3) }}/kWh\n📤 Export Limit: {{ desired_export_limit }} kW\n🔋 Battery: {{ battery_soc | round(0) }}% (Min {{ export_min_soc | round(0) }}%)\n🧠 Mode: {{ desired_ems_mode }}\n🌙 Night: {{ is_evening_or_night }}\n☀️ PV Remaining: {{ forecast_remaining | round(1) }} kWh\n"
+                                  },
+                                  "action": "{{ notification_service }}"
+                                },
+                                {
+                                  "target": {
+                                    "entity_id": "input_text.input_text_sigenergy_last_export_notification"
+                                  },
+                                  "data": {
+                                    "value": "started"
+                                  },
+                                  "action": "input_text.set_value"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ notification_available }}"
+                },
+                {
+                  "condition": "template",
+                  "value_template": "{{ current_export_limit > 0 and desired_export_limit == 0 }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "choose": [
+                    {
+                      "conditions": [
+                        {
+                          "condition": "state",
+                          "entity_id": "input_boolean.input_boolean_sigenergy_automated_export",
+                          "state": "on"
+                        }
+                      ],
+                      "sequence": [
+                        {
+                          "action": "logbook.log",
+                          "data": {
+                            "name": "SigEnergy Export",
+                            "message": "Export DISABLED → Session {{ export_session_kwh }} kWh FIT={{ feedin_price | round(3) }} $/kWh SoC={{ battery_soc | round(0) }}% Mode={{ desired_ems_mode }}\n",
+                            "entity_id": "number.sigen_plant_grid_export_limitation"
+                          }
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "choose": [
+                    {
+                      "conditions": [
+                        {
+                          "condition": "template",
+                          "value_template": "{{ last_export_notification_state != 'stopped' }}"
+                        }
+                      ],
+                      "sequence": [
+                        {
+                          "data": {
+                            "title": "🛑 SigEnergy: Export Stopped",
+                            "message": "📤 Session Export: {{ export_session_kwh }} kWh\n📈 Daily Total: {{ daily_export_kwh | round(3) }} kWh\n🔋 Battery: {{ battery_soc | round(0) }}%\n💲 FIT: {{ feedin_price | round(3) }} $/kWh\n🧠 Mode: {{ desired_ems_mode }}\n"
+                          },
+                          "action": "{{ notification_service }}"
+                        },
+                        {
+                          "target": {
+                            "entity_id": "input_text.input_text_sigenergy_last_export_notification"
+                          },
+                          "data": {
+                            "value": "stopped"
+                          },
+                          "action": "input_text.set_value"
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "target": {
+                    "entity_id": "input_boolean.input_boolean_sigenergy_automated_export"
+                  },
+                  "action": "input_boolean.turn_off"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "action": "number.set_value",
+          "target": {
+            "entity_id": "number.sigen_plant_grid_export_limitation"
+          },
+          "data": {
+            "value": "{% if desired_export_limit > 0 %}\n  {{ desired_export_limit }}\n{% else %}\n  0.01\n{% endif %}\n"
+          }
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{% set diff = (desired_import_limit | float - current_import_limit) | abs %} {{ effective_ha_control_enabled and (diff >= (min_change_threshold | float) or\n   (current_import_limit == 0 and desired_import_limit > 0) or\n   (current_import_limit > 0 and desired_import_limit == 0)) }}\n"
+                }
+              ],
+              "sequence": [
+                {
+                  "choose": [
+                    {
+                      "conditions": [
+                        {
+                          "condition": "template",
+                          "value_template": "{{ notification_available }}"
+                        },
+                        {
+                          "condition": "template",
+                          "value_template": "{{ current_import_limit == 0 and desired_import_limit > 0 }}"
+                        }
+                      ],
+                      "sequence": [
+                        {
+                          "action": "input_number.set_value",
+                          "target": {
+                            "entity_id": "input_number.input_number_sigenergy_import_session_start_kwh"
+                          },
+                          "data": {
+                            "value": "{{ daily_import_kwh }}"
+                          }
+                        },
+                        {
+                          "action": "logbook.log",
+                          "data": {
+                            "name": "SigEnergy Import",
+                            "message": "Import ENABLED → {{ desired_import_limit }} kW Price={{ current_price }}\n",
+                            "entity_id": "number.sigen_plant_grid_import_limitation"
+                          }
+                        },
+                        {
+                          "choose": [
+                            {
+                              "conditions": [
+                                {
+                                  "condition": "template",
+                                  "value_template": "{{ last_import_notification_state != 'started' }}"
+                                }
+                              ],
+                              "sequence": [
+                                {
+                                  "data": {
+                                    "title": "⚡ SigEnergy: Import Started",
+                                    "message": "💲 Price: {{ current_price | round(3) }} $/kWh 📥 Import Limit: {{ desired_import_limit }} kW 🔋 Battery: {{ battery_soc | round(0) }}% 🌙 Night: {{ is_evening_or_night }}\n"
+                                  },
+                                  "action": "{{ notification_service }}"
+                                },
+                                {
+                                  "target": {
+                                    "entity_id": "input_text.input_text_sigenergy_last_import_notification"
+                                  },
+                                  "data": {
+                                    "value": "started"
+                                  },
+                                  "action": "input_text.set_value"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "choose": [
+                    {
+                      "conditions": [
+                        {
+                          "condition": "template",
+                          "value_template": "{{ notification_available }}"
+                        },
+                        {
+                          "condition": "template",
+                          "value_template": "{{ current_import_limit > 0 and desired_import_limit == 0 }}"
+                        }
+                      ],
+                      "sequence": [
+                        {
+                          "action": "logbook.log",
+                          "data": {
+                            "name": "SigEnergy Import",
+                            "message": "Import DISABLED → Session {{ import_session_kwh }} kWh Last Limit={{ current_import_limit }} kW Price={{ current_price }}\n",
+                            "entity_id": "number.sigen_plant_grid_import_limitation"
+                          }
+                        },
+                        {
+                          "choose": [
+                            {
+                              "conditions": [
+                                {
+                                  "condition": "template",
+                                  "value_template": "{{ last_import_notification_state != 'stopped' }}"
+                                }
+                              ],
+                              "sequence": [
+                                {
+                                  "data": {
+                                    "title": "🛑 SigEnergy: Import Stopped",
+                                    "message": "📥 Session Import: {{ import_session_kwh }} kWh\n📈 Daily Total: {{ daily_import_kwh | round(3) }} kWh\n💲 Last seen price: ${{ current_price | round(3) }}/kWh\n🔋 Battery: {{ battery_soc | round(0) }}%\n"
+                                  },
+                                  "action": "{{ notification_service }}"
+                                },
+                                {
+                                  "target": {
+                                    "entity_id": "input_text.input_text_sigenergy_last_import_notification"
+                                  },
+                                  "data": {
+                                    "value": "stopped"
+                                  },
+                                  "action": "input_text.set_value"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "action": "number.set_value",
+          "target": {
+            "entity_id": "number.sigen_plant_grid_import_limitation"
+          },
+          "data": {
+            "value": "{% if standby_holdoff_active %}\n  0.01\n{% elif desired_import_limit > 0 %}\n  {{ desired_import_limit }}\n{% else %}\n  0.01\n{% endif %}\n"
+          }
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ effective_ha_control_enabled and ess_max_charging_limit_entity | default('') }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "action": "number.set_value",
+                  "target": {
+                    "entity_id": "{{ ess_max_charging_limit_entity }}"
+                  },
+                  "data": {
+                    "value": "{{ desired_ess_charge_limit }}"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ effective_ha_control_enabled and ess_max_discharging_limit_entity | default('') }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "action": "number.set_value",
+                  "target": {
+                    "entity_id": "{{ ess_max_discharging_limit_entity }}"
+                  },
+                  "data": {
+                    "value": "{{ desired_ess_discharge_limit }}"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ effective_ha_control_enabled and (current_pv_max_power_limit | float(0)) != (desired_pv_max_power_limit | float(0)) }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "action": "number.set_value",
+                  "target": {
+                    "entity_id": "number.sigen_plant_pv_max_power_limit"
+                  },
+                  "data": {
+                    "value": "{{ desired_pv_max_power_limit }}"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ notification_available }}"
+                },
+                {
+                  "condition": "template",
+                  "value_template": "{% set is_batt = trigger is defined and trigger.entity_id == battery_soc_sensor_entity %} {% if not is_batt %}\n  false\n{% else %}\n  {% set curr_state = trigger.to_state.state if trigger.to_state is defined and trigger.to_state else none %}\n  {% set prev_state = trigger.from_state.state if trigger.from_state is defined and trigger.from_state else none %}\n  {% set invalid = ['unknown','unavailable','none',''] %}\n  {% if curr_state in invalid %}\n    false\n  {% else %}\n    {% set curr = curr_state | float(0) %}\n    {% set prev = prev_state | float(9999) if prev_state not in invalid and prev_state is not none else 9999 %}\n    {% set reserve = sunrise_reserve_soc | float(0) %}\n    {{ prev >= reserve and curr < reserve }}\n  {% endif %}\n{% endif %}\n"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "title": "⚠️ Battery below reserve SoC",
+                    "message": "Battery below reserve ({{ sunrise_reserve_soc | round(0) }}%): {{ battery_soc | round(0) }}%"
+                  },
+                  "action": "{{ notification_service }}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ notification_available }}"
+                },
+                {
+                  "condition": "template",
+                  "value_template": "{% set is_batt = trigger is defined and trigger.entity_id == battery_soc_sensor_entity %} {% if not is_batt %}\n  false\n{% else %}\n  {% set curr_state = trigger.to_state.state if trigger.to_state is defined and trigger.to_state else none %}\n  {% set prev_state = trigger.from_state.state if trigger.from_state is defined and trigger.from_state else none %}\n  {% set invalid = ['unknown','unavailable','none',''] %}\n  {% if curr_state in invalid %}\n    false\n  {% else %}\n    {% set curr = curr_state | float(0) %}\n    {% set prev = prev_state | float(9999) if prev_state not in invalid and prev_state is not none else 9999 %}\n    {{ prev > 1 and curr <= 1 }}\n  {% endif %}\n{% endif %}\n"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "title": "🪫 Battery Empty!",
+                    "message": "Battery SoC: {{ battery_soc | round(0) }}%"
+                  },
+                  "action": "{{ notification_service }}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ notification_available }}"
+                },
+                {
+                  "condition": "template",
+                  "value_template": "{% set is_batt = trigger is defined and trigger.entity_id == battery_soc_sensor_entity %} {% if not is_batt %}\n  false\n{% else %}\n  {% set curr_state = trigger.to_state.state if trigger.to_state is defined and trigger.to_state else none %}\n  {% set prev_state = trigger.from_state.state if trigger.from_state is defined and trigger.from_state else none %}\n  {% set invalid = ['unknown','unavailable','none',''] %}\n  {% if curr_state in invalid %}\n    false\n  {% else %}\n    {% set curr = curr_state | float(0) %}\n    {% set prev = prev_state | float(0) if prev_state not in invalid and prev_state is not none else 0 %}\n    {{ prev < 99 and curr >= 99 }}\n  {% endif %}\n{% endif %}\n"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "title": "🔋 Battery Full!",
+                    "message": "Battery SoC: {{ battery_soc | round(0) }}%"
+                  },
+                  "action": "{{ notification_service }}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ notification_available }}"
+                },
+                {
+                  "condition": "template",
+                  "value_template": "{% set is_spike = trigger is defined and trigger.entity_id == price_spike_sensor_entity %} {{ is_spike and trigger.to_state is not none and trigger.to_state.state == 'on' }}\n"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "title": "📈 Price Spike Active",
+                    "message": "Buy: ${{ current_price | round(3) }}/kWh FIT: ${{ feedin_price | round(3) }}/kWh\n"
+                  },
+                  "action": "{{ notification_service }}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ notification_available }}"
+                },
+                {
+                  "condition": "template",
+                  "value_template": "{% set is_demand = trigger is defined and trigger.entity_id == demand_window_sensor_entity %} {{ is_demand and trigger.to_state is not none and trigger.to_state.state == 'on' }}\n"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "title": "⏱️ Demand Window In Effect",
+                    "message": "Demand window active; import is blocked until it ends."
+                  },
+                  "action": "{{ notification_service }}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ trigger is defined and trigger.id == 'daily_summary' and notify_daily_summary and notification_available }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "title": "☀️ SigEnergy Summary",
+                    "message": "🔌 Use: {{ daily_load_kwh | round(2) }} kWh\n☀️ PV: {{ daily_pv_kwh | round(2) }} kWh\n🔋 Batt charge/discharge: +{{ daily_battery_charge_kwh | round(2) }} / -{{ daily_battery_discharge_kwh | round(2) }} kWh\n📥 Grid import: {{ daily_import_kwh | round(2) }} kWh\n📤 Grid export: {{ daily_export_kwh | round(2) }} kWh\n🔚 SoC: {{ battery_soc | round(0) }}%\n"
+                  },
+                  "action": "{{ notification_service }}"
+                }
+              ]
+            },
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ trigger is defined and trigger.id == 'morning_summary' and notify_morning_summary and notification_available }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "title": "🌅 SigEnergy Morning",
+                    "message": "☀️ PV forecast today: {{ forecast_today | round(1) }} kWh\n🔋 Batt discharge so far: {{ daily_battery_discharge_kwh | round(2) }} kWh\n🔚 SoC: {{ battery_soc | round(0) }}%\n"
+                  },
+                  "action": "{{ notification_service }}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "choose": [
+            {
+              "conditions": [
+                {
+                  "condition": "template",
+                  "value_template": "{{ reason_should_log }}"
+                }
+              ],
+              "sequence": [
+                {
+                  "data": {
+                    "name": "SigEnergy Reason",
+                    "message": "{{ outcome_reason | default('No reason captured') }}"
+                  },
+                  "action": "logbook.log"
+                },
+                {
+                  "target": {
+                    "entity_id": "input_text.sigenergy_reason"
+                  },
+                  "data": {
+                    "value": "{{ outcome_reason | default('No reason captured') | string | truncate(95, True, '') }}"
+                  },
+                  "action": "input_text.set_value"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "delay": "00:00:05"
+        }
+      ],
+      "conditions": [],
+      "id": "1766998580122",
+      "alias": "SigEnergy Solar Import & Export Control",
+      "description": ""
+    },
+    "blueprint_inputs": {
+      "id": "1766998580122",
+      "alias": "SigEnergy Solar Import & Export Control",
+      "description": "",
+      "use_blueprint": {
+        "path": "mplinuxgeek/sigenergy_optimiser.yaml",
+        "input": {
+          "price_sensor": "sensor.amber_general_price",
+          "feedin_sensor": "sensor.amber_feed_in_price",
+          "price_forecast_sensor": "sensor.amber_general_forecast",
+          "notification_service": "notify.mobile_app_dave_s_pixel",
+          "automated_export_flag": "input_boolean.input_boolean_sigenergy_automated_export",
+          "export_session_start": "input_number.input_number_sigenergy_export_session_start_kwh",
+          "import_session_start": "input_number.input_number_sigenergy_import_session_start_kwh",
+          "last_export_notification": "input_text.input_text_sigenergy_last_export_notification",
+          "last_import_notification": "input_text.input_text_sigenergy_last_import_notification",
+          "reason_text_helper": "input_text.sigenergy_reason",
+          "ha_control_switch": "switch.sigen_plant_remote_ems_controled_by_home_assistant",
+          "ems_mode_select": "select.sigen_plant_remote_ems_control_mode",
+          "grid_export_limit": "number.sigen_plant_grid_export_limitation",
+          "grid_import_limit": "number.sigen_plant_grid_import_limitation",
+          "pv_max_power_limit": "number.sigen_plant_pv_max_power_limit",
+          "pcs_export_limit": "number.sigen_plant_pcs_export_limitation",
+          "pcs_import_limit": "number.sigen_plant_pcs_import_limitation",
+          "export_threshold_low": 0.01,
+          "export_spike_threshold": 12,
+          "night_reserve_soc": 20,
+          "min_soc_floor": 1,
+          "night_reserve_buffer": 1,
+          "sunrise_reserve_soc": 1,
+          "standby_holdoff_enabled": true,
+          "standby_holdoff_end_time": "12:00:00",
+          "slow_charge_holdoff": true,
+          "export_limit_low": 5,
+          "demand_window_sensor": "binary_sensor.amber_demand_window",
+          "price_spike_sensor": "binary_sensor.amber_price_spike",
+          "import_limit_medium": 21,
+          "import_limit_low": 21,
+          "import_limit_high": 21,
+          "export_limit_high": 24,
+          "daily_summary_time": "23:55:00",
+          "export_threshold_medium": 0.4,
+          "export_threshold_high": 2,
+          "allow_low_medium_export_positive_fit": false
+        }
+      }
+    },
+    "context": {
+      "id": "01KFHN8R602CP6YMS6T2E9DHSN",
+      "parent_id": "01KFHN8R5MYVG8HVH3AQSNXJSX",
+      "user_id": null
+    }
+  },
+  "logbookEntries": []
+}
