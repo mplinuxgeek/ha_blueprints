@@ -86,6 +86,7 @@ blueprint:
         morning_dump_enabled: false
         morning_dump_hours_before_sunrise: 2
         export_guard_relax_soc: 90
+        sunset_export_grace_hours: 2
         reason_text_helper: input_text.sigenergy_reason
         export_threshold_low: 0.1
         export_threshold_medium: 0.2
@@ -944,6 +945,17 @@ blueprint:
               step: 1
               unit_of_measurement: "deg"
               mode: box
+        sunset_export_grace_hours:
+          name: Sunset Export Grace Window (hrs)
+          description: Within this many hours before sunset the forecast guard is ignored so any remaining PV can export.
+          default: 2
+          selector:
+            number:
+              min: 0
+              max: 6
+              step: 0.5
+              unit_of_measurement: h
+              mode: box
         export_guard_relax_soc:
           name: Export Guard Relax SoC
           description: Above this SoC the forecast-based export guard is ignored so export can discharge harder.
@@ -1030,6 +1042,7 @@ action:
       export_discharge_window_hours: !input export_discharge_window_hours
       sun_elevation_evening_threshold: !input sun_elevation_evening_threshold
       export_guard_relax_soc: !input export_guard_relax_soc
+      sunset_export_grace_hours: !input sunset_export_grace_hours
 
       pv_power_sensor_entity: !input pv_power_sensor
       consumed_power_sensor_entity: !input consumed_power_sensor
@@ -1091,8 +1104,12 @@ action:
       ha_control_enabled: "{{ is_state(ha_control_switch_entity, 'on') }}"
       pv_kw: "{{ (pv_power | float(0)) / (1000 if (pv_power | float(0)) > 1000 else 1) }}"
       load_kw_instant: "{{ (consumed_power | float(0)) / (1000 if (consumed_power | float(0)) > 1000 else 1) }}"
-      load_kw_sunrise: >
+      load_kw_30m_avg: >
         {% set avg_candidates = [
+          state_attr(consumed_power_sensor_entity, 'last_30m_mean'),
+          state_attr(consumed_power_sensor_entity, 'mean_30m'),
+          state_attr(consumed_power_sensor_entity, 'mean_30min'),
+          state_attr(consumed_power_sensor_entity, 'last_30m_average'),
           state_attr(consumed_power_sensor_entity, '1h_mean'),
           state_attr(consumed_power_sensor_entity, 'mean_1h'),
           state_attr(consumed_power_sensor_entity, 'last_1h_mean'),
@@ -1112,6 +1129,8 @@ action:
           {% set avg_w = consumed_power | float(0) %}
         {% endif %}
         {{ (avg_w | float(0)) / (1000 if (avg_w | float(0)) > 1000 else 1) }}
+      load_kw_sunrise: >
+        {{ load_kw_30m_avg }}
       load_kw: "{{ load_kw_instant }}"
       solar_power_now_kw: "{{ (solar_power_now | float(0)) / 1000 }}"
       solar_potential_kw: "{{ [pv_kw, solar_power_now_kw] | max }}"
@@ -1227,6 +1246,10 @@ action:
           {% set hours = (set_ts - now_ts) / 3600.0 %}
           {{ [hours, 0] | max }}
         {% endif %}
+
+      close_to_sunset: >
+        {% set grace = sunset_export_grace_hours | float(2) %}
+        {{ (hours_to_sunset | float(0)) <= grace }}
 
       sunrise_actual_ts: >
         {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
@@ -1354,7 +1377,7 @@ action:
         {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
         {% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
         {% set allow_full_export = battery_soc >= max_battery_soc and not is_evening_or_night and surplus_pv %}
-        {% if battery_soc >= (export_guard_relax_soc | float(90)) %}
+        {% if battery_soc >= (export_guard_relax_soc | float(90)) or close_to_sunset %}
           {{ false }}
         {% elif is_evening_or_night or allow_full_export or not forecast_available %}
           {{ false }}
@@ -1366,7 +1389,7 @@ action:
       export_forecast_guard: >
         {% set need = sunrise_fill_need_kwh | float(0) %}
         {% set required = need * 1.25 %}
-        {% if battery_soc >= (export_guard_relax_soc | float(90)) %}
+        {% if battery_soc >= (export_guard_relax_soc | float(90)) or close_to_sunset %}
           {{ false }}
         {% elif is_evening_or_night or need <= 0 %}
           {{ false }}
