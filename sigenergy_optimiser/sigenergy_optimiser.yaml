@@ -1373,6 +1373,16 @@ action:
         {% else %}
           {{ forecast_remaining < required }}
         {% endif %}
+
+      export_forecast_guard_detail: >
+        {% set need = sunrise_fill_need_kwh | float(0) %}
+        {% set required = need * 1.25 %}
+        {% set net_fc = forecast_remaining | float(0) %}
+        {% if need <= 0 or net_fc >= required %}
+          {{ '' }}
+        {% else %}
+          {{ net_fc | round(2) }} kWh < required {{ required | round(2) }} kWh
+        {% endif %}
       export_blocked_effective: >
         {{ export_blocked_for_forecast }}
 
@@ -1512,9 +1522,9 @@ action:
         {% elif export_blocked_for_forecast %}
           Export blocked (forecast short to fill battery)
         {% elif export_forecast_guard %}
-          Export blocked (forecast < reserve +25%)
+          Export blocked (forecast guard: {{ export_forecast_guard_detail }})
         {% elif export_blocked_effective %}
-          Export blocked (forecast short to sunrise target)
+          Export blocked (forecast short to sunrise target; need {{ battery_fill_need_kwh | round(2) }} kWh)
         {% elif export_high_price %}
           Exporting (FIT above high threshold)
         {% elif spike %}
@@ -1522,15 +1532,19 @@ action:
         {% elif solar_surplus_bypass %}
           Exporting (solar forecast surplus)
         {% elif battery_soc <= export_min_soc %}
-          Export blocked (SoC below sunrise target)
+          Export blocked (SoC {{ battery_soc | round(1) }}% ≤ sunrise target {{ export_min_soc | round(1) }}%)
         {% else %}
           {% set diff = battery_soc - export_min_soc %}
           {% set span = export_soc_span_dynamic %}
           {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
           {% set tier_cap = export_tier_limit | float(0) %}
-          {% if tier_cap <= 0 %}
-            Export blocked (price low)
-          {% else %}
+            {% if tier_cap <= 0 %}
+              {% if pv_safeguard %}
+                Export blocked (forecast insufficient vs sunrise reserve)
+              {% else %}
+                Export blocked (FIT {{ feedin_price | round(3) }} below thresholds)
+              {% endif %}
+            {% else %}
             {% if export_solar_override %}
               Export override (exporting excess PV)
             {% else %}
