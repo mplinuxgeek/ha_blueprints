@@ -98,6 +98,13 @@ blueprint:
       selector:
         text:
 
+    manual_option:
+      name: Manual Mode Label
+      description: Label that simply disables the optimiser without pushing limits.
+      default: Manual
+      selector:
+        text:
+
     export_mode_option:
       name: EMS Option - Force Full Export
       default: Command Discharging (PV First)
@@ -170,6 +177,7 @@ variables:
   full_export_label: !input full_export_option
   full_import_label: !input full_import_option
   block_flow_label: !input block_flow_option
+  manual_label: !input manual_option
 
   optimiser_automation_entity: !input optimiser_automation
   ems_mode_select_entity: !input ems_mode_select
@@ -216,103 +224,112 @@ action:
           - choose:
               - conditions:
                   - condition: template
-                    value_template: "{{ mode_sel == full_export_label }}"
-                sequence:
-                  - service: select.select_option
-                    target:
-                      entity_id: "{{ ems_mode_select_entity }}"
-                    data:
-                      option: !input export_mode_option
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ ess_max_charging_entity }}"
-                    data:
-                      value: !input ess_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ ess_max_discharging_entity }}"
-                    data:
-                      value: !input ess_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ grid_export_limit_entity }}"
-                    data:
-                      value: "{{ computed_export_limit }}"
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ grid_import_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ pv_max_power_limit_entity }}"
-                    data:
-                      value: !input pv_max_power_value
+                    value_template: "{{ mode_sel == manual_label }}"
+                sequence: []
               - conditions:
                   - condition: template
-                    value_template: "{{ mode_sel == full_import_label }}"
+                    value_template: "{{ mode_sel != manual_label }}"
                 sequence:
-                  - service: select.select_option
-                    target:
-                      entity_id: "{{ ems_mode_select_entity }}"
-                    data:
-                      option: !input import_mode_option
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ ess_max_charging_entity }}"
-                    data:
-                      value: !input ess_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ ess_max_discharging_entity }}"
-                    data:
-                      value: !input ess_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ grid_export_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ grid_import_limit_entity }}"
-                    data:
-                      value: "{{ computed_import_limit }}"
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ pv_max_power_limit_entity }}"
-                    data:
-                      value: !input pv_max_power_value
-              - conditions:
-                  - condition: template
-                    value_template: "{{ mode_sel == block_flow_label }}"
-                sequence:
-                  - service: select.select_option
-                    target:
-                      entity_id: "{{ ems_mode_select_entity }}"
-                    data:
-                      option: !input block_mode_option
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ ess_max_charging_entity }}"
-                    data:
-                      value: !input ess_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ ess_max_discharging_entity }}"
-                    data:
-                      value: !input ess_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ grid_export_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ grid_import_limit_entity }}"
-                    data:
-                      value: !input block_flow_limit_value
-                  - service: number.set_value
-                    target:
-                      entity_id: "{{ pv_max_power_limit_entity }}"
-                    data:
-                      value: !input pv_max_power_value
+                  - choose:
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ mode_sel == full_export_label }}"
+                        sequence:
+                          - service: select.select_option
+                            target:
+                              entity_id: "{{ ems_mode_select_entity }}"
+                            data:
+                              option: !input export_mode_option
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ ess_max_charging_entity }}"
+                            data:
+                              value: !input ess_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ ess_max_discharging_entity }}"
+                            data:
+                              value: !input ess_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ grid_export_limit_entity }}"
+                            data:
+                              value: "{{ computed_export_limit }}"
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ grid_import_limit_entity }}"
+                            data:
+                              value: !input block_flow_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ pv_max_power_limit_entity }}"
+                            data:
+                              value: !input pv_max_power_value
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ mode_sel == full_import_label }}"
+                        sequence:
+                          - service: select.select_option
+                            target:
+                              entity_id: "{{ ems_mode_select_entity }}"
+                            data:
+                              option: !input import_mode_option
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ ess_max_charging_entity }}"
+                            data:
+                              value: !input ess_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ ess_max_discharging_entity }}"
+                            data:
+                              value: !input ess_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ grid_export_limit_entity }}"
+                            data:
+                              value: !input block_flow_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ grid_import_limit_entity }}"
+                            data:
+                              value: "{{ computed_import_limit }}"
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ pv_max_power_limit_entity }}"
+                            data:
+                              value: !input pv_max_power_value
+                      - conditions:
+                          - condition: template
+                            value_template: "{{ mode_sel == block_flow_label }}"
+                        sequence:
+                          - service: select.select_option
+                            target:
+                              entity_id: "{{ ems_mode_select_entity }}"
+                            data:
+                              option: !input block_mode_option
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ ess_max_charging_entity }}"
+                            data:
+                              value: !input ess_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ ess_max_discharging_entity }}"
+                            data:
+                              value: !input ess_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ grid_export_limit_entity }}"
+                            data:
+                              value: !input block_flow_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ grid_import_limit_entity }}"
+                            data:
+                              value: !input block_flow_limit_value
+                          - service: number.set_value
+                            target:
+                              entity_id: "{{ pv_max_power_limit_entity }}"
+                            data:
+                              value: !input pv_max_power_value
