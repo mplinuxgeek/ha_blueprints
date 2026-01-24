@@ -1331,6 +1331,11 @@ action:
           {{ export_soc_span_day }}
         {% endif %}
 
+      pv_safeguard_active: >
+        {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
+        {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
+        {{ not full_export_override and not positive_fit_override and forecast_available and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) }}
+
       export_tier_limit: >
         {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
         {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
@@ -1395,11 +1400,6 @@ action:
         {% else %}
           {{ forecast_remaining < required }}
         {% endif %}
-
-      pv_safeguard_active: >
-        {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
-        {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
-        {{ not full_export_override and not positive_fit_override and forecast_available and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) }}
 
       export_forecast_guard_detail: >
         {% set need = sunrise_fill_need_kwh | float(0) %}
