@@ -1334,7 +1334,6 @@ action:
       export_tier_limit: >
         {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
         {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
-        {% set pv_safeguard = not full_export_override and not positive_fit_override and forecast_available and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) %}
         {% if export_spike_active | default(false) %}
           {{ export_limit_high }}
         {% elif export_solar_override %}
@@ -1345,15 +1344,15 @@ action:
           0
         {% elif feedin_price >= export_threshold_high %}
           {{ export_limit_high }}
-        {% elif feedin_price >= export_threshold_medium %}
-          {% if pv_safeguard %}
+          {% elif feedin_price >= export_threshold_medium %}
+          {% if pv_safeguard_active %}
             0
           {% else %}
             {% set frac = (feedin_price - export_threshold_medium) / (export_threshold_high - export_threshold_medium) %}
             {{ export_limit_medium + (frac * (export_limit_high - export_limit_medium)) }}
           {% endif %}
         {% else %}
-          {% if pv_safeguard %}
+          {% if pv_safeguard_active %}
             0
           {% else %}
             {% set frac = (feedin_price - export_threshold_low) / (export_threshold_medium - export_threshold_low) %}
@@ -1396,6 +1395,11 @@ action:
         {% else %}
           {{ forecast_remaining < required }}
         {% endif %}
+
+      pv_safeguard_active: >
+        {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
+        {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
+        {{ not full_export_override and not positive_fit_override and forecast_available and (forecast_remaining | float(0)) <= (battery_fill_need_kwh * 1.25) }}
 
       export_forecast_guard_detail: >
         {% set need = sunrise_fill_need_kwh | float(0) %}
@@ -1562,7 +1566,7 @@ action:
           {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
           {% set tier_cap = export_tier_limit | float(0) %}
             {% if tier_cap <= 0 %}
-              {% if pv_safeguard %}
+              {% if pv_safeguard_active %}
                 Export blocked (forecast insufficient vs sunrise reserve)
               {% else %}
                 Export blocked (FIT {{ feedin_price | round(3) }} below thresholds)
