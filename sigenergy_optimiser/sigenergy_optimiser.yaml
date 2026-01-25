@@ -1640,6 +1640,8 @@ action:
         {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %}
         {% if price_is_negative or feedin_is_negative %}
           0
+        {% elif feedin_price <= 0 %}
+          0
         {% elif not morning_dump_active and (export_blocked_effective or export_forecast_guard) %}
           0
         {% elif morning_dump_active %}
