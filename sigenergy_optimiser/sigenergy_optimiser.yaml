@@ -1134,6 +1134,7 @@ action:
       load_kw: "{{ load_kw_instant }}"
       solar_power_now_kw: "{{ (solar_power_now | float(0)) / 1000 }}"
       solar_potential_kw: "{{ [pv_kw, solar_power_now_kw] | max }}"
+      solar_forecast_surplus_kw: "{{ [solar_power_now_kw - load_kw, 0] | max }}"
       battery_capacity_kwh: >
         {% set cap_raw = states(rated_capacity_sensor_entity) | float(0) %}
         {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}
@@ -1672,8 +1673,9 @@ action:
             {% set span = export_soc_span_dynamic %}
             {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
             {% if export_solar_override %}
-              {% set excess_kw = [pv_kw - load_kw, 0] | max %}
-              {% set override_cap = [excess_kw, export_limit_high, export_tier_limit] | min %}
+              {% set forecast_surplus_kw = solar_forecast_surplus_kw | float(0) %}
+              {% set adjusted_surplus = forecast_surplus_kw * 0.9 %}
+              {% set override_cap = [adjusted_surplus, export_limit_high, export_tier_limit] | min %}
               {% set limit = [0, override_cap] | max | round(1) %}
               {% if limit <= 0 %}
                 0
