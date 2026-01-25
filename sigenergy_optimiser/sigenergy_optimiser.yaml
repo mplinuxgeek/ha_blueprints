@@ -1674,7 +1674,7 @@ action:
             {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
             {% if export_solar_override %}
               {% set forecast_surplus_kw = solar_forecast_surplus_kw | float(0) %}
-              {% set adjusted_surplus = forecast_surplus_kw * 0.9 %}
+              {% set adjusted_surplus = forecast_surplus_kw * 0.85 %}
               {% set override_cap = [adjusted_surplus, export_limit_high, export_tier_limit] | min %}
               {% set limit = [0, override_cap] | max | round(1) %}
               {% if limit <= 0 %}
