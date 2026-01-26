@@ -491,6 +491,17 @@ blueprint:
               step: 0.01
               unit_of_measurement: $/kWh
               mode: box
+        export_spike_min_soc:
+          name: Spike Minimum SoC
+          description: SoC floor (%) below which spike-based export is paused to protect the battery.
+          default: 10
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
         export_spike_full_power:
           name: Spike Full Power Override
           description: When enabled, a spike event uses the configured `cap_total_import` limit instead of the high export cap so the EMS can push the full grid capacity.
@@ -1013,6 +1024,7 @@ action:
       export_limit_medium: !input export_limit_medium
       export_limit_high: !input export_limit_high
       export_spike_threshold: !input export_spike_threshold
+      export_spike_min_soc: !input export_spike_min_soc
       export_spike_full_power: !input export_spike_full_power
       import_threshold_low: !input import_threshold_low
       import_threshold_medium: !input import_threshold_medium
@@ -1524,10 +1536,14 @@ action:
       desired_import_limit: >
         {% if demand_window_active %}
           {% set limit = 0 %}
-        {% elif morning_dump_active %}
+        {% set spike_min_soc_percent = export_spike_min_soc | float(10) %}
+        {% set spike_low_soc = spike and (battery_soc | float(0)) <= spike_min_soc_percent %}
+        {% set bypass_min_soc = high_price or (spike and (battery_soc | float(0)) > spike_min_soc_percent) or solar_surplus_bypass or positive_fit_override %}
           {% set limit = 0 %}
         {% elif standby_holdoff_active %}
           {% set limit = 0.01 %}
+        {% elif spike_low_soc %}
+          0
         {% elif price_is_negative %}
           {% set limit = import_limit_negative %}
         {% elif feedin_price >= export_threshold_low %}
@@ -1561,7 +1577,7 @@ action:
         {% elif export_blocked_effective %}
           Export blocked (forecast short to sunrise target; need {{ battery_fill_need_kwh | round(2) }} kWh)
         {% elif export_high_price %}
-          Exporting (FIT above high threshold)
+          Exporting (FIT above high – ${{ feedin_price | round(2) }})
         {% elif spike %}
           Export spike (full export)
         {% elif solar_surplus_bypass %}
@@ -1616,12 +1632,12 @@ action:
         {% elif price_is_negative %}
           Importing (price is negative)
         {% elif feedin_price >= export_threshold_low %}
-          Import blocked (FIT above export threshold)
+          Import blocked (FIT above export threshold – ${{ feedin_price | round(2) }})
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
-          Import blocked (price/SoC above cheap threshold)
+          Import blocked (price/SoC above cheap threshold – ${{ current_price | round(2) }})
         {% elif grid_limit_base <= 0 %}
           {% if current_price > max_price_threshold %}
-            Import blocked (price above cheap threshold)
+            Import blocked (price above cheap threshold – ${{ current_price | round(2) }})
           {% elif battery_soc >= daytime_topup_max_soc %}
             Import blocked (top-up SoC reached)
           {% else %}
