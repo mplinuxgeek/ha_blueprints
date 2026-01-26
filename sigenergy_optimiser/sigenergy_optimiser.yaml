@@ -333,7 +333,7 @@ blueprint:
               device_class: energy
         daily_load_energy:
           name: Daily Load Energy
-          description: Home load/consumption energy kWh (default `sensor.sigen_plant_daily_load_consumption`).
+          description: Home load/consumption energy kWh for daily totals (e.g., `sensor.sigen_0_daily_consumed_energy`).
           default: sensor.sigen_plant_daily_load_consumption
           selector:
             entity:
@@ -491,6 +491,12 @@ blueprint:
               step: 0.01
               unit_of_measurement: $/kWh
               mode: box
+        export_spike_full_power:
+          name: Spike Full Power Override
+          description: When enabled, a spike event uses the configured `cap_total_import` limit instead of the high export cap so the EMS can push the full grid capacity.
+          default: false
+          selector:
+            boolean: {}
         export_limit_low:
           name: Discharge/Export Limit Low
           description: Discharge power cap (kW) when feed-in price is at the low tier (grid export after serving your load).
@@ -640,8 +646,8 @@ blueprint:
               unit_of_measurement: "%"
               mode: box
         max_battery_soc:
-          name: Max Battery SoC (Paid Import Cap)
-          description: Upper SoC limit when performing paid imports.
+          name: Max Battery SoC (Import Ceil)
+          description: SoC ceiling at which paid imports stop to avoid overcharging.
           default: 50
           selector:
             number:
@@ -1007,6 +1013,7 @@ action:
       export_limit_medium: !input export_limit_medium
       export_limit_high: !input export_limit_high
       export_spike_threshold: !input export_spike_threshold
+      export_spike_full_power: !input export_spike_full_power
       import_threshold_low: !input import_threshold_low
       import_threshold_medium: !input import_threshold_medium
       import_threshold_high: !input import_threshold_high
@@ -1636,6 +1643,7 @@ action:
       desired_export_limit: >
         {% set high_price = export_high_price %}
         {% set spike = export_spike_active | default(false) %}
+        {% set spike_full_power = export_spike_full_power | bool(false) %}
         {% set bypass_min_soc = high_price or spike or solar_surplus_bypass or positive_fit_override %}
         {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %}
         {% if price_is_negative or feedin_is_negative %}
@@ -1653,7 +1661,12 @@ action:
           {% if tier_cap <= 0 %}
             0
           {% elif high_price or spike %}
-            {% set limit = [tier_cap, export_limit_high] | min | round(1) %}
+            {% if spike and spike_full_power %}
+              {% set limit_cap = [tier_cap, cap_total_import | float(0)] | max %}
+            {% else %}
+              {% set limit_cap = [tier_cap, export_limit_high | float(0)] | min %}
+            {% endif %}
+            {% set limit = limit_cap | round(1) %}
             {% if limit <= 0 %}
               0
             {% elif limit < min_grid_kw %}
