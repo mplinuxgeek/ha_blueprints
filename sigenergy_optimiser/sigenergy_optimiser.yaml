@@ -1716,14 +1716,11 @@ action:
             {% set span = export_soc_span_dynamic %}
             {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
             {% if export_solar_override %}
-              {% set forecast_surplus_kw = solar_forecast_surplus_kw | float(0) %}
-              {% set adjusted_surplus = forecast_surplus_kw * 0.85 %}
-              {% set override_cap = [adjusted_surplus, export_limit_high, export_tier_limit] | min %}
+              {% set surplus_kw = [pv_kw - load_kw, 0] | max %}
+              {% set override_cap = [surplus_kw, export_limit_high | float(0), export_tier_limit | float(0)] | min %}
               {% set limit = [0, override_cap] | max | round(1) %}
               {% if limit <= 0 %}
                 0
-              {% elif limit < min_grid_kw %}
-                {{ min_grid_kw | round(1) }}
               {% else %}
                 {{ limit }}
               {% endif %}
