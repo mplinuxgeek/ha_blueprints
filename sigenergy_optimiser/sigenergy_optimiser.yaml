@@ -1580,7 +1580,7 @@ action:
           Exporting (FIT above high – ${{ feedin_price | round(2) }})
         {% elif spike %}
           Export spike (full export)
-        {% elif solar_surplus_bypass %}
+        {% elif export_solar_override %}
           {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %}
           {% set solar_limit = [solar_forecast_surplus_kw | float(0) * 0.85,
                                 export_limit_high | float(0),
@@ -1592,6 +1592,8 @@ action:
           {% else %}
             Exporting (solar forecast surplus)
           {% endif %}
+        {% elif solar_surplus_bypass %}
+          Export limited (solar surplus bypass pending battery/forecast constraints)
         {% elif battery_soc <= export_min_soc %}
           Export blocked (SoC {{ battery_soc | round(1) }}% ≤ sunrise target {{ export_min_soc | round(1) }}%)
         {% else %}
