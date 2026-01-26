@@ -1581,7 +1581,17 @@ action:
         {% elif spike %}
           Export spike (full export)
         {% elif solar_surplus_bypass %}
-          Exporting (solar forecast surplus)
+          {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %}
+          {% set solar_limit = [solar_forecast_surplus_kw | float(0) * 0.85,
+                                export_limit_high | float(0),
+                                export_tier_limit | float(0)] | min %}
+          {% if solar_limit <= 0 %}
+            Export blocked (solar forecast surplus insufficient)
+          {% elif solar_limit < min_grid_kw %}
+            Export limited (solar surplus below min grid cap)
+          {% else %}
+            Exporting (solar forecast surplus)
+          {% endif %}
         {% elif battery_soc <= export_min_soc %}
           Export blocked (SoC {{ battery_soc | round(1) }}% ≤ sunrise target {{ export_min_soc | round(1) }}%)
         {% else %}
