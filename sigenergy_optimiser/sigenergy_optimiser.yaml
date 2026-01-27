@@ -1563,11 +1563,12 @@ action:
         {% endif %}
 
       desired_import_limit: >
-        {% if demand_window_active %}
-          {% set limit = 0 %}
+        {% set spike = export_spike_active | default(false) %}
+        {% set high_price = export_high_price %}
         {% set spike_min_soc_percent = export_spike_min_soc | float(10) %}
         {% set spike_low_soc = spike and (battery_soc | float(0)) <= spike_min_soc_percent %}
         {% set bypass_min_soc = high_price or (spike and (battery_soc | float(0)) > spike_min_soc_percent) or solar_surplus_bypass or positive_fit_override %}
+        {% if demand_window_active %}
           {% set limit = 0 %}
         {% elif standby_holdoff_active %}
           {% set limit = 0.01 %}
