@@ -1205,6 +1205,34 @@ action:
       feedin_is_negative: "{{ feedin_price < 0 }}"
       is_evening_or_night: "{{ sun_elevation < sun_elevation_evening_threshold }}"
       morning_holdoff_window: "{{ standby_holdoff_enabled and negative_price_forecast_bool and now() < today_at(standby_holdoff_end_time) }}"
+      internal_battery_soc: "{{ battery_soc }}"
+      internal_fit_price: "{{ feedin_price }}"
+      internal_general_price: "{{ current_price }}"
+      internal_next_5min_forecasts: >
+        {% set fc = state_attr(price_forecast_sensor_entity,'forecasts') %}
+        {% if fc is iterable %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% set entries = [] %}
+          {% for f in fc %}
+            {% if f is mapping and 'start_time' in f and 'per_kwh' in f %}
+              {% set ts = as_timestamp(f.start_time) %}
+              {% if ts is not none and ts >= now_ts %}
+                {% set entry = f.start_time %}
+                {% if 'end_time' in f %}
+                  {% set entry = entry ~ ' - ' ~ f.end_time %}
+                {% endif %}
+                {% set entry = entry ~ ' @ ' ~ (f.per_kwh | round(3)) %}
+                {% set entries = entries + [entry] %}
+              {% endif %}
+            {% endif %}
+            {% if entries | length >= 5 %}
+              {% break %}
+            {% endif %}
+          {% endfor %}
+          {{ entries | join(' | ') }}
+        {% else %}
+          ''
+        {% endif %}
 
       battery_soc_required_to_sunrise: >
         {% set load_s = states(consumed_power_sensor_entity) %}
@@ -1318,6 +1346,7 @@ action:
         {% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %}
         {% set forecast_ok = (forecast_remaining | float(0)) >= (battery_fill_need_kwh * 1.25) or (battery_fill_need_kwh | float(0)) <= 0 %}
         {{ feedin_price > 0
+           and feedin_price >= export_threshold_medium
            and battery_soc >= max_battery_soc
            and not is_evening_or_night
            and surplus_pv
