@@ -95,6 +95,7 @@ blueprint:
         import_threshold_medium: -0.15
         import_threshold_high: -0.3
     ```
+    
   domain: automation
   input:
     control_notifications:
