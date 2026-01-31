@@ -94,8 +94,7 @@ blueprint:
         import_threshold_low: 0.0
         import_threshold_medium: -0.15
         import_threshold_high: -0.3
-    ```
-    
+      ```
   domain: automation
   input:
     control_notifications:
@@ -430,6 +429,17 @@ blueprint:
           selector:
             entity:
               domain: sensor
+        productive_solar_threshold_kw:
+          name: Productive Solar Threshold (kW)
+          description: Minimum solar production in kW to consider as "productive solar start" (default 1.0 kW).
+          default: 1.0
+          selector:
+            number:
+              min: 0.1
+              max: 10.0
+              step: 0.1
+              unit_of_measurement: "kW"
+              mode: box
 
     export_pricing:
       name: |
@@ -1095,6 +1105,7 @@ action:
       forecast_remaining_sensor_entity: !input forecast_remaining_sensor
       forecast_today_sensor_entity: !input forecast_today_sensor
       solar_power_now_sensor_entity: !input solar_power_now_sensor
+      productive_solar_threshold_kw: !input productive_solar_threshold_kw
       available_discharge_sensor_entity: !input available_discharge_sensor
       ess_rated_discharge_power_sensor_entity: !input ess_rated_discharge_power_sensor
       ha_control_switch_entity: !input ha_control_switch
@@ -1407,6 +1418,30 @@ action:
           {% set now_ts = as_timestamp(now()) %}
           {% set grace_end = end_ts + 7200 %}
           {{ now_ts >= end_ts and now_ts < grace_end }}
+        {% endif %}
+
+      productive_solar_start_time: >
+        {% set forecasts = state_attr(forecast_today_sensor_entity, 'detailedForecast') %}
+        {% set threshold_kw = productive_solar_threshold_kw | float(1.0) %}
+        {% if forecasts is not iterable %}
+          unknown
+        {% else %}
+          {% set ns = namespace(found_time=none) %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% for forecast in forecasts %}
+            {% if forecast is mapping and 'period_start' in forecast and 'pv_estimate' in forecast %}
+              {% set forecast_ts = as_timestamp(forecast.period_start) %}
+              {% set pv_kw = forecast.pv_estimate | float(0) %}
+              {% if forecast_ts >= now_ts and pv_kw >= threshold_kw and ns.found_time is none %}
+                {% set ns.found_time = forecast_ts %}
+              {% endif %}
+            {% endif %}
+          {% endfor %}
+          {% if ns.found_time is not none %}
+            {{ ns.found_time | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+          {% else %}
+            unknown
+          {% endif %}
         {% endif %}
 
       effective_min_soc: >
