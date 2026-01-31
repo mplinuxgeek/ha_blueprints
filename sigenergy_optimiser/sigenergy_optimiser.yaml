@@ -1635,12 +1635,12 @@ action:
           Export blocked – buy price negative ({{ current_price | round(3) }})
         {% elif feedin_is_negative %}
           Export blocked – FIT negative ({{ feedin_price | round(3) }})
+        {% elif morning_dump_active %}
+          Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}
         {% elif battery_soc < min_export_target_soc and past_morning_grace_period %}
           Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target
         {% elif battery_soc < min_export_target_soc %}
           Export blocked – filling battery to sunrise target
-        {% elif morning_dump_active %}
-          Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}
         {% elif export_blocked_for_forecast %}
           Export blocked – need {{ battery_fill_need_kwh | round(1) }} kWh PV for fill
         {% elif export_forecast_guard %}
