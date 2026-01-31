@@ -169,6 +169,10 @@ blueprint:
 trigger:
   - platform: state
     entity_id: !input mode_select
+    id: mode_select_changed
+  - platform: state
+    entity_id: !input ems_mode_select
+    id: ems_mode_changed
 
 variables:
   mode_select_entity: !input mode_select
@@ -206,6 +210,15 @@ mode: single
 action:
   - choose:
       - conditions:
+          - condition: trigger
+            id: ems_mode_changed
+        sequence:
+          - service: input_select.select_option
+            target:
+              entity_id: "{{ mode_select_entity }}"
+            data:
+              option: "{{ manual_label }}"
+      - conditions:
           - condition: template
             value_template: "{{ mode_sel == automated_label }}"
         sequence:
@@ -225,7 +238,12 @@ action:
               - conditions:
                   - condition: template
                     value_template: "{{ mode_sel == manual_label }}"
-                sequence: []
+                sequence:
+                  - service: select.select_option
+                    target:
+                      entity_id: "{{ ems_mode_select_entity }}"
+                    data:
+                      option: !input block_mode_option
               - conditions:
                   - condition: template
                     value_template: "{{ mode_sel != manual_label }}"
