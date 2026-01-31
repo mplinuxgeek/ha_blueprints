@@ -1246,6 +1246,7 @@ action:
       feedin_is_negative: "{{ feedin_price < 0 }}"
       is_evening_or_night: "{{ sun_elevation < sun_elevation_evening_threshold }}"
       morning_holdoff_window: "{{ standby_holdoff_enabled and negative_price_forecast_bool and now() < today_at(standby_holdoff_end_time) }}"
+      local_time: "{{ now() }}"
       internal_battery_soc: "{{ battery_soc }}"
       internal_fit_price: "{{ feedin_price }}"
       internal_general_price: "{{ current_price }}"
@@ -1369,10 +1370,23 @@ action:
         {% if not morning_dump_enabled %}
           false
         {% else %}
-          {% set start_ts = morning_dump_start_ts %}
-          {% set end_ts = morning_dump_end_ts %}
           {% set now_ts = as_timestamp(now()) %}
-          {{ start_ts is not none and end_ts is not none and now_ts >= start_ts and now_ts <= end_ts }}
+          {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
+          {% if next_rising is none %}
+            false
+          {% else %}
+            {% set next_rising_ts = as_timestamp(next_rising) %}
+            {% set is_after_sunrise = is_state(sun_entity_id,'above_horizon') %}
+            {% if is_after_sunrise %}
+              {% set sunrise_ts = next_rising_ts - 86400 %}
+            {% else %}
+              {% set sunrise_ts = next_rising_ts %}
+            {% endif %}
+            {% set offset = (morning_dump_hours_before_sunrise | float(2)) * 3600 %}
+            {% set start_ts = sunrise_ts - offset %}
+            {% set end_ts = sunrise_ts + 3600 %}
+            {{ now_ts >= start_ts and now_ts <= end_ts }}
+          {% endif %}
         {% endif %}
 
       past_morning_grace_period: >
