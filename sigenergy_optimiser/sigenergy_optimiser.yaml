@@ -623,6 +623,17 @@ blueprint:
       icon: mdi:battery-plus-outline
       collapsed: true
       input:
+        min_export_target_soc:
+          name: Minimum SoC Before Export
+          description: Battery must reach this SoC before export is allowed (Priority #1 - fill before export). Prevents battery from discharging before it's adequately charged.
+          default: 90
+          selector:
+            number:
+              min: 0
+              max: 100
+              step: 1
+              unit_of_measurement: "%"
+              mode: box
         min_soc_floor:
           name: Minimum SoC Floor
           description: Minimum daytime battery SoC to maintain.
@@ -1036,6 +1047,7 @@ action:
       night_reserve_soc: !input night_reserve_soc
       night_reserve_buffer: !input night_reserve_buffer
       max_battery_soc: !input max_battery_soc
+      min_export_target_soc: !input min_export_target_soc
       sunrise_reserve_soc: !input sunrise_reserve_soc
       sunrise_safety_factor: !input sunrise_safety_factor
       sunrise_buffer_percent: !input sunrise_buffer_percent
@@ -1354,11 +1366,13 @@ action:
 
       standby_holdoff_active: >
         {% set cutoff = today_at(standby_holdoff_end_time) %}
+        {% set battery_can_reach_target_from_pv = (forecast_remaining | float(0)) >= (sunrise_fill_need_kwh * 1.1) %}
         {{ standby_holdoff_enabled
            and forecast_today >= pv_forecast_holdoff_kwh
            and negative_price_before_cutoff
            and now() < cutoff
-           and current_price > import_threshold_low }}
+           and current_price > import_threshold_low
+           and battery_can_reach_target_from_pv }}
 
       export_min_soc: >
         {% set base = min_soc_floor | float(0) if not export_sunrise_guard_active else effective_min_soc | float(0) %}
@@ -1444,7 +1458,9 @@ action:
         {% set required = need * 1.25 %}
         {% if battery_soc >= (export_guard_relax_soc | float(90)) or close_to_sunset %}
           {{ false }}
-        {% elif is_evening_or_night or need <= 0 %}
+        {% elif is_evening_or_night %}
+          {{ battery_soc < min_export_target_soc }}
+        {% elif need <= 0 %}
           {{ false }}
         {% else %}
           {{ forecast_remaining < required }}
@@ -1465,12 +1481,14 @@ action:
       morning_dump_limit: >
         {% if not morning_dump_active %}
           0
+        {% elif battery_soc < min_export_target_soc %}
+          0
         {% else %}
           {% set tier_cap = export_limit_high | float(25) %}
           {% if tier_cap <= 0 %}
             0
           {% else %}
-            {% set diff = battery_soc - export_min_soc %}
+            {% set diff = battery_soc - min_export_target_soc %}
             {% if diff <= 0 %}
               0
             {% else %}
@@ -1708,6 +1726,8 @@ action:
           0
         {% elif feedin_price <= 0 %}
           0
+        {% elif battery_soc < min_export_target_soc %}
+          0
         {% elif not morning_dump_active and (export_blocked_effective or export_forecast_guard) %}
           0
         {% elif morning_dump_active %}
@@ -1865,7 +1885,9 @@ action:
         {% endif %}
 
       desired_ess_discharge_limit: >
-        {% if positive_fit_override %}
+        {% if positive_fit_override and battery_soc < min_export_target_soc %}
+          0.01
+        {% elif positive_fit_override %}
           {% if allow_positive_fit_battery_discharging %}
             {{ export_limit_high | float(25) }}
           {% else %}
