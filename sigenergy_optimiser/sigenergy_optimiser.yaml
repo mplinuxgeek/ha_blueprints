@@ -1256,11 +1256,6 @@ action:
         {% endif %}
       price_is_negative: "{{ price_valid and current_price < 0 }}"
       feedin_is_negative: "{{ feedin_price < 0 }}"
-      is_evening_or_night: >
-        {% set now_ts = as_timestamp(now()) %}
-        {% set day_start = effective_day_start_ts %}
-        {% set day_end = effective_day_end_ts %}
-        {{ now_ts < day_start or now_ts > day_end }}
       morning_holdoff_window: "{{ standby_holdoff_enabled and negative_price_forecast_bool and now() < today_at(standby_holdoff_end_time) }}"
       local_time: "{{ now() }}"
       internal_battery_soc: "{{ battery_soc }}"
@@ -1599,6 +1594,12 @@ action:
             {{ fallback_ts }}
           {% endif %}
         {% endif %}
+
+      is_evening_or_night: >
+        {% set now_ts = as_timestamp(now()) %}
+        {% set day_start = effective_day_start_ts %}
+        {% set day_end = effective_day_end_ts %}
+        {{ now_ts < day_start or now_ts > day_end }}
 
       effective_min_soc: >
         {% if is_evening_or_night %}
