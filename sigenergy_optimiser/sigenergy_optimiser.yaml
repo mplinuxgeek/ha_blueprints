@@ -1884,14 +1884,6 @@ action:
           Export blocked – FIT negative ({{ feedin_price | round(3) }})
         {% elif morning_dump_active %}
           Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %}
-        {% elif battery_soc < min_export_target_soc and past_morning_grace_period %}
-          Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target
-        {% elif battery_soc < min_export_target_soc %}
-          Export blocked – filling battery to sunrise target
-        {% elif export_blocked_for_forecast %}
-          Export blocked – need {{ battery_fill_need_kwh | round(1) }} kWh PV for fill
-        {% elif export_forecast_guard %}
-          Export blocked – protecting overnight reserve
         {% elif export_high_price %}
           Exporting – high FIT ({{ feedin_price | round(3) }}){% if price_is_estimated %}*{% endif %}
         {% elif spike %}
@@ -1900,18 +1892,26 @@ action:
           Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load){% if price_is_estimated %}*{% endif %}
         {% elif solar_surplus_bypass %}
           Export limited – accumulating PV energy
+        {% elif export_blocked_for_forecast %}
+          Export blocked – need {{ battery_fill_need_kwh | round(1) }} kWh PV for fill
+        {% elif export_forecast_guard %}
+          Export blocked – protecting overnight reserve
         {% elif battery_soc <= export_min_soc %}
           Export blocked – reserve floor ({{ battery_soc | round(0) }}%)
+        {% elif battery_soc < min_export_target_soc and past_morning_grace_period %}
+          Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target
+        {% elif battery_soc < min_export_target_soc %}
+          Export blocked – SoC {{ battery_soc | round(0) }}% below sunrise target ({{ sunrise_soc_target | round(0) }}%)
         {% else %}
           {% set tier_cap = export_tier_limit | float(0) %}
           {% if tier_cap <= 0 %}
             {% if pv_safeguard_active %}
               Export blocked – PV forecast insufficient
             {% else %}
-              Export blocked – FIT below threshold
+              Export blocked – FIT {{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %} < threshold {{ export_threshold_low | round(3) }}
             {% endif %}
           {% else %}
-            Export limited – FIT {{ feedin_price | round(3) }}, headroom ok
+            Export limited – FIT {{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %}, headroom ok
           {% endif %}
         {% endif %}
 
@@ -1927,14 +1927,14 @@ action:
         {% elif price_is_negative %}
           Importing – paid ({{ current_price | round(3) }}), earning!
         {% elif feedin_price >= export_threshold_low %}
-          Import blocked – FIT profitable {{ feedin_price | round(3) }}
+          Import blocked – FIT {{ feedin_price | round(3) }} profitable > threshold {{ export_threshold_low | round(3) }}
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
-          Import blocked – battery ok, price {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %}
+          Import blocked – price {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} > threshold {{ max_price_threshold | round(3) }}, battery ok
         {% elif grid_limit_base <= 0 %}
           {% if current_price > max_price_threshold %}
-            Import blocked – price too high {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %}
+            Import blocked – price {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} > threshold {{ max_price_threshold | round(3) }}
           {% elif battery_soc >= daytime_topup_max_soc %}
-            Import blocked – at target {{ battery_soc | round(0) }}%
+            Import blocked – SoC {{ battery_soc | round(0) }}% at target {{ daytime_topup_max_soc | round(0) }}%
           {% else %}
             Import blocked – no charge needed
           {% endif %}
@@ -1943,9 +1943,9 @@ action:
           {% if price_is_negative %}
             Importing – paid ({{ current_price | round(3) }})
           {% elif cheap_supplement %}
-            Importing – cheap, PV low ({{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %})
+            Importing – price {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} < threshold {{ max_price_threshold | round(3) }}, PV low
           {% else %}
-            Importing – cheap top-up ({{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %})
+            Importing – price {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} < threshold {{ max_price_threshold | round(3) }}, charging
           {% endif %}
         {% else %}
           Import blocked – no condition met
