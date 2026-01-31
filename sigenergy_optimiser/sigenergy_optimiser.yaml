@@ -1613,107 +1613,72 @@ action:
       export_reason: >
         {% set spike = export_spike_active | default(false) %}
         {% if price_is_negative %}
-          Export blocked (negative buy price)
+          Export blocked – buy price negative ({{ current_price | round(3) }})
         {% elif feedin_is_negative %}
-          Export blocked (negative FIT)
+          Export blocked – FIT negative ({{ feedin_price | round(3) }})
+        {% elif battery_soc < min_export_target_soc %}
+          Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target
         {% elif morning_dump_active %}
-          Morning dump active (pre-sunrise export)
+          Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}
         {% elif export_blocked_for_forecast %}
-          Export blocked (forecast short to fill battery)
+          Export blocked – need {{ battery_fill_need_kwh | round(1) }} kWh PV for fill
         {% elif export_forecast_guard %}
-          Export blocked (forecast guard: {{ export_forecast_guard_detail }})
-        {% elif export_blocked_effective %}
-          Export blocked (forecast short to sunrise target; need {{ battery_fill_need_kwh | round(2) }} kWh)
+          Export blocked – protecting overnight reserve
         {% elif export_high_price %}
-          Exporting (FIT above high – ${{ feedin_price | round(2) }})
+          Exporting – high FIT ({{ feedin_price | round(3) }})
         {% elif spike %}
-          Export spike (full export)
+          Exporting – price spike ({{ feedin_price | round(3) }})
         {% elif export_solar_override %}
-          {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %}
-          {% set solar_limit = [solar_forecast_surplus_kw | float(0) * 0.85,
-                                export_limit_high | float(0),
-                                export_tier_limit | float(0)] | min %}
-          {% if solar_limit <= 0 %}
-            Export blocked (solar forecast surplus insufficient)
-          {% elif solar_limit < min_grid_kw %}
-            Export limited (solar surplus below min grid cap)
-          {% else %}
-            Exporting (solar forecast surplus)
-          {% endif %}
+          Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load)
         {% elif solar_surplus_bypass %}
-          Export limited (solar surplus bypass pending battery/forecast constraints)
+          Export limited – accumulating PV energy
         {% elif battery_soc <= export_min_soc %}
-          Export blocked (SoC {{ battery_soc | round(1) }}% ≤ sunrise target {{ export_min_soc | round(1) }}%)
+          Export blocked – reserve floor ({{ battery_soc | round(0) }}%)
         {% else %}
-          {% set diff = battery_soc - export_min_soc %}
-          {% set span = export_soc_span_dynamic %}
-          {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
           {% set tier_cap = export_tier_limit | float(0) %}
-            {% if tier_cap <= 0 %}
-              {% if pv_safeguard_active %}
-                Export blocked (forecast insufficient vs sunrise reserve)
-              {% else %}
-                Export blocked (FIT {{ feedin_price | round(3) }} below thresholds)
-              {% endif %}
+          {% if tier_cap <= 0 %}
+            {% if pv_safeguard_active %}
+              Export blocked – PV forecast insufficient
             {% else %}
-            {% if export_solar_override %}
-              Export override (exporting excess PV)
-            {% else %}
-              {% set hours = hours_to_sunrise | float(1) %}
-              {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}
-              {% set hours_div = [hours, discharge_window] | min %}
-              {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}
-              {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}
-              {% set boost = [1.5, 1 + ((tier_cap / export_limit_high) * 0.3)] | min %}
-              {% set safe_kw = safe_kw_base * boost %}
-              {% set safe_cap = [safe_kw, tier_cap] | min %}
-              {% set raw_limit = tier_cap * scale_soc * 0.9 %}
-              {% set final_limit = [raw_limit, safe_cap] | min %}
-              {% if final_limit == 0 %}
-                Export blocked (zero cap)
-              {% elif final_limit == safe_cap %}
-                Export limited (safe cap)
-              {% elif final_limit == raw_limit %}
-                Export limited (price/SoC)
-              {% else %}
-                Export limited (composite)
-              {% endif %}
+              Export blocked – FIT below threshold
             {% endif %}
+          {% else %}
+            Export limited – FIT {{ feedin_price | round(3) }}, headroom ok
           {% endif %}
         {% endif %}
 
       import_reason: >
         {% if demand_window_active %}
-          Import blocked (demand window)
+          Import blocked – demand window active
         {% elif standby_holdoff_active %}
-          Import blocked (holdoff)
+          Import blocked – holdoff (better prices/PV coming)
         {% elif not price_valid %}
-          Import blocked (price unavailable)
+          Import blocked – price unavailable
         {% elif price_is_negative %}
-          Importing (price is negative)
+          Importing – paid ({{ current_price | round(3) }}), earning!
         {% elif feedin_price >= export_threshold_low %}
-          Import blocked (FIT above export threshold – ${{ feedin_price | round(2) }})
+          Import blocked – FIT profitable {{ feedin_price | round(3) }}
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
-          Import blocked (price/SoC above cheap threshold – ${{ current_price | round(2) }})
+          Import blocked – battery ok, price {{ current_price | round(3) }}
         {% elif grid_limit_base <= 0 %}
           {% if current_price > max_price_threshold %}
-            Import blocked (price above cheap threshold – ${{ current_price | round(2) }})
+            Import blocked – price too high {{ current_price | round(3) }}
           {% elif battery_soc >= daytime_topup_max_soc %}
-            Import blocked (top-up SoC reached)
+            Import blocked – at target {{ battery_soc | round(0) }}%
           {% else %}
-            Import blocked (no top-up needed)
+            Import blocked – no charge needed
           {% endif %}
         {% elif desired_import_limit > 0 %}
           {% set cheap_supplement = (battery_soc >= daytime_topup_max_soc) and (pv_kw < load_kw) and (current_price <= max_price_threshold) %}
           {% if price_is_negative %}
-            Import enabled {{ desired_import_limit }} kW (negative price)
+            Importing – paid ({{ current_price | round(3) }})
           {% elif cheap_supplement %}
-            Import enabled {{ desired_import_limit }} kW (cheap grid supplement)
+            Importing – cheap, PV low ({{ current_price | round(3) }})
           {% else %}
-            Import enabled {{ desired_import_limit }} kW (cheap top-up)
+            Importing – cheap top-up ({{ current_price | round(3) }})
           {% endif %}
         {% else %}
-          Import blocked (no condition)
+          Import blocked – no condition met
         {% endif %}
 
       desired_export_limit: >
