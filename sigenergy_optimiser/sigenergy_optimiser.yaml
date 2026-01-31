@@ -1546,17 +1546,16 @@ action:
         {% elif battery_soc < sunrise_reserve_soc %}
           0
         {% else %}
-          {% set diff = battery_soc - sunrise_reserve_soc %}
-          {% if diff <= 0 %}
+          {% set available_kwh = available_discharge_energy | float(0) %}
+          {% set reserve_kwh = (battery_capacity_kwh | float(10)) * (sunrise_reserve_soc / 100.0) %}
+          {% set headroom_kwh = [available_kwh - reserve_kwh, 0] | max %}
+          {% if headroom_kwh <= 0 %}
             0
           {% else %}
-            {% set span = export_soc_span_dynamic %}
-            {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
             {% set hours = hours_to_sunrise | float(1) %}
             {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}
             {% set hours_div = [hours, discharge_window] | min %}
-            {% set headroom_pct = diff %}
-            {% set safe_kw_base = (headroom_pct / 100) * battery_capacity_kwh / [hours_div, 1] | max %}
+            {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}
             {% set boost = 1.5 %}
             {% set safe_kw = safe_kw_base * boost %}
             {% set limit = [safe_kw, ess_max_discharge_kw] | min | round(2) %}
