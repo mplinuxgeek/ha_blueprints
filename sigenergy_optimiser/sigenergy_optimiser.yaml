@@ -2061,16 +2061,21 @@ action:
             target:
               entity_id: !input automated_export_flag
 
-  - action: number.set_value
-    target:
-      entity_id: !input grid_export_limit
-    data:
-      value: >
-        {% if desired_export_limit > 0 %}
-          {{ desired_export_limit }}
-        {% else %}
-          0.01
-        {% endif %}
+  - choose:
+      - conditions:
+          - condition: template
+            value_template: "{{ effective_ha_control_enabled }}"
+        sequence:
+          - action: number.set_value
+            target:
+              entity_id: !input grid_export_limit
+            data:
+              value: >
+                {% if desired_export_limit > 0 %}
+                  {{ desired_export_limit }}
+                {% else %}
+                  0.01
+                {% endif %}
 
   - choose:
       - conditions:
