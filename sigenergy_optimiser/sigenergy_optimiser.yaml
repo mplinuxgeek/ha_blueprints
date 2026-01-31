@@ -1879,7 +1879,7 @@ action:
       export_reason: >
         {% set spike = export_spike_active | default(false) %}
         {% if price_is_negative %}
-          Export blocked – buy price negative ({{ current_price | round(3) }})
+          Export blocked – price negative ({{ current_price | round(3) }})
         {% elif feedin_is_negative %}
           Export blocked – FIT negative ({{ feedin_price | round(3) }})
         {% elif morning_dump_active %}
@@ -1889,7 +1889,7 @@ action:
         {% elif spike %}
           Exporting – price spike ({{ feedin_price | round(3) }}){% if price_is_estimated %}*{% endif %}
         {% elif export_solar_override %}
-          Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load){% if price_is_estimated %}*{% endif %}
+          Exporting – PV surplus ({{ solar_potential_kw | round(1) }} > load){% if price_is_estimated %}*{% endif %}
         {% elif solar_surplus_bypass %}
           Export blocked – prioritising PV charge
         {% elif export_blocked_for_forecast %}
