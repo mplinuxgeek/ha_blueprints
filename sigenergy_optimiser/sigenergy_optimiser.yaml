@@ -1503,7 +1503,26 @@ action:
         {% elif battery_soc < export_min_soc %}
           0
         {% else %}
-          {{ export_limit_high | float(25) }}
+          {% set diff = battery_soc - export_min_soc %}
+          {% if diff <= 0 %}
+            0
+          {% else %}
+            {% set span = export_soc_span_dynamic %}
+            {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
+            {% set hours = hours_to_sunrise | float(1) %}
+            {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}
+            {% set hours_div = [hours, discharge_window] | min %}
+            {% set headroom_pct = diff %}
+            {% set safe_kw_base = (headroom_pct / 100) * battery_capacity_kwh / [hours_div, 1] | max %}
+            {% set boost = 1.5 %}
+            {% set safe_kw = safe_kw_base * boost %}
+            {% set limit = [0, safe_kw] | max | round(2) %}
+            {% if limit < min_grid_transfer_kw %}
+              0
+            {% else %}
+              {{ limit }}
+            {% endif %}
+          {% endif %}
         {% endif %}
 
       forecast_remaining_after_load: >
