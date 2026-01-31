@@ -1129,14 +1129,28 @@ action:
       battery_soc_raw: "{{ states(battery_soc_sensor_entity) | float(0) }}"
       battery_soc: "{{ [0, [battery_soc_raw, 100] | min] | max }}"
       sun_elevation: "{{ state_attr(sun_entity_id, 'elevation') | float(0) }}"
+
+      # Price handling logic:
+      # - price_is_actual: True when sensor provides confirmed/actual price (preferred)
+      # - price_is_estimated: True when sensor provides estimated price (fallback)
+      # - price_available: True when any price data exists (actual or estimated)
+      # - price_valid: Only true for actual prices (used for negative price logic)
+      # - current_price: Uses actual price if available, estimated price as fallback,
+      #                  or defaults to 1.0 if no price data exists (prevents free charging)
+      # When using estimated prices, reason messages include an asterisk (*) indicator
       price_state: "{{ states(price_sensor_entity) }}"
       price_estimate_attr: "{{ state_attr(price_sensor_entity, 'estimate') | default(false) }}"
-      price_valid: "{{ price_state not in ['unknown','unavailable','none',''] and not (price_estimate_attr | bool(false)) }}"
+      price_available: "{{ price_state not in ['unknown','unavailable','none',''] }}"
+      price_is_actual: "{{ price_available and not (price_estimate_attr | bool(false)) }}"
+      price_is_estimated: "{{ price_available and (price_estimate_attr | bool(false)) }}"
+      price_valid: "{{ price_is_actual }}"
       current_price: >
-        {% if price_valid %}
+        {% if price_is_actual %}
+          {{ price_state | float(1) }}
+        {% elif price_is_estimated %}
           {{ price_state | float(1) }}
         {% else %}
-          0
+          1
         {% endif %}
       feedin_price: "{{ states(feedin_sensor_entity) | float(-999) }}"
       price_spike_active: "{{ is_state(price_spike_sensor_entity, 'on') }}"
@@ -1869,7 +1883,7 @@ action:
         {% elif feedin_is_negative %}
           Export blocked – FIT negative ({{ feedin_price | round(3) }})
         {% elif morning_dump_active %}
-          Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}
+          Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %}
         {% elif battery_soc < min_export_target_soc and past_morning_grace_period %}
           Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target
         {% elif battery_soc < min_export_target_soc %}
@@ -1879,11 +1893,11 @@ action:
         {% elif export_forecast_guard %}
           Export blocked – protecting overnight reserve
         {% elif export_high_price %}
-          Exporting – high FIT ({{ feedin_price | round(3) }})
+          Exporting – high FIT ({{ feedin_price | round(3) }}){% if price_is_estimated %}*{% endif %}
         {% elif spike %}
-          Exporting – price spike ({{ feedin_price | round(3) }})
+          Exporting – price spike ({{ feedin_price | round(3) }}){% if price_is_estimated %}*{% endif %}
         {% elif export_solar_override %}
-          Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load)
+          Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load){% if price_is_estimated %}*{% endif %}
         {% elif solar_surplus_bypass %}
           Export limited – accumulating PV energy
         {% elif battery_soc <= export_min_soc %}
@@ -1908,17 +1922,17 @@ action:
           Import blocked – demand window active
         {% elif standby_holdoff_active %}
           Import blocked – holdoff (better prices/PV coming)
-        {% elif not price_valid %}
+        {% elif not price_available %}
           Import blocked – price unavailable
         {% elif price_is_negative %}
           Importing – paid ({{ current_price | round(3) }}), earning!
         {% elif feedin_price >= export_threshold_low %}
           Import blocked – FIT profitable {{ feedin_price | round(3) }}
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
-          Import blocked – battery ok, price {{ current_price | round(3) }}
+          Import blocked – battery ok, price {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %}
         {% elif grid_limit_base <= 0 %}
           {% if current_price > max_price_threshold %}
-            Import blocked – price too high {{ current_price | round(3) }}
+            Import blocked – price too high {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %}
           {% elif battery_soc >= daytime_topup_max_soc %}
             Import blocked – at target {{ battery_soc | round(0) }}%
           {% else %}
@@ -1929,9 +1943,9 @@ action:
           {% if price_is_negative %}
             Importing – paid ({{ current_price | round(3) }})
           {% elif cheap_supplement %}
-            Importing – cheap, PV low ({{ current_price | round(3) }})
+            Importing – cheap, PV low ({{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %})
           {% else %}
-            Importing – cheap top-up ({{ current_price | round(3) }})
+            Importing – cheap top-up ({{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %})
           {% endif %}
         {% else %}
           Import blocked – no condition met
@@ -2157,6 +2171,9 @@ action:
         ] %}
         {% if demand_window_active %}
           {% set reasons = reasons + ['Demand window active'] %}
+        {% endif %}
+        {% if price_is_estimated %}
+          {% set reasons = reasons + ['*estimated price'] %}
         {% endif %}
         {{ reasons | join('; ') }}
 
