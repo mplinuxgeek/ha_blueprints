@@ -1357,7 +1357,6 @@ action:
         {% if power_abs < idle_threshold %}
           {{ none }}
         {% else %}
-          {% set cap = battery_capacity_kwh | float(0) %}
           {% set current_soc = battery_soc | float(0) %}
           {% set available = available_discharge_energy | float(0) %}
           {% set charging = batt_power > 0 %}
@@ -1366,10 +1365,15 @@ action:
             {% if current_soc >= target_soc %}
               {{ none }}
             {% else %}
-              {% set energy_needed = (target_soc - current_soc) / 100.0 * cap %}
-              {% set hours = energy_needed / power_abs %}
-              {% set minutes = (hours * 60) | round(0) %}
-              {{ [minutes, 1] | max }}
+              {% set soc_gap = target_soc - current_soc %}
+              {% if soc_gap <= 0 or current_soc <= 0 %}
+                {{ none }}
+              {% else %}
+                {% set energy_needed = available * (soc_gap / current_soc) %}
+                {% set hours = energy_needed / power_abs %}
+                {% set minutes = (hours * 60) | round(0) %}
+                {{ [minutes, 1] | max }}
+              {% endif %}
             {% endif %}
           {% else %}
             {% if available <= 0 %}
