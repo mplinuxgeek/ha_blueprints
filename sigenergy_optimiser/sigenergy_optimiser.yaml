@@ -1256,7 +1256,11 @@ action:
         {% endif %}
       price_is_negative: "{{ price_valid and current_price < 0 }}"
       feedin_is_negative: "{{ feedin_price < 0 }}"
-      is_evening_or_night: "{{ sun_elevation < sun_elevation_evening_threshold }}"
+      is_evening_or_night: >
+        {% set now_ts = as_timestamp(now()) %}
+        {% set day_start = effective_day_start_ts %}
+        {% set day_end = effective_day_end_ts %}
+        {{ now_ts < day_start or now_ts > day_end }}
       morning_holdoff_window: "{{ standby_holdoff_enabled and negative_price_forecast_bool and now() < today_at(standby_holdoff_end_time) }}"
       local_time: "{{ now() }}"
       internal_battery_soc: "{{ battery_soc }}"
@@ -1423,24 +1427,176 @@ action:
       productive_solar_start_time: >
         {% set forecasts = state_attr(forecast_today_sensor_entity, 'detailedForecast') %}
         {% set threshold_kw = productive_solar_threshold_kw | float(1.0) %}
+        {% set current_pv_kw = states(solar_power_now_sensor_entity) | float(0) %}
         {% if forecasts is not iterable %}
           unknown
         {% else %}
-          {% set ns = namespace(found_time=none) %}
           {% set now_ts = as_timestamp(now()) %}
-          {% for forecast in forecasts %}
-            {% if forecast is mapping and 'period_start' in forecast and 'pv_estimate' in forecast %}
-              {% set forecast_ts = as_timestamp(forecast.period_start) %}
-              {% set pv_kw = forecast.pv_estimate | float(0) %}
-              {% if forecast_ts >= now_ts and pv_kw >= threshold_kw and ns.found_time is none %}
-                {% set ns.found_time = forecast_ts %}
-              {% endif %}
-            {% endif %}
-          {% endfor %}
-          {% if ns.found_time is not none %}
-            {{ ns.found_time | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+          {% if current_pv_kw >= threshold_kw %}
+            {{ now_ts | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
           {% else %}
-            unknown
+            {% set ns = namespace(found_time=none, prev_above=false) %}
+            {% for forecast in forecasts %}
+              {% if forecast is mapping and 'period_start' in forecast and 'pv_estimate' in forecast %}
+                {% set forecast_ts = as_timestamp(forecast.period_start) %}
+                {% set pv_kw = forecast.pv_estimate | float(0) %}
+                {% if forecast_ts >= now_ts %}
+                  {% if pv_kw >= threshold_kw %}
+                    {% if ns.prev_above and ns.found_time is none %}
+                      {% set ns.found_time = forecast_ts %}
+                    {% endif %}
+                    {% set ns.prev_above = true %}
+                  {% else %}
+                    {% set ns.prev_above = false %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {% if ns.found_time is not none %}
+              {{ ns.found_time | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+            {% else %}
+              unknown
+            {% endif %}
+          {% endif %}
+        {% endif %}
+
+      productive_solar_start_ts: >
+        {% set forecasts = state_attr(forecast_today_sensor_entity, 'detailedForecast') %}
+        {% set threshold_kw = productive_solar_threshold_kw | float(1.0) %}
+        {% set current_pv_kw = states(solar_power_now_sensor_entity) | float(0) %}
+        {% if forecasts is not iterable %}
+          {{ none }}
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% if current_pv_kw >= threshold_kw %}
+            {{ now_ts }}
+          {% else %}
+            {% set ns = namespace(found_time=none, prev_above=false) %}
+            {% for forecast in forecasts %}
+              {% if forecast is mapping and 'period_start' in forecast and 'pv_estimate' in forecast %}
+                {% set forecast_ts = as_timestamp(forecast.period_start) %}
+                {% set pv_kw = forecast.pv_estimate | float(0) %}
+                {% if forecast_ts >= now_ts %}
+                  {% if pv_kw >= threshold_kw %}
+                    {% if ns.prev_above and ns.found_time is none %}
+                      {% set ns.found_time = forecast_ts %}
+                    {% endif %}
+                    {% set ns.prev_above = true %}
+                  {% else %}
+                    {% set ns.prev_above = false %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.found_time }}
+          {% endif %}
+        {% endif %}
+
+      effective_day_start_ts: >
+        {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
+        {% if next_rising is none %}
+          {{ as_timestamp(now()) }}
+        {% else %}
+          {% set next_rising_ts = as_timestamp(next_rising) %}
+          {% set is_after_sunrise = is_state(sun_entity_id,'above_horizon') %}
+          {% if is_after_sunrise %}
+            {% set sunrise_ts = next_rising_ts - 86400 %}
+          {% else %}
+            {% set sunrise_ts = next_rising_ts %}
+          {% endif %}
+          {% set fallback_ts = sunrise_ts + 5400 %}
+          {% set productive_ts = productive_solar_start_ts %}
+          {% if productive_ts is not none and productive_ts <= fallback_ts %}
+            {{ productive_ts }}
+          {% else %}
+            {{ fallback_ts }}
+          {% endif %}
+        {% endif %}
+
+      productive_solar_end_time: >
+        {% set forecasts = state_attr(forecast_today_sensor_entity, 'detailedForecast') %}
+        {% set threshold_kw = productive_solar_threshold_kw | float(1.0) %}
+        {% set current_pv_kw = states(solar_power_now_sensor_entity) | float(0) %}
+        {% if forecasts is not iterable %}
+          unknown
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% set next_setting = state_attr(sun_entity_id,'next_setting') %}
+          {% set sunset_ts = as_timestamp(next_setting) if next_setting is not none else now_ts + 86400 %}
+          {% if current_pv_kw < threshold_kw %}
+            {{ now_ts | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+          {% else %}
+            {% set ns = namespace(found_time=none, prev_above=false) %}
+            {% for forecast in forecasts | reverse %}
+              {% if forecast is mapping and 'period_start' in forecast and 'pv_estimate' in forecast %}
+                {% set forecast_ts = as_timestamp(forecast.period_start) %}
+                {% set pv_kw = forecast.pv_estimate | float(0) %}
+                {% if forecast_ts <= sunset_ts %}
+                  {% if pv_kw >= threshold_kw %}
+                    {% if ns.prev_above and ns.found_time is none %}
+                      {% set ns.found_time = forecast_ts %}
+                    {% endif %}
+                    {% set ns.prev_above = true %}
+                  {% else %}
+                    {% set ns.prev_above = false %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {% if ns.found_time is not none %}
+              {{ ns.found_time | timestamp_custom('%Y-%m-%d %H:%M:%S') }}
+            {% else %}
+              unknown
+            {% endif %}
+          {% endif %}
+        {% endif %}
+
+      productive_solar_end_ts: >
+        {% set forecasts = state_attr(forecast_today_sensor_entity, 'detailedForecast') %}
+        {% set threshold_kw = productive_solar_threshold_kw | float(1.0) %}
+        {% set current_pv_kw = states(solar_power_now_sensor_entity) | float(0) %}
+        {% if forecasts is not iterable %}
+          {{ none }}
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% set next_setting = state_attr(sun_entity_id,'next_setting') %}
+          {% set sunset_ts = as_timestamp(next_setting) if next_setting is not none else now_ts + 86400 %}
+          {% if current_pv_kw < threshold_kw %}
+            {{ now_ts }}
+          {% else %}
+            {% set ns = namespace(found_time=none, prev_above=false) %}
+            {% for forecast in forecasts | reverse %}
+              {% if forecast is mapping and 'period_start' in forecast and 'pv_estimate' in forecast %}
+                {% set forecast_ts = as_timestamp(forecast.period_start) %}
+                {% set pv_kw = forecast.pv_estimate | float(0) %}
+                {% if forecast_ts <= sunset_ts %}
+                  {% if pv_kw >= threshold_kw %}
+                    {% if ns.prev_above and ns.found_time is none %}
+                      {% set ns.found_time = forecast_ts %}
+                    {% endif %}
+                    {% set ns.prev_above = true %}
+                  {% else %}
+                    {% set ns.prev_above = false %}
+                  {% endif %}
+                {% endif %}
+              {% endif %}
+            {% endfor %}
+            {{ ns.found_time }}
+          {% endif %}
+        {% endif %}
+
+      effective_day_end_ts: >
+        {% set next_setting = state_attr(sun_entity_id,'next_setting') %}
+        {% if next_setting is none %}
+          {{ as_timestamp(now()) }}
+        {% else %}
+          {% set sunset_ts = as_timestamp(next_setting) %}
+          {% set fallback_ts = sunset_ts - 5400 %}
+          {% set productive_ts = productive_solar_end_ts %}
+          {% if productive_ts is not none and productive_ts >= fallback_ts %}
+            {{ productive_ts }}
+          {% else %}
+            {{ fallback_ts }}
           {% endif %}
         {% endif %}
 
@@ -1591,17 +1747,11 @@ action:
             {% set now_ts = as_timestamp(now()) %}
             {% set start_ts = morning_dump_start_ts %}
             {% set end_ts = morning_dump_end_ts %}
-            {% set window_duration = end_ts - start_ts %}
             {% set time_remaining = end_ts - now_ts %}
-            {% set time_elapsed = now_ts - start_ts %}
-            {% set progress_ratio = time_elapsed / window_duration if window_duration > 0 else 0 %}
+            {% set hours_left = time_remaining / 3600.0 %}
             {% set max_discharge = ess_max_discharge_kw | float(28.8) %}
-            {% set safe_kw = max_discharge %}
-            {% if progress_ratio > 0.8 %}
-              {% set hours_left = time_remaining / 3600.0 %}
-              {% set required_rate = headroom_kwh / [hours_left, 0.1] | max %}
-              {% set safe_kw = [required_rate * 1.2, max_discharge] | min %}
-            {% endif %}
+            {% set safe_rate = headroom_kwh / [hours_left, 0.1] | max %}
+            {% set safe_kw = [safe_rate * 1.2, max_discharge] | min %}
             {% set limit = [safe_kw, max_discharge] | min | round(2) %}
             {% if limit < min_grid_transfer_kw %}
               0
