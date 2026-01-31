@@ -1487,7 +1487,7 @@ action:
           {% endif %}
         {% endif %}
 
-      effective_day_start_ts: >
+      day_effective_start_ts: >
         {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
         {% if next_rising is none %}
           {{ as_timestamp(now()) }}
@@ -1580,7 +1580,7 @@ action:
           {% endif %}
         {% endif %}
 
-      effective_day_end_ts: >
+      day_effective_end_ts: >
         {% set next_setting = state_attr(sun_entity_id,'next_setting') %}
         {% if next_setting is none %}
           {{ as_timestamp(now()) }}
@@ -1597,8 +1597,8 @@ action:
 
       is_evening_or_night: >
         {% set now_ts = as_timestamp(now()) %}
-        {% set day_start = effective_day_start_ts %}
-        {% set day_end = effective_day_end_ts %}
+        {% set day_start = day_effective_start_ts %}
+        {% set day_end = day_effective_end_ts %}
         {{ now_ts < day_start or now_ts > day_end }}
 
       effective_min_soc: >
