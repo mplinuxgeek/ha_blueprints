@@ -1891,7 +1891,7 @@ action:
         {% elif export_solar_override %}
           Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load){% if price_is_estimated %}*{% endif %}
         {% elif solar_surplus_bypass %}
-          Export limited – accumulating PV energy
+          Export blocked – prioritising PV charge
         {% elif export_blocked_for_forecast %}
           Export blocked – need {{ battery_fill_need_kwh | round(1) }} kWh PV for fill
         {% elif export_forecast_guard %}
