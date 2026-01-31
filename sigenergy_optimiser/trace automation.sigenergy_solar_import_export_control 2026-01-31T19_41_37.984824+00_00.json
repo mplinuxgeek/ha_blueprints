@@ -1,38 +1,38 @@
 {
   "trace": {
     "last_step": "action/19",
-    "run_id": "28a0eaa2e1273401e5e68daaa525e497",
+    "run_id": "66e64dcfd3bb2577d0fe1fdb26c3004f",
     "state": "stopped",
     "script_execution": "finished",
     "timestamp": {
-      "start": "2026-01-31T07:42:34.007675+00:00",
-      "finish": "2026-01-31T07:42:39.321452+00:00"
+      "start": "2026-01-31T19:41:37.984824+00:00",
+      "finish": "2026-01-31T19:41:43.312361+00:00"
     },
     "domain": "automation",
     "item_id": "1768000027792",
-    "trigger": "state of sensor.sigen_plant_pv_power",
+    "trigger": "state of sensor.sigen_plant_consumed_power",
     "trace": {
       "trigger/0": [
         {
           "path": "trigger/0",
-          "timestamp": "2026-01-31T07:42:34.007719+00:00",
+          "timestamp": "2026-01-31T19:41:37.984864+00:00",
           "changed_variables": {
             "this": {
               "entity_id": "automation.sigenergy_solar_import_export_control",
               "state": "on",
               "attributes": {
                 "id": "1768000027792",
-                "last_triggered": "2026-01-31T07:42:23.999971+00:00",
+                "last_triggered": "2026-01-31T19:41:27.994923+00:00",
                 "mode": "single",
                 "current": 0,
                 "friendly_name": "SigEnergy Solar Import & Export Control"
               },
-              "last_changed": "2026-01-31T07:41:04.312599+00:00",
-              "last_reported": "2026-01-31T07:42:29.296296+00:00",
-              "last_updated": "2026-01-31T07:42:29.296296+00:00",
+              "last_changed": "2026-01-31T19:40:16.860225+00:00",
+              "last_reported": "2026-01-31T19:41:33.315712+00:00",
+              "last_updated": "2026-01-31T19:41:33.315712+00:00",
               "context": {
-                "id": "01KG9G1PM9K7JX833TG80V4TVF",
-                "parent_id": "01KG9G1PM2G3BPVM11AMZF94BS",
+                "id": "01KGAS6BE5VH6DA8P49XBSSQB7",
+                "parent_id": "01KGAS6BDX0DV3DGEJ5ZPPEE9C",
                 "user_id": null
               }
             },
@@ -41,48 +41,48 @@
               "idx": "0",
               "alias": null,
               "platform": "state",
-              "entity_id": "sensor.sigen_plant_pv_power",
+              "entity_id": "sensor.sigen_plant_consumed_power",
               "from_state": {
-                "entity_id": "sensor.sigen_plant_pv_power",
-                "state": "7.208000",
+                "entity_id": "sensor.sigen_plant_consumed_power",
+                "state": "1.859000",
                 "attributes": {
                   "state_class": "measurement",
                   "unit_of_measurement": "kW",
                   "device_class": "power",
-                  "icon": "mdi:solar-power",
-                  "friendly_name": "Sigen Plant PV Power"
+                  "icon": "mdi:home-lightning-bolt",
+                  "friendly_name": "Sigen Plant Consumed Power"
                 },
-                "last_changed": "2026-01-31T07:42:28.994422+00:00",
-                "last_reported": "2026-01-31T07:42:28.994422+00:00",
-                "last_updated": "2026-01-31T07:42:28.994422+00:00",
+                "last_changed": "2026-01-31T19:41:32.989981+00:00",
+                "last_reported": "2026-01-31T19:41:32.989981+00:00",
+                "last_updated": "2026-01-31T19:41:32.989981+00:00",
                 "context": {
-                  "id": "01KG9G1PM261VHHWHA6CHHM0M1",
+                  "id": "01KGAS6BDX0DV3DGEJ5ZPPEE9C",
                   "parent_id": null,
                   "user_id": null
                 }
               },
               "to_state": {
-                "entity_id": "sensor.sigen_plant_pv_power",
-                "state": "7.110000",
+                "entity_id": "sensor.sigen_plant_consumed_power",
+                "state": "1.813000",
                 "attributes": {
                   "state_class": "measurement",
                   "unit_of_measurement": "kW",
                   "device_class": "power",
-                  "icon": "mdi:solar-power",
-                  "friendly_name": "Sigen Plant PV Power"
+                  "icon": "mdi:home-lightning-bolt",
+                  "friendly_name": "Sigen Plant Consumed Power"
                 },
-                "last_changed": "2026-01-31T07:42:34.004668+00:00",
-                "last_reported": "2026-01-31T07:42:34.273978+00:00",
-                "last_updated": "2026-01-31T07:42:34.004668+00:00",
+                "last_changed": "2026-01-31T19:41:37.982154+00:00",
+                "last_reported": "2026-01-31T19:41:38.269887+00:00",
+                "last_updated": "2026-01-31T19:41:37.982154+00:00",
                 "context": {
-                  "id": "01KG9G1VGMHA5MCSGJWCJJ1Y90",
+                  "id": "01KGAS6G9YNPKWNZE0VEQW9RRC",
                   "parent_id": null,
                   "user_id": null
                 }
               },
               "for": null,
               "attribute": null,
-              "description": "state of sensor.sigen_plant_pv_power"
+              "description": "state of sensor.sigen_plant_consumed_power"
             }
           }
         }
@@ -90,11 +90,11 @@
       "action/0": [
         {
           "path": "action/0",
-          "timestamp": "2026-01-31T07:42:34.007881+00:00",
+          "timestamp": "2026-01-31T19:41:37.985019+00:00",
           "changed_variables": {
             "context": {
-              "id": "01KG9G1VGQ7GP3XTE0JH770P4W",
-              "parent_id": "01KG9G1VGMHA5MCSGJWCJJ1Y90",
+              "id": "01KGAS6GA0RNC1XXKZ01FYDKPG",
+              "parent_id": "01KGAS6G9YNPKWNZE0VEQW9RRC",
               "user_id": null
             },
             "notification_service": "notify.mobile_app_pixel_10_pro_xl",
@@ -187,103 +187,104 @@
             "last_import_notification_entity": "input_text.sigenergy_last_import_notification",
             "reason_text_entity": "input_text.sigenergy_reason",
             "min_soc_to_sunrise_helper_entity": "input_number.battery_min_soc_to_last_till_sunrise",
-            "pv_power": 7.11,
-            "consumed_power": 5.772,
-            "battery_soc_raw": 92.3,
-            "battery_soc": 92.3,
-            "sun_elevation": 26.05,
-            "price_state": 0.3,
+            "pv_power": 0,
+            "consumed_power": 1.813,
+            "battery_soc_raw": 46,
+            "battery_soc": 46,
+            "sun_elevation": -5.26,
+            "price_state": 0.29,
             "price_estimate_attr": false,
             "price_valid": true,
-            "current_price": 0.3,
-            "feedin_price": 0.04,
+            "current_price": 0.29,
+            "feedin_price": 0.03,
             "price_spike_active": false,
             "demand_window_active": false,
             "export_spike_active": false,
             "positive_fit_override": false,
-            "solar_power_now": 6202,
+            "solar_power_now": 0,
             "current_mode": "Maximum Self Consumption",
             "current_export_limit": 0.01,
             "current_import_limit": 0.01,
-            "current_pv_max_power_limit": 25,
-            "forecast_remaining": 7.7699,
-            "forecast_today": 103.5468,
-            "available_discharge_energy": 46.52,
+            "current_pv_max_power_limit": 3,
+            "forecast_remaining": 140.2162,
+            "forecast_today": 140.2163,
+            "available_discharge_energy": 22.8,
             "ha_control_enabled": true,
-            "pv_kw": 7.11,
-            "load_kw_instant": 5.772,
-            "load_kw_30m_avg": 5.772,
-            "load_kw_sunrise": 5.772,
-            "load_kw": 5.772,
-            "solar_power_now_kw": 6.202,
-            "solar_potential_kw": 7.11,
-            "solar_forecast_surplus_kw": 0.4299999999999997,
-            "battery_capacity_kwh": 48.36,
-            "battery_fill_need_kwh": 1.8399999999999963,
-            "negative_price_forecast_ahead": false,
-            "negative_price_forecast_bool": false,
+            "pv_kw": 0,
+            "load_kw_instant": 1.813,
+            "load_kw_30m_avg": 1.813,
+            "load_kw_sunrise": 1.813,
+            "load_kw": 1.813,
+            "solar_power_now_kw": 0,
+            "solar_potential_kw": 0,
+            "solar_forecast_surplus_kw": 0,
+            "battery_capacity_kwh": 0.05,
+            "battery_fill_need_kwh": 0,
+            "negative_price_forecast_ahead": true,
+            "negative_price_forecast_bool": true,
             "negative_price_before_cutoff": false,
             "price_is_negative": false,
             "feedin_is_negative": false,
-            "is_evening_or_night": false,
-            "morning_holdoff_window": false,
-            "internal_battery_soc": 92.3,
-            "internal_fit_price": 0.04,
-            "internal_general_price": 0.3,
+            "is_evening_or_night": true,
+            "morning_holdoff_window": true,
+            "internal_battery_soc": 46,
+            "internal_fit_price": 0.03,
+            "internal_general_price": 0.29,
             "internal_next_5min_forecasts": "",
-            "battery_soc_required_to_sunrise": 100,
-            "sunrise_soc_target": 50,
+            "battery_soc_required_to_sunrise": 10.207962942843068,
+            "sunrise_soc_target": 10.207962942843068,
             "sunrise_fill_need_kwh": 0,
-            "hours_to_sunrise": 13.373611053625742,
-            "hours_to_sunset": 2.1911899908383687,
+            "hours_to_sunrise": 1.3891730908552806,
+            "hours_to_sunset": 14.19406518306997,
             "close_to_sunset": false,
             "sunrise_actual_ts": 1769889899.01076,
             "morning_dump_end_ts": 1769893499.01076,
             "morning_dump_start_ts": 1769882699.01076,
-            "morning_dump_active": false,
+            "morning_dump_active": true,
+            "past_morning_grace_period": false,
             "effective_min_soc": 5,
-            "export_sunrise_guard_active": false,
+            "export_sunrise_guard_active": true,
             "export_solar_override": false,
             "standby_holdoff_active": false,
-            "export_min_soc": 5,
+            "export_min_soc": 10.207962942843068,
             "export_start_low": 0.1,
             "export_stop_low": 0.09000000000000001,
-            "export_soc_span_dynamic": 20,
+            "export_soc_span_dynamic": 25,
             "pv_safeguard_active": false,
             "export_tier_limit": 0,
             "export_high_price": false,
             "solar_surplus_bypass": false,
             "export_blocked_for_forecast": false,
-            "export_forecast_guard": false,
+            "export_forecast_guard": true,
             "export_forecast_guard_detail": "",
             "export_blocked_effective": false,
             "morning_dump_limit": 0,
-            "forecast_remaining_after_load": 0,
+            "forecast_remaining_after_load": 114.48235982309413,
             "grid_limit_base": 0,
             "import_limit_negative": 0,
             "desired_import_limit": 0,
-            "export_reason": "Export blocked – FIT below threshold",
-            "import_reason": "Import blocked – battery ok, price 0.3",
+            "export_reason": "Export blocked – filling battery to sunrise target",
+            "import_reason": "Import blocked – battery ok, price 0.29",
             "desired_export_limit": 0,
             "needs_ha_control_switch": false,
             "effective_ha_control_enabled": true,
             "desired_ems_mode": "Maximum Self Consumption",
-            "battery_only_mode": false,
-            "desired_pv_max_power_limit": 25,
+            "battery_only_mode": true,
+            "desired_pv_max_power_limit": 3,
             "desired_ess_charge_limit": 0.01,
             "desired_ess_discharge_limit": 0.01,
             "reason_should_log": true,
-            "outcome_reason": "Export blocked – FIT below threshold; Import blocked – battery ok, price 0.3; PV Limit 25.0 kW",
-            "daily_export_kwh": 0.65,
+            "outcome_reason": "Export blocked – filling battery to sunrise target; Import blocked – battery ok, price 0.29; PV Limit 3.0 kW",
+            "daily_export_kwh": 0.08,
             "export_session_start_kwh": 0.05,
-            "export_session_kwh": 0.6,
-            "daily_import_kwh": 16.3,
+            "export_session_kwh": 0.03,
+            "daily_import_kwh": 0.1,
             "import_session_start_kwh": 45.7,
             "import_session_kwh": 0,
-            "daily_load_kwh": 65.09,
-            "daily_battery_charge_kwh": 51.61,
-            "daily_battery_discharge_kwh": 15.81,
-            "daily_pv_kwh": 85.24,
+            "daily_load_kwh": 10.35,
+            "daily_battery_charge_kwh": 0,
+            "daily_battery_discharge_kwh": 10.33,
+            "daily_pv_kwh": 0,
             "last_export_notification_state": "stopped",
             "last_import_notification_state": "stopped"
           }
@@ -292,7 +293,7 @@
       "action/1": [
         {
           "path": "action/1",
-          "timestamp": "2026-01-31T07:42:34.015389+00:00",
+          "timestamp": "2026-01-31T19:41:37.989584+00:00",
           "result": {
             "choice": 0
           }
@@ -301,7 +302,7 @@
       "action/1/choose/0": [
         {
           "path": "action/1/choose/0",
-          "timestamp": "2026-01-31T07:42:34.015558+00:00",
+          "timestamp": "2026-01-31T19:41:37.989678+00:00",
           "result": {
             "result": true
           }
@@ -310,7 +311,7 @@
       "action/1/choose/0/conditions/0": [
         {
           "path": "action/1/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.015893+00:00",
+          "timestamp": "2026-01-31T19:41:37.989864+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -320,13 +321,13 @@
       "action/1/choose/0/sequence/0": [
         {
           "path": "action/1/choose/0/sequence/0",
-          "timestamp": "2026-01-31T07:42:34.016583+00:00",
+          "timestamp": "2026-01-31T19:41:37.991945+00:00",
           "result": {
             "params": {
               "domain": "input_number",
               "service": "set_value",
               "service_data": {
-                "value": 100,
+                "value": 10.207962942843068,
                 "entity_id": [
                   "input_number.battery_min_soc_to_last_till_sunrise"
                 ]
@@ -344,13 +345,13 @@
       "action/2": [
         {
           "path": "action/2",
-          "timestamp": "2026-01-31T07:42:34.017691+00:00"
+          "timestamp": "2026-01-31T19:41:37.993477+00:00"
         }
       ],
       "action/2/choose/0": [
         {
           "path": "action/2/choose/0",
-          "timestamp": "2026-01-31T07:42:34.017834+00:00",
+          "timestamp": "2026-01-31T19:41:37.993668+00:00",
           "result": {
             "result": false
           }
@@ -359,7 +360,7 @@
       "action/2/choose/0/conditions/0": [
         {
           "path": "action/2/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.018186+00:00",
+          "timestamp": "2026-01-31T19:41:37.994122+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -369,13 +370,13 @@
       "action/3": [
         {
           "path": "action/3",
-          "timestamp": "2026-01-31T07:42:34.018906+00:00"
+          "timestamp": "2026-01-31T19:41:37.994837+00:00"
         }
       ],
       "action/3/choose/0": [
         {
           "path": "action/3/choose/0",
-          "timestamp": "2026-01-31T07:42:34.019063+00:00",
+          "timestamp": "2026-01-31T19:41:37.994993+00:00",
           "result": {
             "result": false
           }
@@ -384,7 +385,7 @@
       "action/3/choose/0/conditions/0": [
         {
           "path": "action/3/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.019359+00:00",
+          "timestamp": "2026-01-31T19:41:37.995331+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -394,7 +395,7 @@
       "action/4": [
         {
           "path": "action/4",
-          "timestamp": "2026-01-31T07:42:34.019883+00:00",
+          "timestamp": "2026-01-31T19:41:37.996032+00:00",
           "result": {
             "choice": 0
           }
@@ -403,7 +404,7 @@
       "action/4/choose/0": [
         {
           "path": "action/4/choose/0",
-          "timestamp": "2026-01-31T07:42:34.019976+00:00",
+          "timestamp": "2026-01-31T19:41:37.996169+00:00",
           "result": {
             "result": true
           }
@@ -412,7 +413,7 @@
       "action/4/choose/0/conditions/0": [
         {
           "path": "action/4/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.020202+00:00",
+          "timestamp": "2026-01-31T19:41:37.996499+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -422,13 +423,13 @@
       "action/4/choose/0/sequence/0": [
         {
           "path": "action/4/choose/0/sequence/0",
-          "timestamp": "2026-01-31T07:42:34.020650+00:00"
+          "timestamp": "2026-01-31T19:41:37.997183+00:00"
         }
       ],
       "action/4/choose/0/sequence/0/choose/0": [
         {
           "path": "action/4/choose/0/sequence/0/choose/0",
-          "timestamp": "2026-01-31T07:42:34.020738+00:00",
+          "timestamp": "2026-01-31T19:41:37.997347+00:00",
           "result": {
             "result": false
           }
@@ -437,7 +438,7 @@
       "action/4/choose/0/sequence/0/choose/0/conditions/0": [
         {
           "path": "action/4/choose/0/sequence/0/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.020937+00:00",
+          "timestamp": "2026-01-31T19:41:37.997748+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -447,7 +448,7 @@
       "action/4/choose/0/sequence/0/choose/0/conditions/1": [
         {
           "path": "action/4/choose/0/sequence/0/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.021308+00:00",
+          "timestamp": "2026-01-31T19:41:37.998962+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -457,7 +458,7 @@
       "action/5": [
         {
           "path": "action/5",
-          "timestamp": "2026-01-31T07:42:34.021834+00:00",
+          "timestamp": "2026-01-31T19:41:37.999905+00:00",
           "result": {
             "choice": 0
           }
@@ -466,7 +467,7 @@
       "action/5/choose/0": [
         {
           "path": "action/5/choose/0",
-          "timestamp": "2026-01-31T07:42:34.021915+00:00",
+          "timestamp": "2026-01-31T19:41:38.000053+00:00",
           "result": {
             "result": true
           }
@@ -475,7 +476,7 @@
       "action/5/choose/0/conditions/0": [
         {
           "path": "action/5/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.022150+00:00",
+          "timestamp": "2026-01-31T19:41:38.000407+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -485,7 +486,7 @@
       "action/5/choose/0/conditions/1": [
         {
           "path": "action/5/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.022652+00:00",
+          "timestamp": "2026-01-31T19:41:38.001012+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -495,13 +496,13 @@
       "action/5/choose/0/sequence/0": [
         {
           "path": "action/5/choose/0/sequence/0",
-          "timestamp": "2026-01-31T07:42:34.023133+00:00"
+          "timestamp": "2026-01-31T19:41:38.001696+00:00"
         }
       ],
       "action/5/choose/0/sequence/0/choose/0": [
         {
           "path": "action/5/choose/0/sequence/0/choose/0",
-          "timestamp": "2026-01-31T07:42:34.023388+00:00",
+          "timestamp": "2026-01-31T19:41:38.001847+00:00",
           "result": {
             "result": false
           }
@@ -510,7 +511,7 @@
       "action/5/choose/0/sequence/0/choose/0/conditions/0": [
         {
           "path": "action/5/choose/0/sequence/0/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.023607+00:00",
+          "timestamp": "2026-01-31T19:41:38.002264+00:00",
           "result": {
             "result": false
           }
@@ -519,7 +520,7 @@
       "action/5/choose/0/sequence/0/choose/0/conditions/0/entity_id/0": [
         {
           "path": "action/5/choose/0/sequence/0/choose/0/conditions/0/entity_id/0",
-          "timestamp": "2026-01-31T07:42:34.023802+00:00",
+          "timestamp": "2026-01-31T19:41:38.002626+00:00",
           "result": {
             "result": false,
             "state": "off",
@@ -530,13 +531,13 @@
       "action/5/choose/0/sequence/1": [
         {
           "path": "action/5/choose/0/sequence/1",
-          "timestamp": "2026-01-31T07:42:34.024108+00:00"
+          "timestamp": "2026-01-31T19:41:38.003168+00:00"
         }
       ],
       "action/5/choose/0/sequence/1/choose/0": [
         {
           "path": "action/5/choose/0/sequence/1/choose/0",
-          "timestamp": "2026-01-31T07:42:34.024190+00:00",
+          "timestamp": "2026-01-31T19:41:38.003310+00:00",
           "result": {
             "result": false
           }
@@ -545,7 +546,7 @@
       "action/5/choose/0/sequence/1/choose/0/conditions/0": [
         {
           "path": "action/5/choose/0/sequence/1/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.024398+00:00",
+          "timestamp": "2026-01-31T19:41:38.003676+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -555,7 +556,7 @@
       "action/5/choose/0/sequence/2": [
         {
           "path": "action/5/choose/0/sequence/2",
-          "timestamp": "2026-01-31T07:42:34.024859+00:00",
+          "timestamp": "2026-01-31T19:41:38.005579+00:00",
           "result": {
             "params": {
               "domain": "input_boolean",
@@ -574,7 +575,7 @@
       "action/6": [
         {
           "path": "action/6",
-          "timestamp": "2026-01-31T07:42:34.025328+00:00",
+          "timestamp": "2026-01-31T19:41:38.006834+00:00",
           "result": {
             "params": {
               "domain": "number",
@@ -598,7 +599,7 @@
       "action/7": [
         {
           "path": "action/7",
-          "timestamp": "2026-01-31T07:42:34.276593+00:00",
+          "timestamp": "2026-01-31T19:41:38.271233+00:00",
           "result": {
             "choice": 0
           }
@@ -607,7 +608,7 @@
       "action/7/choose/0": [
         {
           "path": "action/7/choose/0",
-          "timestamp": "2026-01-31T07:42:34.276707+00:00",
+          "timestamp": "2026-01-31T19:41:38.271340+00:00",
           "result": {
             "result": true
           }
@@ -616,7 +617,7 @@
       "action/7/choose/0/conditions/0": [
         {
           "path": "action/7/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.276933+00:00",
+          "timestamp": "2026-01-31T19:41:38.271553+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -626,13 +627,13 @@
       "action/7/choose/0/sequence/0": [
         {
           "path": "action/7/choose/0/sequence/0",
-          "timestamp": "2026-01-31T07:42:34.277467+00:00"
+          "timestamp": "2026-01-31T19:41:38.272059+00:00"
         }
       ],
       "action/7/choose/0/sequence/0/choose/0": [
         {
           "path": "action/7/choose/0/sequence/0/choose/0",
-          "timestamp": "2026-01-31T07:42:34.277568+00:00",
+          "timestamp": "2026-01-31T19:41:38.272162+00:00",
           "result": {
             "result": false
           }
@@ -641,7 +642,7 @@
       "action/7/choose/0/sequence/0/choose/0/conditions/0": [
         {
           "path": "action/7/choose/0/sequence/0/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.277790+00:00",
+          "timestamp": "2026-01-31T19:41:38.272378+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -651,7 +652,7 @@
       "action/7/choose/0/sequence/0/choose/0/conditions/1": [
         {
           "path": "action/7/choose/0/sequence/0/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.278207+00:00",
+          "timestamp": "2026-01-31T19:41:38.272761+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -661,7 +662,7 @@
       "action/7/choose/0/sequence/1": [
         {
           "path": "action/7/choose/0/sequence/1",
-          "timestamp": "2026-01-31T07:42:34.278666+00:00",
+          "timestamp": "2026-01-31T19:41:38.273220+00:00",
           "result": {
             "choice": 0
           }
@@ -670,7 +671,7 @@
       "action/7/choose/0/sequence/1/choose/0": [
         {
           "path": "action/7/choose/0/sequence/1/choose/0",
-          "timestamp": "2026-01-31T07:42:34.278771+00:00",
+          "timestamp": "2026-01-31T19:41:38.273303+00:00",
           "result": {
             "result": true
           }
@@ -679,7 +680,7 @@
       "action/7/choose/0/sequence/1/choose/0/conditions/0": [
         {
           "path": "action/7/choose/0/sequence/1/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.278990+00:00",
+          "timestamp": "2026-01-31T19:41:38.273514+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -689,7 +690,7 @@
       "action/7/choose/0/sequence/1/choose/0/conditions/1": [
         {
           "path": "action/7/choose/0/sequence/1/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.279391+00:00",
+          "timestamp": "2026-01-31T19:41:38.273882+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -699,14 +700,14 @@
       "action/7/choose/0/sequence/1/choose/0/sequence/0": [
         {
           "path": "action/7/choose/0/sequence/1/choose/0/sequence/0",
-          "timestamp": "2026-01-31T07:42:34.279861+00:00",
+          "timestamp": "2026-01-31T19:41:38.274306+00:00",
           "result": {
             "params": {
               "domain": "logbook",
               "service": "log",
               "service_data": {
                 "name": "SigEnergy Import",
-                "message": "Import DISABLED → Session 0.0 kWh Last Limit=0.01 kW Price=0.3",
+                "message": "Import DISABLED → Session 0.0 kWh Last Limit=0.01 kW Price=0.29",
                 "entity_id": "number.sigen_plant_grid_import_limitation"
               },
               "target": {}
@@ -718,13 +719,13 @@
       "action/7/choose/0/sequence/1/choose/0/sequence/1": [
         {
           "path": "action/7/choose/0/sequence/1/choose/0/sequence/1",
-          "timestamp": "2026-01-31T07:42:34.280388+00:00"
+          "timestamp": "2026-01-31T19:41:38.276190+00:00"
         }
       ],
       "action/7/choose/0/sequence/1/choose/0/sequence/1/choose/0": [
         {
           "path": "action/7/choose/0/sequence/1/choose/0/sequence/1/choose/0",
-          "timestamp": "2026-01-31T07:42:34.280478+00:00",
+          "timestamp": "2026-01-31T19:41:38.276298+00:00",
           "result": {
             "result": false
           }
@@ -733,7 +734,7 @@
       "action/7/choose/0/sequence/1/choose/0/sequence/1/choose/0/conditions/0": [
         {
           "path": "action/7/choose/0/sequence/1/choose/0/sequence/1/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.280689+00:00",
+          "timestamp": "2026-01-31T19:41:38.276536+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -743,7 +744,7 @@
       "action/8": [
         {
           "path": "action/8",
-          "timestamp": "2026-01-31T07:42:34.281397+00:00",
+          "timestamp": "2026-01-31T19:41:38.277256+00:00",
           "result": {
             "params": {
               "domain": "number",
@@ -767,13 +768,13 @@
       "action/9": [
         {
           "path": "action/9",
-          "timestamp": "2026-01-31T07:42:34.303646+00:00"
+          "timestamp": "2026-01-31T19:41:38.298985+00:00"
         }
       ],
       "action/9/choose/0": [
         {
           "path": "action/9/choose/0",
-          "timestamp": "2026-01-31T07:42:34.303810+00:00",
+          "timestamp": "2026-01-31T19:41:38.299131+00:00",
           "result": {
             "result": false
           }
@@ -782,7 +783,7 @@
       "action/9/choose/0/conditions/0": [
         {
           "path": "action/9/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.304170+00:00",
+          "timestamp": "2026-01-31T19:41:38.299364+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -792,13 +793,13 @@
       "action/10": [
         {
           "path": "action/10",
-          "timestamp": "2026-01-31T07:42:34.304946+00:00"
+          "timestamp": "2026-01-31T19:41:38.299897+00:00"
         }
       ],
       "action/10/choose/0": [
         {
           "path": "action/10/choose/0",
-          "timestamp": "2026-01-31T07:42:34.305108+00:00",
+          "timestamp": "2026-01-31T19:41:38.300092+00:00",
           "result": {
             "result": false
           }
@@ -807,7 +808,7 @@
       "action/10/choose/0/conditions/0": [
         {
           "path": "action/10/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.305433+00:00",
+          "timestamp": "2026-01-31T19:41:38.300364+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -817,13 +818,13 @@
       "action/11": [
         {
           "path": "action/11",
-          "timestamp": "2026-01-31T07:42:34.306179+00:00"
+          "timestamp": "2026-01-31T19:41:38.300944+00:00"
         }
       ],
       "action/11/choose/0": [
         {
           "path": "action/11/choose/0",
-          "timestamp": "2026-01-31T07:42:34.306316+00:00",
+          "timestamp": "2026-01-31T19:41:38.301048+00:00",
           "result": {
             "result": false
           }
@@ -832,7 +833,7 @@
       "action/11/choose/0/conditions/0": [
         {
           "path": "action/11/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.306640+00:00",
+          "timestamp": "2026-01-31T19:41:38.301289+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -842,13 +843,13 @@
       "action/12": [
         {
           "path": "action/12",
-          "timestamp": "2026-01-31T07:42:34.307396+00:00"
+          "timestamp": "2026-01-31T19:41:38.301813+00:00"
         }
       ],
       "action/12/choose/0": [
         {
           "path": "action/12/choose/0",
-          "timestamp": "2026-01-31T07:42:34.307536+00:00",
+          "timestamp": "2026-01-31T19:41:38.301922+00:00",
           "result": {
             "result": false
           }
@@ -857,7 +858,7 @@
       "action/12/choose/0/conditions/0": [
         {
           "path": "action/12/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.307872+00:00",
+          "timestamp": "2026-01-31T19:41:38.302165+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -867,7 +868,7 @@
       "action/12/choose/0/conditions/1": [
         {
           "path": "action/12/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.308467+00:00",
+          "timestamp": "2026-01-31T19:41:38.302558+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -877,13 +878,13 @@
       "action/13": [
         {
           "path": "action/13",
-          "timestamp": "2026-01-31T07:42:34.309210+00:00"
+          "timestamp": "2026-01-31T19:41:38.303063+00:00"
         }
       ],
       "action/13/choose/0": [
         {
           "path": "action/13/choose/0",
-          "timestamp": "2026-01-31T07:42:34.309348+00:00",
+          "timestamp": "2026-01-31T19:41:38.303156+00:00",
           "result": {
             "result": false
           }
@@ -892,7 +893,7 @@
       "action/13/choose/0/conditions/0": [
         {
           "path": "action/13/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.309684+00:00",
+          "timestamp": "2026-01-31T19:41:38.303386+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -902,7 +903,7 @@
       "action/13/choose/0/conditions/1": [
         {
           "path": "action/13/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.310347+00:00",
+          "timestamp": "2026-01-31T19:41:38.303755+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -912,13 +913,13 @@
       "action/14": [
         {
           "path": "action/14",
-          "timestamp": "2026-01-31T07:42:34.310848+00:00"
+          "timestamp": "2026-01-31T19:41:38.304350+00:00"
         }
       ],
       "action/14/choose/0": [
         {
           "path": "action/14/choose/0",
-          "timestamp": "2026-01-31T07:42:34.310941+00:00",
+          "timestamp": "2026-01-31T19:41:38.304442+00:00",
           "result": {
             "result": false
           }
@@ -927,7 +928,7 @@
       "action/14/choose/0/conditions/0": [
         {
           "path": "action/14/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.311176+00:00",
+          "timestamp": "2026-01-31T19:41:38.304653+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -937,7 +938,7 @@
       "action/14/choose/0/conditions/1": [
         {
           "path": "action/14/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.311556+00:00",
+          "timestamp": "2026-01-31T19:41:38.305040+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -947,13 +948,13 @@
       "action/15": [
         {
           "path": "action/15",
-          "timestamp": "2026-01-31T07:42:34.312020+00:00"
+          "timestamp": "2026-01-31T19:41:38.305502+00:00"
         }
       ],
       "action/15/choose/0": [
         {
           "path": "action/15/choose/0",
-          "timestamp": "2026-01-31T07:42:34.312127+00:00",
+          "timestamp": "2026-01-31T19:41:38.305601+00:00",
           "result": {
             "result": false
           }
@@ -962,7 +963,7 @@
       "action/15/choose/0/conditions/0": [
         {
           "path": "action/15/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.312332+00:00",
+          "timestamp": "2026-01-31T19:41:38.305819+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -972,7 +973,7 @@
       "action/15/choose/0/conditions/1": [
         {
           "path": "action/15/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.312774+00:00",
+          "timestamp": "2026-01-31T19:41:38.306185+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -982,13 +983,13 @@
       "action/16": [
         {
           "path": "action/16",
-          "timestamp": "2026-01-31T07:42:34.313593+00:00"
+          "timestamp": "2026-01-31T19:41:38.306623+00:00"
         }
       ],
       "action/16/choose/0": [
         {
           "path": "action/16/choose/0",
-          "timestamp": "2026-01-31T07:42:34.313748+00:00",
+          "timestamp": "2026-01-31T19:41:38.306703+00:00",
           "result": {
             "result": false
           }
@@ -997,7 +998,7 @@
       "action/16/choose/0/conditions/0": [
         {
           "path": "action/16/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.314271+00:00",
+          "timestamp": "2026-01-31T19:41:38.306914+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -1007,7 +1008,7 @@
       "action/16/choose/0/conditions/1": [
         {
           "path": "action/16/choose/0/conditions/1",
-          "timestamp": "2026-01-31T07:42:34.314701+00:00",
+          "timestamp": "2026-01-31T19:41:38.307275+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -1017,13 +1018,13 @@
       "action/17": [
         {
           "path": "action/17",
-          "timestamp": "2026-01-31T07:42:34.315185+00:00"
+          "timestamp": "2026-01-31T19:41:38.307774+00:00"
         }
       ],
       "action/17/choose/0": [
         {
           "path": "action/17/choose/0",
-          "timestamp": "2026-01-31T07:42:34.315277+00:00",
+          "timestamp": "2026-01-31T19:41:38.307863+00:00",
           "result": {
             "result": false
           }
@@ -1032,7 +1033,7 @@
       "action/17/choose/0/conditions/0": [
         {
           "path": "action/17/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.315484+00:00",
+          "timestamp": "2026-01-31T19:41:38.308088+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -1042,7 +1043,7 @@
       "action/17/choose/1": [
         {
           "path": "action/17/choose/1",
-          "timestamp": "2026-01-31T07:42:34.315883+00:00",
+          "timestamp": "2026-01-31T19:41:38.308461+00:00",
           "result": {
             "result": false
           }
@@ -1051,7 +1052,7 @@
       "action/17/choose/1/conditions/0": [
         {
           "path": "action/17/choose/1/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.316116+00:00",
+          "timestamp": "2026-01-31T19:41:38.308669+00:00",
           "result": {
             "result": false,
             "entities": []
@@ -1061,7 +1062,7 @@
       "action/18": [
         {
           "path": "action/18",
-          "timestamp": "2026-01-31T07:42:34.316570+00:00",
+          "timestamp": "2026-01-31T19:41:38.309118+00:00",
           "result": {
             "choice": 0
           }
@@ -1070,7 +1071,7 @@
       "action/18/choose/0": [
         {
           "path": "action/18/choose/0",
-          "timestamp": "2026-01-31T07:42:34.316656+00:00",
+          "timestamp": "2026-01-31T19:41:38.309199+00:00",
           "result": {
             "result": true
           }
@@ -1079,7 +1080,7 @@
       "action/18/choose/0/conditions/0": [
         {
           "path": "action/18/choose/0/conditions/0",
-          "timestamp": "2026-01-31T07:42:34.316872+00:00",
+          "timestamp": "2026-01-31T19:41:38.309405+00:00",
           "result": {
             "result": true,
             "entities": []
@@ -1089,14 +1090,14 @@
       "action/18/choose/0/sequence/0": [
         {
           "path": "action/18/choose/0/sequence/0",
-          "timestamp": "2026-01-31T07:42:34.317342+00:00",
+          "timestamp": "2026-01-31T19:41:38.309845+00:00",
           "result": {
             "params": {
               "domain": "logbook",
               "service": "log",
               "service_data": {
                 "name": "SigEnergy Reason",
-                "message": "Export blocked – FIT below threshold; Import blocked – battery ok, price 0.3; PV Limit 25.0 kW"
+                "message": "Export blocked – filling battery to sunrise target; Import blocked – battery ok, price 0.29; PV Limit 3.0 kW"
               },
               "target": {}
             },
@@ -1107,13 +1108,13 @@
       "action/18/choose/0/sequence/1": [
         {
           "path": "action/18/choose/0/sequence/1",
-          "timestamp": "2026-01-31T07:42:34.317813+00:00",
+          "timestamp": "2026-01-31T19:41:38.310329+00:00",
           "result": {
             "params": {
               "domain": "input_text",
               "service": "set_value",
               "service_data": {
-                "value": "Export blocked – FIT below threshold; Import blocked – battery ok, price 0.3; PV Limit 25.0 kW",
+                "value": "Export blocked – filling battery to sunrise target; Import blocked – battery ok, price 0.29; PV",
                 "entity_id": [
                   "input_text.sigenergy_reason"
                 ]
@@ -1131,11 +1132,11 @@
       "action/19": [
         {
           "path": "action/19",
-          "timestamp": "2026-01-31T07:42:34.318536+00:00",
+          "timestamp": "2026-01-31T19:41:38.311117+00:00",
           "child_id": {
             "domain": "automation",
             "item_id": "1768000027792",
-            "run_id": "d2305c5c189d547467f3f45ae0475aee"
+            "run_id": "b06b4ac4c9d24d93a5b9befa40f9d33d"
           },
           "result": {
             "delay": 5,
@@ -1272,7 +1273,7 @@
             "price_state": "{{ states(price_sensor_entity) }}",
             "price_estimate_attr": "{{ state_attr(price_sensor_entity, 'estimate') | default(false) }}",
             "price_valid": "{{ price_state not in ['unknown','unavailable','none',''] and not (price_estimate_attr | bool(false)) }}",
-            "current_price": "{{ price_state | float(999) if price_valid else 999 }}",
+            "current_price": "{% if price_valid %}\n  {{ price_state | float(1) }}\n{% else %}\n  0\n{% endif %}\n",
             "feedin_price": "{{ states(feedin_sensor_entity) | float(-999) }}",
             "price_spike_active": "{{ is_state(price_spike_sensor_entity, 'on') }}",
             "demand_window_active": "{{ is_state(demand_window_sensor_entity, 'on') }}",
@@ -1287,15 +1288,15 @@
             "forecast_today": "{{ states(forecast_today_sensor_entity) | float(0) }}",
             "available_discharge_energy": "{{ states(available_discharge_sensor_entity) | float(0) }}",
             "ha_control_enabled": "{{ is_state(ha_control_switch_entity, 'on') }}",
-            "pv_kw": "{{ (pv_power | float(0)) / (1000 if (pv_power | float(0)) > 1000 else 1) }}",
-            "load_kw_instant": "{{ (consumed_power | float(0)) / (1000 if (consumed_power | float(0)) > 1000 else 1) }}",
+            "pv_kw": "{% set raw = pv_power | float(0) %} {{ (raw / 1000) if raw > 1000 else raw }}",
+            "load_kw_instant": "{% set raw = consumed_power | float(0) %} {{ (raw / 1000) if raw > 1000 else raw }}",
             "load_kw_30m_avg": "{% set avg_candidates = [\n  state_attr(consumed_power_sensor_entity, 'last_30m_mean'),\n  state_attr(consumed_power_sensor_entity, 'mean_30m'),\n  state_attr(consumed_power_sensor_entity, 'mean_30min'),\n  state_attr(consumed_power_sensor_entity, 'last_30m_average'),\n  state_attr(consumed_power_sensor_entity, '1h_mean'),\n  state_attr(consumed_power_sensor_entity, 'mean_1h'),\n  state_attr(consumed_power_sensor_entity, 'last_1h_mean'),\n  state_attr(consumed_power_sensor_entity, 'mean')\n] %} {% set avg_w = none %} {% for cand in avg_candidates %}\n  {% if cand is not none %}\n    {% set try = cand | float(none) %}\n    {% if try is not none %}\n      {% set avg_w = try %}\n      {% break %}\n    {% endif %}\n  {% endif %}\n{% endfor %} {% if avg_w is none %}\n  {% set avg_w = consumed_power | float(0) %}\n{% endif %} {{ (avg_w | float(0)) / (1000 if (avg_w | float(0)) > 1000 else 1) }}\n",
             "load_kw_sunrise": "{{ load_kw_30m_avg }}\n",
             "load_kw": "{{ load_kw_instant }}",
             "solar_power_now_kw": "{{ (solar_power_now | float(0)) / 1000 }}",
             "solar_potential_kw": "{{ [pv_kw, solar_power_now_kw] | max }}",
             "solar_forecast_surplus_kw": "{{ [solar_power_now_kw - load_kw, 0] | max }}",
-            "battery_capacity_kwh": "{% set cap_raw = states(rated_capacity_sensor_entity) | float(0) %} {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %} {% set uom = cap_uom | lower if cap_uom is string else '' %} {% set cap_kwh = cap_raw if 'kwh' in uom else (cap_raw / 1000 if 'wh' in uom else cap_raw) %} {{ cap_kwh if cap_kwh > 0 else 0.001 }}\n",
+            "battery_capacity_kwh": "{% set cap_raw = states(rated_capacity_sensor_entity) | float(none) %} {% if cap_raw is none or cap_raw <= 0 %}\n  10\n{% else %}\n  {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}\n  {% set uom = cap_uom | lower if cap_uom is string else 'kwh' %}\n  {% if 'wh' in uom %}\n    {{ (cap_raw / 1000) | round(2) }}\n  {% else %}\n    {{ cap_raw | round(2) }}\n  {% endif %}\n{% endif %}\n",
             "battery_fill_need_kwh": "{% set need_unclamped = battery_capacity_kwh - (available_discharge_energy | float(0)) %} {{ [battery_capacity_kwh, [need_unclamped, 0] | max] | min }}\n",
             "negative_price_forecast_ahead": "{% set fc = state_attr(price_forecast_sensor_entity,'forecasts') %} {% if fc is not iterable %}\n  {{ false }}\n{% else %}\n  {% set ns = namespace(found=false) %}\n  {% set now_ts = as_timestamp(now()) %}\n  {% set cutoff = now_ts + (negative_price_forecast_lookahead_hours | float(12)) * 3600 %}\n  {% for f in fc %}\n    {% if f is mapping and 'per_kwh' in f and 'start_time' in f %}\n      {% set ts = as_timestamp(f.start_time) %}\n      {% if ts is not none and ts <= cutoff and (f.per_kwh | float(0)) < 0 %}\n        {% set ns.found = true %}\n      {% endif %}\n    {% endif %}\n  {% endfor %}\n  {{ ns.found }}\n{% endif %}\n",
             "negative_price_forecast_bool": "{{ negative_price_forecast_ahead | bool(false) }}",
@@ -1318,6 +1319,7 @@
             "morning_dump_end_ts": "{% set sunrise_ts = sunrise_actual_ts %} {% if sunrise_ts is none %}\n  {{ none }}\n{% else %}\n  {{ sunrise_ts + 3600 }}\n{% endif %}\n",
             "morning_dump_start_ts": "{% set offset = (morning_dump_hours_before_sunrise | float(2)) * 3600 %} {% set sunrise_ts = sunrise_actual_ts %} {% if sunrise_ts is none %}\n  {{ none }}\n{% else %}\n  {{ sunrise_ts - offset }}\n{% endif %}\n",
             "morning_dump_active": "{% if not morning_dump_enabled %}\n  false\n{% else %}\n  {% set start_ts = morning_dump_start_ts %}\n  {% set end_ts = morning_dump_end_ts %}\n  {% set now_ts = as_timestamp(now()) %}\n  {{ start_ts is not none and end_ts is not none and now_ts >= start_ts and now_ts <= end_ts }}\n{% endif %}\n",
+            "past_morning_grace_period": "{% set end_ts = morning_dump_end_ts %} {% if end_ts is none %}\n  false\n{% else %}\n  {% set now_ts = as_timestamp(now()) %}\n  {{ now_ts >= (end_ts + 3600) }}\n{% endif %}\n",
             "effective_min_soc": "{% if is_evening_or_night %}\n  {% set relaxed = (sunrise_soc_target | float(0)) - (sunrise_export_relax_percent | float(0)) %}\n  {{ [[relaxed, 100] | min, sunrise_reserve_soc] | max }}\n{% else %}\n  {{ min_soc_floor }}\n{% endif %}\n",
             "export_sunrise_guard_active": "{{ is_evening_or_night }}",
             "export_solar_override": "{% set surplus_pv = (solar_potential_kw - load_kw) > (min_grid_transfer_kw | float(0.5)) %} {% set forecast_ok = (forecast_remaining | float(0)) >= (battery_fill_need_kwh * 1.25) or (battery_fill_need_kwh | float(0)) <= 0 %} {{ feedin_price > 0\n   and feedin_price >= export_threshold_medium\n   and battery_soc >= max_battery_soc\n   and not is_evening_or_night\n   and surplus_pv\n   and forecast_ok }}\n",
@@ -1334,14 +1336,14 @@
             "export_forecast_guard": "{% set need = sunrise_fill_need_kwh | float(0) %} {% set required = need * 1.25 %} {% if battery_soc >= (export_guard_relax_soc | float(90)) or close_to_sunset %}\n  {{ false }}\n{% elif is_evening_or_night %}\n  {{ battery_soc < min_export_target_soc }}\n{% elif need <= 0 %}\n  {{ false }}\n{% else %}\n  {{ forecast_remaining < required }}\n{% endif %}\n",
             "export_forecast_guard_detail": "{% set need = sunrise_fill_need_kwh | float(0) %} {% set required = need * 1.25 %} {% set net_fc = forecast_remaining | float(0) %} {% if need <= 0 or net_fc >= required %}\n  {{ '' }}\n{% else %}\n  {{ net_fc | round(2) }} kWh < required {{ required | round(2) }} kWh\n{% endif %}\n",
             "export_blocked_effective": "{{ export_blocked_for_forecast }}\n",
-            "morning_dump_limit": "{% if not morning_dump_active %}\n  0\n{% elif battery_soc < min_export_target_soc %}\n  0\n{% else %}\n  {% set tier_cap = export_limit_high | float(25) %}\n  {% if tier_cap <= 0 %}\n    0\n  {% else %}\n    {% set diff = battery_soc - min_export_target_soc %}\n    {% if diff <= 0 %}\n      0\n    {% else %}\n      {% set span = export_soc_span_dynamic %}\n      {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}\n      {% set hours = hours_to_sunrise | float(1) %}\n      {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}\n      {% set hours_div = [hours, discharge_window] | min %}\n      {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}\n      {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}\n      {% set export_high_ref = export_limit_high | float(25) %}\n      {% set ratio = 1 if export_high_ref <= 0 else (tier_cap / export_high_ref) %}\n      {% set boost = [1.5, 1 + (ratio * 0.3)] | min %}\n      {% set safe_kw = safe_kw_base * boost %}\n      {% set safe_cap = [safe_kw, tier_cap] | min %}\n      {% set raw_limit = tier_cap * scale_soc * 0.9 %}\n      {% set final_limit = [raw_limit, safe_cap] | min %}\n      {% set limit = [0, final_limit] | max | round(1) %}\n      {% if limit < min_grid_transfer_kw %}\n        0\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% endif %}\n  {% endif %}\n{% endif %}\n",
+            "morning_dump_limit": "{% if not morning_dump_active %}\n  0\n{% elif battery_soc < min_export_target_soc %}\n  0\n{% else %}\n  {% set tier_cap = export_limit_high | float(25) %}\n  {% if tier_cap <= 0 %}\n    0\n  {% else %}\n    {% set diff = battery_soc - min_export_target_soc %}\n    {% if diff <= 0 %}\n      0\n    {% else %}\n      {% set span = export_soc_span_dynamic %}\n      {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}\n      {% set hours = hours_to_sunrise | float(1) %}\n      {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}\n      {% set hours_div = [hours, discharge_window] | min %}\n      {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}\n      {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}\n      {% set export_high_ref = export_limit_high | float(25) %}\n      {% set ratio = 1 if export_high_ref <= 0 else (tier_cap / export_high_ref) %}\n      {% set boost = [1.5, 1 + (ratio * 0.3)] | min %}\n      {% set safe_kw = safe_kw_base * boost %}\n      {% set safe_cap = [safe_kw, tier_cap] | min %}\n      {% set raw_limit = tier_cap * scale_soc * 0.9 %}\n      {% set final_limit = [raw_limit, safe_cap] | min %}\n      {% set limit = [0, final_limit] | max | round(2) %}\n      {% if limit < min_grid_transfer_kw %}\n        0\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% endif %}\n  {% endif %}\n{% endif %}\n",
             "forecast_remaining_after_load": "{% set est_load_kwh = (load_kw | float(0)) * (hours_to_sunset | float(0)) %} {% set net = (forecast_remaining | float(0)) - est_load_kwh %} {{ [net, 0] | max }}\n",
             "grid_limit_base": "{% if current_price <= max_price_threshold\n      and current_price >= 0\n      and battery_soc < daytime_topup_max_soc %}\n  {% if forecast_today >= pv_forecast_holdoff_kwh\n        and negative_price_forecast_ahead\n        and battery_soc >= (sunrise_soc_target | float(0)) %}\n    0\n  {% elif is_evening_or_night %}\n    {% if battery_soc < (sunrise_soc_target | float(0)) %}\n      {% set target_total_kw = consumed_power + target_battery_charge %}\n      {% set needed_from_grid_kw = target_total_kw - pv_power %}\n      {{ [0, [needed_from_grid_kw, cap_total_import] | min] | max | round(1) }}\n    {% else %}\n      0\n    {% endif %}\n  {% else %}\n    {% if battery_soc < daytime_topup_max_soc\n          and current_price <= max_price_threshold %}\n      {% set net_forecast_for_charge = forecast_remaining_after_load | float(0) %}\n      {% set forecast_short = net_forecast_for_charge < (sunrise_fill_need_kwh * forecast_safety_margin) %}\n      {% set pv_surplus_kw = [pv_kw - load_kw, 0] | max %}\n      {% set needs_charge_rate = pv_surplus_kw < (target_battery_charge | float(0)) %}\n      {% set prevent_discharge = battery_soc >= daytime_topup_max_soc and pv_kw < load_kw %}\n      {% if forecast_short or needs_charge_rate or prevent_discharge %}\n        {% if prevent_discharge %}\n          {% set target_total_kw = consumed_power %}\n        {% else %}\n          {% set target_total_kw = consumed_power + target_battery_charge %}\n        {% endif %}\n        {% set needed_from_grid_kw = target_total_kw - pv_power %}\n        {{ [0, [needed_from_grid_kw, cap_total_import] | min] | max | round(1) }}\n      {% else %}\n        0\n      {% endif %}\n    {% else %}\n      0\n    {% endif %}\n  {% endif %}\n{% else %}\n  0\n{% endif %}\n",
             "import_limit_negative": "{% if price_is_negative %}\n  {% if current_price <= import_threshold_high %}\n    {% set requested_limit = import_limit_high %}\n  {% elif current_price <= import_threshold_medium %}\n    {% set requested_limit = import_limit_medium %}\n  {% elif current_price <= import_threshold_low %}\n    {% set requested_limit = import_limit_low %}\n  {% else %}\n    {% set requested_limit = 0 %}\n  {% endif %}\n  {{ [requested_limit, cap_total_import] | min }}\n{% else %}\n  0\n{% endif %}\n",
-            "desired_import_limit": "{% set spike = export_spike_active | default(false) %} {% set high_price = export_high_price %} {% set spike_min_soc_percent = export_spike_min_soc | float(10) %} {% set spike_low_soc = spike and (battery_soc | float(0)) <= spike_min_soc_percent %} {% set bypass_min_soc = high_price or (spike and (battery_soc | float(0)) > spike_min_soc_percent) or solar_surplus_bypass or positive_fit_override %} {% if demand_window_active %}\n  {% set limit = 0 %}\n{% elif standby_holdoff_active %}\n  {% set limit = 0.01 %}\n{% elif spike_low_soc %}\n  0\n{% elif price_is_negative %}\n  {% set limit = import_limit_negative %}\n{% elif feedin_price >= export_threshold_low %}\n  {% set limit = 0 %}\n{% else %}\n  {% set limit = grid_limit_base %}\n{% endif %} {% if current_price > max_price_threshold\n      and battery_soc >= (sunrise_soc_target | float(0)) %}\n  {% set limit = 0 %}\n{% endif %} {% set limit = [0, limit] | max | round(1) %} {% if limit < min_grid_transfer_kw %}\n  0\n{% else %}\n  {{ limit }}\n{% endif %}\n",
-            "export_reason": "{% set spike = export_spike_active | default(false) %} {% if price_is_negative %}\n  Export blocked – buy price negative ({{ current_price | round(3) }})\n{% elif feedin_is_negative %}\n  Export blocked – FIT negative ({{ feedin_price | round(3) }})\n{% elif battery_soc < min_export_target_soc %}\n  Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target\n{% elif morning_dump_active %}\n  Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}\n{% elif export_blocked_for_forecast %}\n  Export blocked – need {{ battery_fill_need_kwh | round(1) }} kWh PV for fill\n{% elif export_forecast_guard %}\n  Export blocked – protecting overnight reserve\n{% elif export_high_price %}\n  Exporting – high FIT ({{ feedin_price | round(3) }})\n{% elif spike %}\n  Exporting – price spike ({{ feedin_price | round(3) }})\n{% elif export_solar_override %}\n  Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load)\n{% elif solar_surplus_bypass %}\n  Export limited – accumulating PV energy\n{% elif battery_soc <= export_min_soc %}\n  Export blocked – reserve floor ({{ battery_soc | round(0) }}%)\n{% else %}\n  {% set tier_cap = export_tier_limit | float(0) %}\n  {% if tier_cap <= 0 %}\n    {% if pv_safeguard_active %}\n      Export blocked – PV forecast insufficient\n    {% else %}\n      Export blocked – FIT below threshold\n    {% endif %}\n  {% else %}\n    Export limited – FIT {{ feedin_price | round(3) }}, headroom ok\n  {% endif %}\n{% endif %}\n",
+            "desired_import_limit": "{% set spike = export_spike_active | default(false) %} {% set high_price = export_high_price %} {% set spike_min_soc_percent = export_spike_min_soc | float(10) %} {% set spike_low_soc = spike and (battery_soc | float(0)) <= spike_min_soc_percent %} {% set bypass_min_soc = high_price or (spike and (battery_soc | float(0)) > spike_min_soc_percent) or solar_surplus_bypass or positive_fit_override %} {% if demand_window_active %}\n  {% set limit = 0 %}\n{% elif standby_holdoff_active %}\n  {% set limit = 0.01 %}\n{% elif spike_low_soc %}\n  0\n{% elif price_is_negative %}\n  {% set limit = import_limit_negative %}\n{% elif feedin_price >= export_threshold_low %}\n  {% set limit = 0 %}\n{% else %}\n  {% set limit = grid_limit_base %}\n{% endif %} {% if current_price > max_price_threshold\n      and battery_soc >= (sunrise_soc_target | float(0)) %}\n  {% set limit = 0 %}\n{% endif %} {% set limit = [0, limit] | max | round(2) %} {% if limit < min_grid_transfer_kw %}\n  0\n{% else %}\n  {{ limit }}\n{% endif %}\n",
+            "export_reason": "{% set spike = export_spike_active | default(false) %} {% if price_is_negative %}\n  Export blocked – buy price negative ({{ current_price | round(3) }})\n{% elif feedin_is_negative %}\n  Export blocked – FIT negative ({{ feedin_price | round(3) }})\n{% elif battery_soc < min_export_target_soc and past_morning_grace_period %}\n  Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target\n{% elif battery_soc < min_export_target_soc %}\n  Export blocked – filling battery to sunrise target\n{% elif morning_dump_active %}\n  Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}\n{% elif export_blocked_for_forecast %}\n  Export blocked – need {{ battery_fill_need_kwh | round(1) }} kWh PV for fill\n{% elif export_forecast_guard %}\n  Export blocked – protecting overnight reserve\n{% elif export_high_price %}\n  Exporting – high FIT ({{ feedin_price | round(3) }})\n{% elif spike %}\n  Exporting – price spike ({{ feedin_price | round(3) }})\n{% elif export_solar_override %}\n  Exporting – solar surplus ({{ solar_potential_kw | round(1) }} > load)\n{% elif solar_surplus_bypass %}\n  Export limited – accumulating PV energy\n{% elif battery_soc <= export_min_soc %}\n  Export blocked – reserve floor ({{ battery_soc | round(0) }}%)\n{% else %}\n  {% set tier_cap = export_tier_limit | float(0) %}\n  {% if tier_cap <= 0 %}\n    {% if pv_safeguard_active %}\n      Export blocked – PV forecast insufficient\n    {% else %}\n      Export blocked – FIT below threshold\n    {% endif %}\n  {% else %}\n    Export limited – FIT {{ feedin_price | round(3) }}, headroom ok\n  {% endif %}\n{% endif %}\n",
             "import_reason": "{% if demand_window_active %}\n  Import blocked – demand window active\n{% elif standby_holdoff_active %}\n  Import blocked – holdoff (better prices/PV coming)\n{% elif not price_valid %}\n  Import blocked – price unavailable\n{% elif price_is_negative %}\n  Importing – paid ({{ current_price | round(3) }}), earning!\n{% elif feedin_price >= export_threshold_low %}\n  Import blocked – FIT profitable {{ feedin_price | round(3) }}\n{% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}\n  Import blocked – battery ok, price {{ current_price | round(3) }}\n{% elif grid_limit_base <= 0 %}\n  {% if current_price > max_price_threshold %}\n    Import blocked – price too high {{ current_price | round(3) }}\n  {% elif battery_soc >= daytime_topup_max_soc %}\n    Import blocked – at target {{ battery_soc | round(0) }}%\n  {% else %}\n    Import blocked – no charge needed\n  {% endif %}\n{% elif desired_import_limit > 0 %}\n  {% set cheap_supplement = (battery_soc >= daytime_topup_max_soc) and (pv_kw < load_kw) and (current_price <= max_price_threshold) %}\n  {% if price_is_negative %}\n    Importing – paid ({{ current_price | round(3) }})\n  {% elif cheap_supplement %}\n    Importing – cheap, PV low ({{ current_price | round(3) }})\n  {% else %}\n    Importing – cheap top-up ({{ current_price | round(3) }})\n  {% endif %}\n{% else %}\n  Import blocked – no condition met\n{% endif %}\n",
-            "desired_export_limit": "{% set high_price = export_high_price %} {% set spike = export_spike_active | default(false) %} {% set spike_full_power = export_spike_full_power | bool(false) %} {% set bypass_min_soc = high_price or spike or solar_surplus_bypass or positive_fit_override %} {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %} {% if price_is_negative or feedin_is_negative %}\n  0\n{% elif feedin_price <= 0 %}\n  0\n{% elif battery_soc < min_export_target_soc %}\n  0\n{% elif not morning_dump_active and (export_blocked_effective or export_forecast_guard) %}\n  0\n{% elif morning_dump_active %}\n  {{ morning_dump_limit }}\n{% elif (not bypass_min_soc) and battery_soc <= export_min_soc %}\n  0\n{% else %}\n  {% set tier_cap = export_tier_limit | float(0) %}\n  {% if tier_cap <= 0 %}\n    0\n  {% elif high_price or spike %}\n    {% if spike and spike_full_power %}\n      {% set limit_cap = [tier_cap, cap_total_import | float(0)] | max %}\n    {% else %}\n      {% set limit_cap = [tier_cap, export_limit_high | float(0)] | min %}\n    {% endif %}\n    {% set limit = limit_cap | round(1) %}\n    {% if limit <= 0 %}\n      0\n    {% elif limit < min_grid_kw %}\n      {{ min_grid_kw | round(1) }}\n    {% else %}\n      {{ limit }}\n    {% endif %}\n  {% elif positive_fit_override %}\n    {% set limit = tier_cap | round(1) %}\n    {% if limit <= 0 %}\n      0\n    {% elif limit < min_grid_kw %}\n      {{ min_grid_kw | round(1) }}\n    {% else %}\n      {{ limit }}\n    {% endif %}\n  {% else %}\n    {% set diff = battery_soc - export_min_soc %}\n    {% set span = export_soc_span_dynamic %}\n    {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}\n    {% if export_solar_override %}\n      {% set surplus_kw = [pv_kw - load_kw, 0] | max %}\n      {% set override_cap = [surplus_kw, export_limit_high | float(0), export_tier_limit | float(0)] | min %}\n      {% set limit = [0, override_cap] | max | round(1) %}\n      {% if limit <= 0 %}\n        0\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% else %}\n      {% set hours = hours_to_sunrise | float(1) %}\n      {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}\n      {% set hours_div = [hours, discharge_window] | min %}\n      {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}\n      {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}\n      {% set boost = [1.5, 1 + ((tier_cap / export_limit_high) * 0.3)] | min %}\n      {% set safe_kw = safe_kw_base * boost %}\n      {% set safe_cap = [safe_kw, tier_cap] | min %}\n      {% set raw_limit = tier_cap * scale_soc * 0.9 %}\n      {% set final_limit = [raw_limit, safe_cap] | min %}\n      {% set limit = [0, final_limit] | max | round(1) %}\n      {% if (not is_evening_or_night) and (not high_price and not spike) %}\n        {% set pv_surplus = [pv_kw - load_kw, 0] | max %}\n        {% set limit = [limit, pv_surplus] | min %}\n      {% endif %}\n      {% if limit <= 0 %}\n        0\n      {% elif limit < min_grid_kw %}\n        {{ min_grid_kw | round(1) }}\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% endif %}\n  {% endif %}\n{% endif %}\n",
+            "desired_export_limit": "{% set high_price = export_high_price %} {% set spike = export_spike_active | default(false) %} {% set spike_full_power = export_spike_full_power | bool(false) %} {% set bypass_min_soc = high_price or spike or solar_surplus_bypass or positive_fit_override %} {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %} {% if morning_dump_active %}\n  {{ morning_dump_limit }}\n{% elif price_is_negative or feedin_is_negative %}\n  0\n{% elif feedin_price <= 0 %}\n  0\n{% elif battery_soc < min_export_target_soc %}\n  0\n{% elif export_blocked_effective or export_forecast_guard %}\n  0\n{% elif (not bypass_min_soc) and battery_soc <= export_min_soc %}\n  0\n{% else %}\n  {% set tier_cap = export_tier_limit | float(0) %}\n  {% if tier_cap <= 0 %}\n    0\n  {% elif high_price or spike %}\n    {% if spike and spike_full_power %}\n      {% set limit_cap = [tier_cap, cap_total_import | float(0)] | max %}\n    {% else %}\n      {% set limit_cap = [tier_cap, export_limit_high | float(0)] | min %}\n    {% endif %}\n    {% set limit = limit_cap | round(1) %}\n    {% if limit <= 0 %}\n      0\n    {% elif limit < min_grid_kw %}\n      {{ min_grid_kw | round(1) }}\n    {% else %}\n      {{ limit }}\n    {% endif %}\n  {% elif positive_fit_override %}\n    {% set limit = tier_cap | round(1) %}\n    {% if limit <= 0 %}\n      0\n    {% elif limit < min_grid_kw %}\n      {{ min_grid_kw | round(1) }}\n    {% else %}\n      {{ limit }}\n    {% endif %}\n  {% else %}\n    {% set diff = battery_soc - export_min_soc %}\n    {% set span = export_soc_span_dynamic %}\n    {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}\n    {% if export_solar_override %}\n      {% set surplus_kw = [pv_kw - load_kw, 0] | max %}\n      {% set override_cap = [surplus_kw, export_limit_high | float(0), export_tier_limit | float(0)] | min %}\n      {% set limit = [0, override_cap] | max | round(1) %}\n      {% if limit <= 0 %}\n        0\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% else %}\n      {% set hours = hours_to_sunrise | float(1) %}\n      {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}\n      {% set hours_div = [hours, discharge_window] | min %}\n      {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}\n      {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}\n      {% set boost = [1.5, 1 + ((tier_cap / export_limit_high) * 0.3)] | min %}\n      {% set safe_kw = safe_kw_base * boost %}\n      {% set safe_cap = [safe_kw, tier_cap] | min %}\n      {% set raw_limit = tier_cap * scale_soc * 0.9 %}\n      {% set final_limit = [raw_limit, safe_cap] | min %}\n      {% set limit = [0, final_limit] | max | round(1) %}\n      {% if (not is_evening_or_night) and (not high_price and not spike) %}\n        {% set pv_surplus = [pv_kw - load_kw, 0] | max %}\n        {% set limit = [limit, pv_surplus] | min %}\n      {% endif %}\n      {% if limit <= 0 %}\n        0\n      {% elif limit < min_grid_kw %}\n        {{ min_grid_kw | round(1) }}\n      {% else %}\n        {{ limit }}\n      {% endif %}\n    {% endif %}\n  {% endif %}\n{% endif %}\n",
             "needs_ha_control_switch": "{{ auto_enable_ha_control and (not ha_control_enabled) and\n   (feedin_is_negative or (desired_export_limit | float > 0) or (desired_import_limit | float > 0)\n    or (current_mode != desired_ems_mode)) }}\n",
             "effective_ha_control_enabled": "{{ ha_control_enabled or needs_ha_control_switch }}",
             "desired_ems_mode": "{% set currently_discharging = current_mode in\n  ['Command Discharging (PV First)', 'Command Discharging (ESS First)'] %}\n{% set currently_charging = current_mode in ['Command Charging (PV First)', 'Command Charging (Grid First)'] %} {% if demand_window_active %}\n  {% if desired_export_limit | float > 0 %}\n    Command Discharging (PV First)\n  {% else %}\n    Maximum Self Consumption\n  {% endif %}\n{% elif desired_import_limit | float > 0 and not price_is_negative %}\n  Command Charging (PV First)\n{% elif export_solar_override %}\n  Command Discharging (PV First)\n{% elif standby_holdoff_active and (desired_export_limit | float(0)) == 0 %}\n  {% if battery_soc < (sunrise_soc_target | float(0)) %}\n    Command Charging (PV First)\n  {% else %}\n    Maximum Self Consumption\n  {% endif %}\n{% elif price_is_negative and current_price <= import_threshold_low %}\n  Command Charging (Grid First)\n{% elif feedin_is_negative %}\n  Maximum Self Consumption\n{% elif desired_export_limit | float > 0 %}\n  Command Discharging (PV First)\n{% elif (not export_blocked_for_forecast) and battery_soc > (export_min_soc + soc_hysteresis) %}\n  {% if currently_discharging and feedin_price >= (export_stop_low | float) %}\n    Command Discharging (PV First)\n  {% elif feedin_price >= (export_start_low | float) %}\n    Command Discharging (PV First)\n  {% else %}\n    Maximum Self Consumption\n  {% endif %}\n{% elif grid_limit_base > 0 and feedin_price < (export_threshold_low - price_hysteresis) and battery_soc < (max_battery_soc - soc_hysteresis) %}\n  Command Charging (PV First)\n{% elif currently_charging and grid_limit_base > 0 and feedin_price < (export_threshold_low + price_hysteresis) and battery_soc < max_battery_soc %}\n  Command Charging (PV First)\n{% else %}\n  Maximum Self Consumption\n{% endif %}\n",
@@ -2066,45 +2068,56 @@
       }
     },
     "context": {
-      "id": "01KG9G1VGQ7GP3XTE0JH770P4W",
-      "parent_id": "01KG9G1VGMHA5MCSGJWCJJ1Y90",
+      "id": "01KGAS6GA0RNC1XXKZ01FYDKPG",
+      "parent_id": "01KGAS6G9YNPKWNZE0VEQW9RRC",
       "user_id": null
     }
   },
   "logbookEntries": [
     {
       "name": "SigEnergy Solar Import & Export Control",
-      "message": "triggered by state of sensor.sigen_plant_pv_power",
-      "source": "state of sensor.sigen_plant_pv_power",
+      "message": "triggered by state of sensor.sigen_plant_consumed_power",
+      "source": "state of sensor.sigen_plant_consumed_power",
       "entity_id": "automation.sigenergy_solar_import_export_control",
-      "context_id": "01KG9G1VGQ7GP3XTE0JH770P4W",
+      "context_id": "01KGAS6GA0RNC1XXKZ01FYDKPG",
       "domain": "automation",
-      "when": 1769845354.0077598
+      "when": 1769888497.9849117
     },
     {
-      "name": "SigEnergy Import",
-      "message": "Import DISABLED → Session 0.0 kWh Last Limit=0.01 kW Price=0.3",
-      "domain": "number",
-      "entity_id": "number.sigen_plant_grid_import_limitation",
-      "when": 1769845354.2802672,
+      "state": "10.2079629428431",
+      "entity_id": "input_number.battery_min_soc_to_last_till_sunrise",
+      "when": 1769888497.9928694,
       "context_event_type": "automation_triggered",
       "context_domain": "automation",
       "context_name": "SigEnergy Solar Import & Export Control",
-      "context_message": "triggered by state of sensor.sigen_plant_pv_power",
-      "context_source": "state of sensor.sigen_plant_pv_power",
+      "context_message": "triggered by state of sensor.sigen_plant_consumed_power",
+      "context_source": "state of sensor.sigen_plant_consumed_power",
+      "context_entity_id": "automation.sigenergy_solar_import_export_control"
+    },
+    {
+      "name": "SigEnergy Import",
+      "message": "Import DISABLED → Session 0.0 kWh Last Limit=0.01 kW Price=0.29",
+      "domain": "number",
+      "entity_id": "number.sigen_plant_grid_import_limitation",
+      "when": 1769888498.2760587,
+      "context_event_type": "automation_triggered",
+      "context_domain": "automation",
+      "context_name": "SigEnergy Solar Import & Export Control",
+      "context_message": "triggered by state of sensor.sigen_plant_consumed_power",
+      "context_source": "state of sensor.sigen_plant_consumed_power",
       "context_entity_id": "automation.sigenergy_solar_import_export_control"
     },
     {
       "name": "SigEnergy Reason",
-      "message": "Export blocked – FIT below threshold; Import blocked – battery ok, price 0.3; PV Limit 25.0 kW",
+      "message": "Export blocked – filling battery to sunrise target; Import blocked – battery ok, price 0.29; PV Limit 3.0 kW",
       "domain": "logbook",
       "entity_id": null,
-      "when": 1769845354.3177054,
+      "when": 1769888498.3102183,
       "context_event_type": "automation_triggered",
       "context_domain": "automation",
       "context_name": "SigEnergy Solar Import & Export Control",
-      "context_message": "triggered by state of sensor.sigen_plant_pv_power",
-      "context_source": "state of sensor.sigen_plant_pv_power",
+      "context_message": "triggered by state of sensor.sigen_plant_consumed_power",
+      "context_source": "state of sensor.sigen_plant_consumed_power",
       "context_entity_id": "automation.sigenergy_solar_import_export_control"
     }
   ]

@@ -1500,14 +1500,14 @@ action:
       morning_dump_limit: >
         {% if not morning_dump_active %}
           0
-        {% elif battery_soc < min_export_target_soc %}
+        {% elif battery_soc < export_min_soc %}
           0
         {% else %}
           {% set tier_cap = export_limit_high | float(25) %}
           {% if tier_cap <= 0 %}
             0
           {% else %}
-            {% set diff = battery_soc - min_export_target_soc %}
+            {% set diff = battery_soc - export_min_soc %}
             {% if diff <= 0 %}
               0
             {% else %}
