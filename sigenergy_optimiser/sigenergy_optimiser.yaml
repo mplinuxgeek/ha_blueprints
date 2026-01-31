@@ -1543,10 +1543,10 @@ action:
       morning_dump_limit: >
         {% if not morning_dump_active %}
           0
-        {% elif battery_soc < export_min_soc %}
+        {% elif battery_soc < sunrise_reserve_soc %}
           0
         {% else %}
-          {% set diff = battery_soc - export_min_soc %}
+          {% set diff = battery_soc - sunrise_reserve_soc %}
           {% if diff <= 0 %}
             0
           {% else %}
