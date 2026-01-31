@@ -94,12 +94,6 @@ blueprint:
         import_threshold_low: 0.0
         import_threshold_medium: -0.15
         import_threshold_high: -0.3
-        export_threshold_low: 0.1
-        export_threshold_medium: 0.2
-        export_threshold_high: 1.0
-        import_threshold_low: 0.0
-        import_threshold_medium: -0.15
-        import_threshold_high: -0.3
     ```
   domain: automation
   input:
@@ -1117,7 +1111,12 @@ action:
       price_state: "{{ states(price_sensor_entity) }}"
       price_estimate_attr: "{{ state_attr(price_sensor_entity, 'estimate') | default(false) }}"
       price_valid: "{{ price_state not in ['unknown','unavailable','none',''] and not (price_estimate_attr | bool(false)) }}"
-      current_price: "{{ price_state | float(999) if price_valid else 999 }}"
+      current_price: >
+        {% if price_valid %}
+          {{ price_state | float(1) }}
+        {% else %}
+          0
+        {% endif %}
       feedin_price: "{{ states(feedin_sensor_entity) | float(-999) }}"
       price_spike_active: "{{ is_state(price_spike_sensor_entity, 'on') }}"
       demand_window_active: "{{ is_state(demand_window_sensor_entity, 'on') }}"
@@ -1133,8 +1132,12 @@ action:
       forecast_today: "{{ states(forecast_today_sensor_entity) | float(0) }}"
       available_discharge_energy: "{{ states(available_discharge_sensor_entity) | float(0) }}"
       ha_control_enabled: "{{ is_state(ha_control_switch_entity, 'on') }}"
-      pv_kw: "{{ (pv_power | float(0)) / (1000 if (pv_power | float(0)) > 1000 else 1) }}"
-      load_kw_instant: "{{ (consumed_power | float(0)) / (1000 if (consumed_power | float(0)) > 1000 else 1) }}"
+      pv_kw: >-
+        {% set raw = pv_power | float(0) %}
+        {{ (raw / 1000) if raw > 1000 else raw }}
+      load_kw_instant: >-
+        {% set raw = consumed_power | float(0) %}
+        {{ (raw / 1000) if raw > 1000 else raw }}
       load_kw_30m_avg: >
         {% set avg_candidates = [
           state_attr(consumed_power_sensor_entity, 'last_30m_mean'),
@@ -1167,11 +1170,18 @@ action:
       solar_potential_kw: "{{ [pv_kw, solar_power_now_kw] | max }}"
       solar_forecast_surplus_kw: "{{ [solar_power_now_kw - load_kw, 0] | max }}"
       battery_capacity_kwh: >
-        {% set cap_raw = states(rated_capacity_sensor_entity) | float(0) %}
-        {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}
-        {% set uom = cap_uom | lower if cap_uom is string else '' %}
-        {% set cap_kwh = cap_raw if 'kwh' in uom else (cap_raw / 1000 if 'wh' in uom else cap_raw) %}
-        {{ cap_kwh if cap_kwh > 0 else 0.001 }}
+        {% set cap_raw = states(rated_capacity_sensor_entity) | float(none) %}
+        {% if cap_raw is none or cap_raw <= 0 %}
+          10
+        {% else %}
+          {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}
+          {% set uom = cap_uom | lower if cap_uom is string else 'kwh' %}
+          {% if 'wh' in uom %}
+            {{ (cap_raw / 1000) | round(2) }}
+          {% else %}
+            {{ cap_raw | round(2) }}
+          {% endif %}
+        {% endif %}
       battery_fill_need_kwh: >
         {% set need_unclamped = battery_capacity_kwh - (available_discharge_energy | float(0)) %}
         {{ [battery_capacity_kwh, [need_unclamped, 0] | max] | min }}
@@ -1346,6 +1356,15 @@ action:
           {{ start_ts is not none and end_ts is not none and now_ts >= start_ts and now_ts <= end_ts }}
         {% endif %}
 
+      past_morning_grace_period: >
+        {% set end_ts = morning_dump_end_ts %}
+        {% if end_ts is none %}
+          false
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {{ now_ts >= (end_ts + 3600) }}
+        {% endif %}
+
       effective_min_soc: >
         {% if is_evening_or_night %}
           {% set relaxed = (sunrise_soc_target | float(0)) - (sunrise_export_relax_percent | float(0)) %}
@@ -1506,7 +1525,7 @@ action:
               {% set safe_cap = [safe_kw, tier_cap] | min %}
               {% set raw_limit = tier_cap * scale_soc * 0.9 %}
               {% set final_limit = [raw_limit, safe_cap] | min %}
-              {% set limit = [0, final_limit] | max | round(1) %}
+              {% set limit = [0, final_limit] | max | round(2) %}
               {% if limit < min_grid_transfer_kw %}
                 0
               {% else %}
@@ -1603,7 +1622,7 @@ action:
               and battery_soc >= (sunrise_soc_target | float(0)) %}
           {% set limit = 0 %}
         {% endif %}
-        {% set limit = [0, limit] | max | round(1) %}
+        {% set limit = [0, limit] | max | round(2) %}
         {% if limit < min_grid_transfer_kw %}
           0
         {% else %}
@@ -1616,8 +1635,10 @@ action:
           Export blocked – buy price negative ({{ current_price | round(3) }})
         {% elif feedin_is_negative %}
           Export blocked – FIT negative ({{ feedin_price | round(3) }})
-        {% elif battery_soc < min_export_target_soc %}
+        {% elif battery_soc < min_export_target_soc and past_morning_grace_period %}
           Export blocked – SoC {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}% target
+        {% elif battery_soc < min_export_target_soc %}
+          Export blocked – filling battery to sunrise target
         {% elif morning_dump_active %}
           Morning dump – {{ battery_soc | round(0) }}% SoC, {{ feedin_price | round(3) }}
         {% elif export_blocked_for_forecast %}
@@ -1687,16 +1708,16 @@ action:
         {% set spike_full_power = export_spike_full_power | bool(false) %}
         {% set bypass_min_soc = high_price or spike or solar_surplus_bypass or positive_fit_override %}
         {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %}
-        {% if price_is_negative or feedin_is_negative %}
+        {% if morning_dump_active %}
+          {{ morning_dump_limit }}
+        {% elif price_is_negative or feedin_is_negative %}
           0
         {% elif feedin_price <= 0 %}
           0
         {% elif battery_soc < min_export_target_soc %}
           0
-        {% elif not morning_dump_active and (export_blocked_effective or export_forecast_guard) %}
+        {% elif export_blocked_effective or export_forecast_guard %}
           0
-        {% elif morning_dump_active %}
-          {{ morning_dump_limit }}
         {% elif (not bypass_min_soc) and battery_soc <= export_min_soc %}
           0
         {% else %}
