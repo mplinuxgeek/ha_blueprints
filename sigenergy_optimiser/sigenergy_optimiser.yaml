@@ -1503,36 +1503,7 @@ action:
         {% elif battery_soc < export_min_soc %}
           0
         {% else %}
-          {% set tier_cap = export_limit_high | float(25) %}
-          {% if tier_cap <= 0 %}
-            0
-          {% else %}
-            {% set diff = battery_soc - export_min_soc %}
-            {% if diff <= 0 %}
-              0
-            {% else %}
-              {% set span = export_soc_span_dynamic %}
-              {% set scale_soc = [1.0, [diff / span, 0] | max] | min %}
-              {% set hours = hours_to_sunrise | float(1) %}
-              {% set discharge_window = [export_discharge_window_hours | float(3), 1] | max %}
-              {% set hours_div = [hours, discharge_window] | min %}
-              {% set headroom_kwh = (diff / 100) * battery_capacity_kwh %}
-              {% set safe_kw_base = headroom_kwh / [hours_div, 1] | max %}
-              {% set export_high_ref = export_limit_high | float(25) %}
-              {% set ratio = 1 if export_high_ref <= 0 else (tier_cap / export_high_ref) %}
-              {% set boost = [1.5, 1 + (ratio * 0.3)] | min %}
-              {% set safe_kw = safe_kw_base * boost %}
-              {% set safe_cap = [safe_kw, tier_cap] | min %}
-              {% set raw_limit = tier_cap * scale_soc * 0.9 %}
-              {% set final_limit = [raw_limit, safe_cap] | min %}
-              {% set limit = [0, final_limit] | max | round(2) %}
-              {% if limit < min_grid_transfer_kw %}
-                0
-              {% else %}
-                {{ limit }}
-              {% endif %}
-            {% endif %}
-          {% endif %}
+          {{ export_limit_high | float(25) }}
         {% endif %}
 
       forecast_remaining_after_load: >
@@ -1797,7 +1768,9 @@ action:
         {% set currently_discharging = current_mode in
           ['Command Discharging (PV First)', 'Command Discharging (ESS First)'] %}
         {% set currently_charging = current_mode in ['Command Charging (PV First)', 'Command Charging (Grid First)'] %}
-        {% if demand_window_active %}
+        {% if morning_dump_active %}
+          Command Discharging (PV First)
+        {% elif demand_window_active %}
           {% if desired_export_limit | float > 0 %}
             Command Discharging (PV First)
           {% else %}
