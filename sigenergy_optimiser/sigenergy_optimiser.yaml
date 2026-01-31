@@ -1835,7 +1835,9 @@ action:
         {% set spike_min_soc_percent = export_spike_min_soc | float(10) %}
         {% set spike_low_soc = spike and (battery_soc | float(0)) <= spike_min_soc_percent %}
         {% set bypass_min_soc = high_price or (spike and (battery_soc | float(0)) > spike_min_soc_percent) or solar_surplus_bypass or positive_fit_override %}
-        {% if demand_window_active %}
+        {% if morning_dump_active %}
+          {% set limit = 0 %}
+        {% elif demand_window_active %}
           {% set limit = 0 %}
         {% elif standby_holdoff_active %}
           {% set limit = 0.01 %}
@@ -1899,7 +1901,9 @@ action:
         {% endif %}
 
       import_reason: >
-        {% if demand_window_active %}
+        {% if morning_dump_active %}
+          Import blocked – morning dump exporting
+        {% elif demand_window_active %}
           Import blocked – demand window active
         {% elif standby_holdoff_active %}
           Import blocked – holdoff (better prices/PV coming)
