@@ -2030,7 +2030,12 @@ action:
           {% elif battery_soc >= daytime_topup_max_soc %}
             Import blocked, {{ battery_soc | round(0) }}% at {{ daytime_topup_max_soc | round(0) }}%
           {% else %}
-            Import blocked, no charge needed
+            {% set pv_surplus_kw = [pv_kw - load_kw, 0] | max %}
+            {% if pv_surplus_kw >= target_battery_charge %}
+              Import blocked, PV surplus {{ pv_surplus_kw | round(1) }}kW > desired {{ target_battery_charge | round(1) }}kW
+            {% else %}
+              Import blocked, forecast sufficient
+            {% endif %}
           {% endif %}
         {% elif desired_import_limit > 0 %}
           {% set cheap_supplement = (battery_soc >= daytime_topup_max_soc) and (pv_kw < load_kw) and (current_price <= max_price_threshold) %}
