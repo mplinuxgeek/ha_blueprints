@@ -1,6 +1,5 @@
 blueprint:
   name: SigEnergy Solar Import & Export Control
-  source_url: https://github.com/mplinuxgeek/ha_blueprints/blob/main/sigenergy_optimiser/sigenergy_optimiser.yaml
   description: |
     # SigEnergy Solar Import & Export Control
 
@@ -27,7 +26,7 @@ blueprint:
     - EMS hysteresis: uses start/stop around the low FIT threshold to prevent flapping
     - Price spike boost: optional price spike sensor drives full export when spike is on (demand window no longer blocks export)
     - Mode: Command Discharging (PV First) - prioritizes solar over battery
-    - Morning Dump: optional pre-sunrise window that pushes export to the highest safe rate while still honoring the minimum SoC floor
+    - Morning Dump: optional pre-sunrise export window (configurable hours before sunrise) that pushes export to the highest safe rate while still honoring the minimum SoC floor
 
     ## Import optimization
     - Negative-price import: tiered limits at low/medium/high negative thresholds
@@ -868,19 +867,19 @@ blueprint:
     morning_dump:
       name: |
         # Morning Dump
-      description: Smart export window that analyzes feed-in price forecasts between midnight and 1 hour after productive solar start to find the optimal 1-hour export window with the highest average FIT price.
+      description: Pre-sunrise export window that runs for a configurable period before sunrise to export excess battery capacity while preserving the minimum SoC floor.
       icon: mdi:weather-sunset-up
       collapsed: true
       input:
         morning_dump_enabled:
           name: Enable Morning Dump
-          description: Enable the smart pre-sunrise export surge that targets the hour with the best average feed-in price while preserving the minimum SoC target.
+          description: Enable the pre-sunrise export window that safely discharges the battery before sunrise while preserving the minimum SoC target.
           default: false
           selector:
             boolean: {}
         morning_dump_hours_before_sunrise:
-          name: Morning Dump Lead Time (deprecated)
-          description: This setting is no longer used. The system now automatically selects the optimal 1-hour export window based on feed-in price forecasts.
+          name: Morning Dump Hours Before Productive Solar
+          description: How many hours before productive solar start time (1 hour after sunrise) to begin the morning dump export window.
           default: 2
           selector:
             number:
@@ -1240,7 +1239,7 @@ action:
         {% else %}
           {% set cap_uom = state_attr(rated_capacity_sensor_entity,'unit_of_measurement') %}
           {% set uom = cap_uom | lower if cap_uom is string else 'kwh' %}
-          {% if 'wh' in uom %}
+          {% if uom == 'wh' %}
             {{ (cap_raw / 1000) | round(2) }}
           {% else %}
             {{ cap_raw | round(2) }}
@@ -1390,18 +1389,18 @@ action:
           {% if power_abs < idle_threshold %}
             {{ none }}
           {% else %}
-            {% set available = available_discharge_energy | float(0) %}
             {% set charging = batt_power > 0 %}
+            {% set capacity = battery_capacity_kwh | float(10) %}
             {% if charging %}
-              {% set target_soc = sunrise_soc_target | float(0) %}
+              {% set target_soc = 100 %}
               {% if current_soc >= target_soc %}
                 {{ none }}
               {% else %}
                 {% set soc_gap = target_soc - current_soc %}
-                {% if soc_gap <= 0 or current_soc <= 0 %}
+                {% if soc_gap <= 0 %}
                   {{ none }}
                 {% else %}
-                  {% set energy_needed = available * (soc_gap / current_soc) %}
+                  {% set energy_needed = capacity * (soc_gap / 100.0) %}
                   {% set hours = energy_needed / power_abs %}
                   {% if hours > max_eta_hours %}
                     {{ none }}
@@ -1412,6 +1411,7 @@ action:
                 {% endif %}
               {% endif %}
             {% else %}
+              {% set available = available_discharge_energy | float(0) %}
               {% if available <= 0 %}
                 {{ none }}
               {% else %}
@@ -1556,67 +1556,44 @@ action:
           {% endif %}
         {% endif %}
 
-      optimal_morning_dump_window: >
-        {% set feedin_fc = state_attr(feedin_sensor_entity, 'forecasts') %}
-        {% if feedin_fc is not iterable %}
+      morning_dump_start_ts: >
+        {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
+        {% if next_rising is none %}
           {{ none }}
         {% else %}
-          {% set productive_ts = productive_solar_start_ts %}
-          {% if productive_ts is none %}
+          {% set next_rising_ts = as_timestamp(next_rising) %}
+          {% if next_rising_ts is none %}
             {{ none }}
           {% else %}
-            {% set today_midnight = now().replace(hour=0, minute=0, second=0, microsecond=0) %}
-            {% set midnight_ts = as_timestamp(today_midnight) %}
-            {% set end_window_ts = productive_ts + 3600 %}
-            {% set ns = namespace(blocks={}) %}
-            {% for hour_offset in range(0, 24) %}
-              {% set block_start = midnight_ts + (hour_offset * 3600) %}
-              {% set block_end = block_start + 3600 %}
-              {% if block_start >= midnight_ts and block_end <= end_window_ts %}
-                {% set ns.blocks = dict(ns.blocks, **{hour_offset: {'sum': 0, 'count': 0, 'start': block_start}}) %}
-              {% endif %}
-            {% endfor %}
-            {% for f in feedin_fc %}
-              {% if f is mapping and 'start_time' in f and 'per_kwh' in f %}
-                {% set forecast_start = as_timestamp(f.start_time) %}
-                {% set forecast_end = as_timestamp(f.end_time) if 'end_time' in f else (forecast_start + 1800) %}
-                {% set fit_price = f.per_kwh | float(0) %}
-                {% if forecast_start is not none and forecast_end is not none %}
-                  {% for hour_offset, block in ns.blocks.items() %}
-                    {% set block_start = block.start %}
-                    {% set block_end = block_start + 3600 %}
-                    {% set overlap_start = [forecast_start, block_start] | max %}
-                    {% set overlap_end = [forecast_end, block_end] | min %}
-                    {% if overlap_start < overlap_end %}
-                      {% set overlap_duration = overlap_end - overlap_start %}
-                      {% set weighted_price = fit_price * overlap_duration %}
-                      {% set ns.blocks = dict(ns.blocks, **{hour_offset: {'sum': block.sum + weighted_price, 'count': block.count + overlap_duration, 'start': block_start}}) %}
-                    {% endif %}
-                  {% endfor %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-            {% set ns.best_block = none %}
-            {% set ns.best_avg = -999 %}
-            {% for hour_offset, block in ns.blocks.items() %}
-              {% if block.count > 0 %}
-                {% set avg_price = block.sum / block.count %}
-                {% if avg_price > ns.best_avg %}
-                  {% set ns.best_avg = avg_price %}
-                  {% set ns.best_block = block.start %}
-                {% endif %}
-              {% endif %}
-            {% endfor %}
-            {{ ns.best_block }}
+            {% set is_after_sunrise = is_state(sun_entity_id,'above_horizon') %}
+            {% if is_after_sunrise %}
+              {% set sunrise_ts = (next_rising_ts | float(0)) - 86400 %}
+            {% else %}
+              {% set sunrise_ts = next_rising_ts | float(0) %}
+            {% endif %}
+            {% set day_start = sunrise_ts + 3600 %}
+            {% set hours_before = morning_dump_hours_before_sunrise | float(2) %}
+            {{ day_start - (hours_before * 3600) }}
           {% endif %}
         {% endif %}
 
-      optimal_morning_dump_end_ts: >
-        {% set start_ts = optimal_morning_dump_window %}
-        {% if start_ts is none %}
+      morning_dump_end_ts: >
+        {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
+        {% if next_rising is none %}
           {{ none }}
         {% else %}
-          {{ start_ts + 3600 }}
+          {% set next_rising_ts = as_timestamp(next_rising) %}
+          {% if next_rising_ts is none %}
+            {{ none }}
+          {% else %}
+            {% set is_after_sunrise = is_state(sun_entity_id,'above_horizon') %}
+            {% if is_after_sunrise %}
+              {% set sunrise_ts = (next_rising_ts | float(0)) - 86400 %}
+            {% else %}
+              {% set sunrise_ts = next_rising_ts | float(0) %}
+            {% endif %}
+            {{ sunrise_ts + 3600 }}
+          {% endif %}
         {% endif %}
 
       morning_dump_active: >
@@ -1624,56 +1601,58 @@ action:
           {{ false }}
         {% else %}
           {% set now_ts = as_timestamp(now()) %}
-          {% set optimal_start = optimal_morning_dump_window %}
-          {% set optimal_end = optimal_morning_dump_end_ts %}
-          {% if optimal_start is none or optimal_end is none %}
+          {% set start_ts = morning_dump_start_ts %}
+          {% set end_ts = morning_dump_end_ts %}
+          {% if now_ts is none or start_ts is none or end_ts is none %}
             {{ false }}
           {% else %}
-            {{ now_ts >= optimal_start and now_ts <= optimal_end }}
+            {{ (now_ts | float(0)) >= (start_ts | float(0)) and (now_ts | float(0)) <= (end_ts | float(0)) }}
           {% endif %}
         {% endif %}
 
       past_morning_grace_period: >
-        {% set end_ts = optimal_morning_dump_end_ts %}
+        {% set end_ts = morning_dump_end_ts %}
         {% if end_ts is none %}
           {{ false }}
         {% else %}
           {% set now_ts = as_timestamp(now()) %}
-          {{ now_ts >= (end_ts + 3600) }}
+          {% if now_ts is none %}
+            {{ false }}
+          {% else %}
+            {{ (now_ts | float(0)) >= ((end_ts | float(0)) + 3600) }}
+          {% endif %}
         {% endif %}
 
       within_morning_grace_period: >
-        {% set end_ts = optimal_morning_dump_end_ts %}
+        {% set end_ts = morning_dump_end_ts %}
         {% if end_ts is none or not morning_dump_enabled %}
           {{ false }}
         {% else %}
           {% set now_ts = as_timestamp(now()) %}
-          {% set grace_end = end_ts + 7200 %}
-          {{ now_ts >= end_ts and now_ts < grace_end }}
+          {% if now_ts is none %}
+            {{ false }}
+          {% else %}
+          {% set grace_end = (end_ts | float(0)) + 7200 %}
+          {{ (now_ts | float(0)) >= (end_ts | float(0)) and (now_ts | float(0)) < grace_end }}
+          {% endif %}
         {% endif %}
 
       day_effective_start_ts: >
         {% set next_rising = state_attr(sun_entity_id,'next_rising') %}
         {% if next_rising is none %}
-          {{ as_timestamp(now()) }}
+          {{ as_timestamp(now()) | float(0) }}
         {% else %}
           {% set next_rising_ts = as_timestamp(next_rising) %}
           {% if next_rising_ts is none %}
             {{ as_timestamp(now()) | float(0) }}
           {% else %}
-          {% set is_after_sunrise = is_state(sun_entity_id,'above_horizon') %}
-          {% if is_after_sunrise %}
-            {% set sunrise_ts = (next_rising_ts | float(0)) - 86400 %}
-          {% else %}
-            {% set sunrise_ts = next_rising_ts | float(0) %}
-          {% endif %}
-          {% set fallback_ts = sunrise_ts + 5400 %}
-          {% set productive_ts = productive_solar_start_ts %}
-          {% if productive_ts is not none and productive_ts <= fallback_ts %}
-            {{ productive_ts }}
-          {% else %}
-            {{ fallback_ts }}
-          {% endif %}
+            {% set is_after_sunrise = is_state(sun_entity_id,'above_horizon') %}
+            {% if is_after_sunrise %}
+              {% set sunrise_ts = (next_rising_ts | float(0)) - 86400 %}
+            {% else %}
+              {% set sunrise_ts = next_rising_ts | float(0) %}
+            {% endif %}
+            {{ sunrise_ts + 3600 }}
           {% endif %}
         {% endif %}
 
@@ -1752,19 +1731,13 @@ action:
       day_effective_end_ts: >
         {% set next_setting = state_attr(sun_entity_id,'next_setting') %}
         {% if next_setting is none %}
-          {{ as_timestamp(now()) }}
+          {{ as_timestamp(now()) | float(0) }}
         {% else %}
           {% set sunset_ts = as_timestamp(next_setting) %}
           {% if sunset_ts is none %}
             {{ as_timestamp(now()) | float(0) }}
           {% else %}
-          {% set fallback_ts = (sunset_ts | float(0)) - 5400 %}
-          {% set productive_ts = productive_solar_end_ts %}
-          {% if productive_ts is not none and productive_ts >= fallback_ts %}
-            {{ productive_ts }}
-          {% else %}
-            {{ fallback_ts }}
-          {% endif %}
+            {{ (sunset_ts | float(0)) - 3600 }}
           {% endif %}
         {% endif %}
 
@@ -1830,6 +1803,7 @@ action:
       export_tier_limit: >
         {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and ((solar_potential_kw | float(0)) - (load_kw | float(0))) > (min_grid_transfer_kw | float(0.5)) %}
         {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
+        {% set below_target = battery_soc < min_export_target_soc %}
         {% if export_spike_active | default(false) %}
           {{ export_limit_high }}
         {% elif export_solar_override %}
@@ -1840,7 +1814,7 @@ action:
           0
         {% elif feedin_price >= export_threshold_high %}
           {{ export_limit_high }}
-          {% elif feedin_price >= export_threshold_medium %}
+        {% elif feedin_price >= export_threshold_medium %}
           {% if pv_safeguard_active %}
             0
           {% else %}
@@ -1848,7 +1822,7 @@ action:
             {{ export_limit_medium + (frac * (export_limit_high - export_limit_medium)) }}
           {% endif %}
         {% else %}
-          {% if pv_safeguard_active %}
+          {% if below_target or pv_safeguard_active %}
             0
           {% else %}
             {% set frac = (feedin_price - export_threshold_low) / (export_threshold_medium - export_threshold_low) %}
@@ -1919,8 +1893,7 @@ action:
             0
           {% else %}
             {% set now_ts = as_timestamp(now()) %}
-            {% set start_ts = morning_dump_start_ts %}
-            {% set end_ts = optimal_morning_dump_end_ts %}
+            {% set end_ts = morning_dump_end_ts %}
             {% if now_ts is none or end_ts is none %}
               0
             {% else %}
@@ -2072,6 +2045,8 @@ action:
           Export blocked, {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}%
         {% elif battery_soc < min_export_target_soc %}
           Export blocked, {{ battery_soc | round(0) }}% < sunrise {{ sunrise_soc_target | round(0) }}%
+        {% elif export_blocked_effective %}
+          Export blocked, demand/conditions
         {% else %}
           {% set tier_cap = export_tier_limit | float(0) %}
           {% if tier_cap <= 0 %}
