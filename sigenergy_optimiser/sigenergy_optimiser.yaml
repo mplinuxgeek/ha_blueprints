@@ -1370,44 +1370,63 @@ action:
         {{ battery_flow | round(3) }}
 
       battery_eta_minutes: >
-        {% set batt_power = battery_power_kw | float(0) %}
-        {% set power_abs = batt_power | abs %}
-        {% set idle_threshold = 0.1 %}
-        {% if power_abs < idle_threshold %}
-          {{ none }}
+        {% set current_soc = battery_soc | float(0) %}
+        {% if current_soc >= 100 %}
+          Full
+        {% elif current_soc <= 0 %}
+          Empty
         {% else %}
-          {% set current_soc = battery_soc | float(0) %}
-          {% set available = available_discharge_energy | float(0) %}
-          {% set charging = batt_power > 0 %}
-          {% if charging %}
-            {% set target_soc = sunrise_soc_target | float(0) %}
-            {% if current_soc >= target_soc %}
-              {{ none }}
-            {% else %}
-              {% set soc_gap = target_soc - current_soc %}
-              {% if soc_gap <= 0 or current_soc <= 0 %}
+          {% set batt_power = battery_power_kw | float(0) %}
+          {% set power_abs = batt_power | abs %}
+          {% set idle_threshold = 0.2 %}
+          {% set max_eta_hours = 48 %}
+          {% if power_abs < idle_threshold %}
+            {{ none }}
+          {% else %}
+            {% set available = available_discharge_energy | float(0) %}
+            {% set charging = batt_power > 0 %}
+            {% if charging %}
+              {% set target_soc = sunrise_soc_target | float(0) %}
+              {% if current_soc >= target_soc %}
                 {{ none }}
               {% else %}
-                {% set energy_needed = available * (soc_gap / current_soc) %}
-                {% set hours = energy_needed / power_abs %}
-                {% set minutes = (hours * 60) | round(0) %}
-                {{ [minutes, 1] | max }}
+                {% set soc_gap = target_soc - current_soc %}
+                {% if soc_gap <= 0 or current_soc <= 0 %}
+                  {{ none }}
+                {% else %}
+                  {% set energy_needed = available * (soc_gap / current_soc) %}
+                  {% set hours = energy_needed / power_abs %}
+                  {% if hours > max_eta_hours %}
+                    {{ none }}
+                  {% else %}
+                    {% set minutes = (hours * 60) | round(0) %}
+                    {{ [minutes, 1] | max }}
+                  {% endif %}
+                {% endif %}
               {% endif %}
-            {% endif %}
-          {% else %}
-            {% if available <= 0 %}
-              {{ none }}
             {% else %}
-              {% set hours = available / power_abs %}
-              {% set minutes = (hours * 60) | round(0) %}
-              {{ [minutes, 1] | max }}
+              {% if available <= 0 %}
+                {{ none }}
+              {% else %}
+                {% set hours = available / power_abs %}
+                {% if hours > max_eta_hours %}
+                  {{ none }}
+                {% else %}
+                  {% set minutes = (hours * 60) | round(0) %}
+                  {{ [minutes, 1] | max }}
+                {% endif %}
+              {% endif %}
             {% endif %}
           {% endif %}
         {% endif %}
 
       battery_eta_formatted: >
         {% set mins = battery_eta_minutes %}
-        {% if mins is none %}
+        {% if mins == 'Full' %}
+          Full
+        {% elif mins == 'Empty' %}
+          Empty
+        {% elif mins is none %}
           idle
         {% elif mins >= 1440 %}
           {% set days = (mins / 1440) | int %}
