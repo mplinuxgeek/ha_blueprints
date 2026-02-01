@@ -309,6 +309,14 @@ blueprint:
             entity:
               domain: sensor
               device_class: power
+        ess_rated_charge_power_sensor:
+          name: ESS Rated Charge Power Sensor
+          description: ESS/inverter maximum charge power in kW (default `sensor.sigen_inverter_ess_rated_charge_power`). Used to maximize import rate for free/negative prices.
+          default: sensor.sigen_inverter_ess_rated_charge_power
+          selector:
+            entity:
+              domain: sensor
+              device_class: power
         sun_entity:
           name: Sun Entity
           description: Sun entity for elevation and sunrise/sunset timings (default `sun.sun`).
@@ -1108,6 +1116,7 @@ action:
       productive_solar_threshold_kw: !input productive_solar_threshold_kw
       available_discharge_sensor_entity: !input available_discharge_sensor
       ess_rated_discharge_power_sensor_entity: !input ess_rated_discharge_power_sensor
+      ess_rated_charge_power_sensor_entity: !input ess_rated_charge_power_sensor
       ha_control_switch_entity: !input ha_control_switch
       price_forecast_sensor_entity: !input price_forecast_sensor
       rated_capacity_sensor_entity: !input rated_capacity_sensor
@@ -1169,6 +1178,16 @@ action:
       ess_rated_discharge_power_raw: "{{ states(ess_rated_discharge_power_sensor_entity) | float(0) }}"
       ess_max_discharge_kw: >
         {% set raw = ess_rated_discharge_power_raw | float(0) %}
+        {% if raw <= 0 %}
+          999
+        {% elif raw > 1000 %}
+          {{ (raw / 1000) | round(2) }}
+        {% else %}
+          {{ raw | round(2) }}
+        {% endif %}
+      ess_rated_charge_power_raw: "{{ states(ess_rated_charge_power_sensor_entity) | float(0) }}"
+      ess_max_charge_kw: >
+        {% set raw = ess_rated_charge_power_raw | float(0) %}
         {% if raw <= 0 %}
           999
         {% elif raw > 1000 %}
@@ -1911,7 +1930,14 @@ action:
         {% set spike_min_soc_percent = export_spike_min_soc | float(10) %}
         {% set spike_low_soc = spike and (battery_soc | float(0)) <= spike_min_soc_percent %}
         {% set bypass_min_soc = high_price or (spike and (battery_soc | float(0)) > spike_min_soc_percent) or solar_surplus_bypass or positive_fit_override %}
-        {% if morning_dump_active %}
+        {% set free_or_paid_import = price_is_actual and current_price <= 0 %}
+        {% if free_or_paid_import %}
+          {% if current_price < 0 %}
+            {% set limit = import_limit_negative %}
+          {% else %}
+            {% set limit = [cap_total_import, ess_max_charge_kw] | max %}
+          {% endif %}
+        {% elif morning_dump_active %}
           {% set limit = 0 %}
         {% elif demand_window_active %}
           {% set limit = 0 %}
@@ -1977,7 +2003,14 @@ action:
         {% endif %}
 
       import_reason: >
-        {% if morning_dump_active %}
+        {% set free_or_paid_import = price_is_actual and current_price <= 0 %}
+        {% if free_or_paid_import %}
+          {% if current_price < 0 %}
+            Importing, negative price={{ current_price | round(3) }}
+          {% else %}
+            Importing, FREE (0.000)
+          {% endif %}
+        {% elif morning_dump_active %}
           Import blocked, dump active
         {% elif demand_window_active %}
           Import blocked, demand window
