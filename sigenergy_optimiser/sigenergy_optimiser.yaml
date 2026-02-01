@@ -1473,45 +1473,6 @@ action:
           {{ as_timestamp(next_rising) }}
         {% endif %}
 
-      morning_dump_end_ts: >-
-        {{ optimal_morning_dump_end_ts }}
-
-      morning_dump_start_ts: >-
-        {{ optimal_morning_dump_window }}
-
-      morning_dump_active: >
-        {% if not morning_dump_enabled %}
-          false
-        {% else %}
-          {% set now_ts = as_timestamp(now()) %}
-          {% set optimal_start = optimal_morning_dump_window %}
-          {% set optimal_end = optimal_morning_dump_end_ts %}
-          {% if optimal_start is none or optimal_end is none %}
-            false
-          {% else %}
-            {{ now_ts >= optimal_start and now_ts <= optimal_end }}
-          {% endif %}
-        {% endif %}
-
-      past_morning_grace_period: >
-        {% set end_ts = morning_dump_end_ts %}
-        {% if end_ts is none %}
-          false
-        {% else %}
-          {% set now_ts = as_timestamp(now()) %}
-          {{ now_ts >= (end_ts + 3600) }}
-        {% endif %}
-
-      within_morning_grace_period: >
-        {% set end_ts = morning_dump_end_ts %}
-        {% if end_ts is none or not morning_dump_enabled %}
-          false
-        {% else %}
-          {% set now_ts = as_timestamp(now()) %}
-          {% set grace_end = end_ts + 7200 %}
-          {{ now_ts >= end_ts and now_ts < grace_end }}
-        {% endif %}
-
       productive_solar_start_time: >
         {% set forecasts = state_attr(forecast_today_sensor_entity, 'detailedForecast') %}
         {% set threshold_kw = productive_solar_threshold_kw | float(1.0) %}
@@ -1641,6 +1602,45 @@ action:
           {{ none }}
         {% else %}
           {{ start_ts + 3600 }}
+        {% endif %}
+
+      morning_dump_end_ts: >-
+        {{ optimal_morning_dump_end_ts }}
+
+      morning_dump_start_ts: >-
+        {{ optimal_morning_dump_window }}
+
+      morning_dump_active: >
+        {% if not morning_dump_enabled %}
+          false
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% set optimal_start = optimal_morning_dump_window %}
+          {% set optimal_end = optimal_morning_dump_end_ts %}
+          {% if optimal_start is none or optimal_end is none %}
+            false
+          {% else %}
+            {{ now_ts >= optimal_start and now_ts <= optimal_end }}
+          {% endif %}
+        {% endif %}
+
+      past_morning_grace_period: >
+        {% set end_ts = morning_dump_end_ts %}
+        {% if end_ts is none %}
+          false
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {{ now_ts >= (end_ts + 3600) }}
+        {% endif %}
+
+      within_morning_grace_period: >
+        {% set end_ts = morning_dump_end_ts %}
+        {% if end_ts is none or not morning_dump_enabled %}
+          false
+        {% else %}
+          {% set now_ts = as_timestamp(now()) %}
+          {% set grace_end = end_ts + 7200 %}
+          {{ now_ts >= end_ts and now_ts < grace_end }}
         {% endif %}
 
       day_effective_start_ts: >
