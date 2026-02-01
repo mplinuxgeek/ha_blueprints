@@ -1931,16 +1931,16 @@ action:
         {% set spike_low_soc = spike and (battery_soc | float(0)) <= spike_min_soc_percent %}
         {% set bypass_min_soc = high_price or (spike and (battery_soc | float(0)) > spike_min_soc_percent) or solar_surplus_bypass or positive_fit_override %}
         {% set free_or_paid_import = price_is_actual and current_price <= 0 %}
-        {% if free_or_paid_import %}
+        {% if morning_dump_active %}
+          {% set limit = 0 %}
+        {% elif demand_window_active %}
+          {% set limit = 0 %}
+        {% elif free_or_paid_import %}
           {% if current_price < 0 %}
             {% set limit = import_limit_negative %}
           {% else %}
             {% set limit = [cap_total_import, ess_max_charge_kw] | max %}
           {% endif %}
-        {% elif morning_dump_active %}
-          {% set limit = 0 %}
-        {% elif demand_window_active %}
-          {% set limit = 0 %}
         {% elif standby_holdoff_active %}
           {% set limit = 0.01 %}
         {% elif spike_low_soc %}
