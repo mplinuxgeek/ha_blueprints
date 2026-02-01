@@ -1604,12 +1604,6 @@ action:
           {{ start_ts + 3600 }}
         {% endif %}
 
-      morning_dump_end_ts: >-
-        {{ optimal_morning_dump_end_ts }}
-
-      morning_dump_start_ts: >-
-        {{ optimal_morning_dump_window }}
-
       morning_dump_active: >
         {% if not morning_dump_enabled %}
           false
@@ -1625,7 +1619,7 @@ action:
         {% endif %}
 
       past_morning_grace_period: >
-        {% set end_ts = morning_dump_end_ts %}
+        {% set end_ts = optimal_morning_dump_end_ts %}
         {% if end_ts is none %}
           false
         {% else %}
@@ -1634,7 +1628,7 @@ action:
         {% endif %}
 
       within_morning_grace_period: >
-        {% set end_ts = morning_dump_end_ts %}
+        {% set end_ts = optimal_morning_dump_end_ts %}
         {% if end_ts is none or not morning_dump_enabled %}
           false
         {% else %}
@@ -1903,7 +1897,7 @@ action:
           {% else %}
             {% set now_ts = as_timestamp(now()) %}
             {% set start_ts = morning_dump_start_ts %}
-            {% set end_ts = morning_dump_end_ts %}
+            {% set end_ts = optimal_morning_dump_end_ts %}
             {% set time_remaining = end_ts - now_ts %}
             {% set hours_left = time_remaining / 3600.0 %}
             {% set max_discharge = ess_max_discharge_kw | float(28.8) %}
