@@ -284,6 +284,14 @@ blueprint:
           selector:
             entity:
               domain: sensor
+        battery_power_sensor:
+          name: Battery Power Sensor
+          description: Battery power sensor in kW - positive for charging, negative for discharging (default `sensor.sigen_plant_battery_power`).
+          default: sensor.sigen_plant_battery_power
+          selector:
+            entity:
+              domain: sensor
+              device_class: power
         rated_capacity_sensor:
           name: Rated Energy Capacity Sensor
           description: Battery rated capacity sensor (Wh or kWh, default `sensor.sigen_plant_rated_energy_capacity`).
@@ -1098,6 +1106,7 @@ action:
       pv_power_sensor_entity: !input pv_power_sensor
       consumed_power_sensor_entity: !input consumed_power_sensor
       battery_soc_sensor_entity: !input battery_soc_sensor
+      battery_power_sensor_entity: !input battery_power_sensor
       sun_entity_id: !input sun_entity
       price_sensor_entity: !input price_sensor
       feedin_sensor_entity: !input feedin_sensor
@@ -1136,6 +1145,7 @@ action:
       consumed_power: "{{ states(consumed_power_sensor_entity) | float(0) }}"
       battery_soc_raw: "{{ states(battery_soc_sensor_entity) | float(0) }}"
       battery_soc: "{{ [0, [battery_soc_raw, 100] | min] | max }}"
+      battery_power_actual: "{{ states(battery_power_sensor_entity) | float(0) }}"
       sun_elevation: "{{ state_attr(sun_entity_id, 'elevation') | float(0) }}"
 
       # Price handling logic:
@@ -1803,7 +1813,8 @@ action:
       export_tier_limit: >
         {% set full_export_override = battery_soc >= max_battery_soc and not is_evening_or_night and ((solar_potential_kw | float(0)) - (load_kw | float(0))) > (min_grid_transfer_kw | float(0.5)) %}
         {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
-        {% set below_target = battery_soc < min_export_target_soc %}
+        {% set below_target = battery_soc < battery_soc_required_to_sunrise %}
+        {% set night_acceptable_price = is_evening_or_night and feedin_price >= export_threshold_low and battery_soc >= battery_soc_required_to_sunrise %}
         {% if export_spike_active | default(false) %}
           {{ export_limit_high }}
         {% elif export_solar_override %}
@@ -1822,7 +1833,7 @@ action:
             {{ export_limit_medium + (frac * (export_limit_high - export_limit_medium)) }}
           {% endif %}
         {% else %}
-          {% if below_target or pv_safeguard_active %}
+          {% if (below_target and not night_acceptable_price) or pv_safeguard_active %}
             0
           {% else %}
             {% set frac = (feedin_price - export_threshold_low) / (export_threshold_medium - export_threshold_low) %}
@@ -1831,6 +1842,8 @@ action:
         {% endif %}
 
       export_high_price: "{{ feedin_price >= export_threshold_high }}"
+      
+      export_medium_or_high_price: "{{ feedin_price >= export_threshold_medium }}"
 
       solar_surplus_bypass: >
         {% set cap = battery_capacity_kwh | float(10) %}
@@ -1840,7 +1853,8 @@ action:
         {% set start_ok = forecast_remaining >= start_thresh %}
         {% set continue_ok = forecast_remaining >= stop_thresh
                               and current_mode in ['Command Discharging (PV First)','Command Discharging (ESS First)'] %}
-        {{ pv_over_load and (start_ok or continue_ok) }}
+        {% set good_export_price = feedin_price >= export_threshold_medium %}
+        {{ pv_over_load and (start_ok or continue_ok) and not good_export_price }}
 
       export_blocked_for_forecast: >
         {% set forecast_available = (forecast_remaining | float(0)) > 0 %}
@@ -1858,10 +1872,16 @@ action:
       export_forecast_guard: >
         {% set need = sunrise_fill_need_kwh | float(0) %}
         {% set required = need * 1.25 %}
+        {% set good_price = feedin_price >= export_threshold_medium %}
+        {% set acceptable_price = feedin_price >= export_threshold_low %}
         {% if battery_soc >= (export_guard_relax_soc | float(90)) or close_to_sunset %}
           {{ false }}
         {% elif is_evening_or_night %}
-          {{ battery_soc < min_export_target_soc }}
+          {% if good_price or acceptable_price %}
+            {{ battery_soc < battery_soc_required_to_sunrise }}
+          {% else %}
+            {{ battery_soc < battery_soc_required_to_sunrise }}
+          {% endif %}
         {% elif need <= 0 %}
           {{ false }}
         {% else %}
@@ -2021,91 +2041,99 @@ action:
 
       export_reason: >
         {% set spike = export_spike_active | default(false) %}
+        {% set fit_cents = (feedin_price * 100) | round(0) | int %}
         {% if price_is_negative %}
-          Export blocked, price<0 ({{ current_price | round(3) }})
+          Export blocked (price<0)
         {% elif feedin_is_negative %}
-          Export blocked, FIT<0 ({{ feedin_price | round(3) }})
+          Export blocked (FIT<0)
         {% elif morning_dump_active %}
-          Morning dump, {{ battery_soc | round(0) }}%, FIT={{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %}
+          Morning dump ({{ battery_soc | round(0) }}%){% if price_is_estimated %}*{% endif %}
         {% elif export_high_price %}
-          Exporting, high FIT={{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %}
+          Export high ({{ fit_cents }}c){% if price_is_estimated %}*{% endif %}
         {% elif spike %}
-          Exporting, spike FIT={{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %}
+          Export spike ({{ fit_cents }}c){% if price_is_estimated %}*{% endif %}
+        {% elif export_medium_or_high_price and ((solar_potential_kw | float(0)) - (load_kw | float(0))) > (min_grid_transfer_kw | float(0.5)) %}
+          Export good ({{ fit_cents }}c), PV surplus{% if price_is_estimated %}*{% endif %}
         {% elif export_solar_override %}
-          Exporting, PV surplus {{ solar_potential_kw | float(0) | round(1) }}kW{% if price_is_estimated %}*{% endif %}
+          Export PV surplus{% if price_is_estimated %}*{% endif %}
         {% elif solar_surplus_bypass %}
-          Export blocked, PV charging
+          Export blocked (PV charging)
         {% elif export_blocked_for_forecast %}
-          Export blocked, need {{ battery_fill_need_kwh | float(0) | round(1) }}kWh PV
+          Export blocked (need {{ battery_fill_need_kwh | float(0) | round(1) }}kWh)
         {% elif export_forecast_guard %}
-          Export blocked, reserve protect
+          {% if is_evening_or_night %}
+            Export blocked ({{ battery_soc | round(0) }}% < {{ battery_soc_required_to_sunrise | round(0) }}%){% if price_is_estimated %}*{% endif %}
+          {% else %}
+            Export blocked (low PV forecast)
+          {% endif %}
         {% elif battery_soc <= export_min_soc %}
-          Export blocked, floor {{ battery_soc | round(0) }}%
-        {% elif battery_soc < min_export_target_soc and past_morning_grace_period %}
-          Export blocked, {{ battery_soc | round(0) }}% < {{ min_export_target_soc }}%
-        {% elif battery_soc < min_export_target_soc %}
-          Export blocked, {{ battery_soc | round(0) }}% < sunrise {{ sunrise_soc_target | round(0) }}%
+          Export blocked (floor {{ battery_soc | round(0) }}%)
+        {% elif battery_soc < battery_soc_required_to_sunrise and past_morning_grace_period %}
+          Export blocked ({{ battery_soc | round(0) }}% < {{ battery_soc_required_to_sunrise | round(0) }}%)
+        {% elif battery_soc < battery_soc_required_to_sunrise %}
+          Export blocked ({{ battery_soc | round(0) }}% < sunrise {{ battery_soc_required_to_sunrise | round(0) }}%)
         {% elif export_blocked_effective %}
-          Export blocked, demand/conditions
+          Export blocked (demand)
         {% else %}
           {% set tier_cap = export_tier_limit | float(0) %}
           {% if tier_cap <= 0 %}
             {% if pv_safeguard_active %}
-              Export blocked, PV forecast low
+              Export blocked (PV low)
             {% else %}
-              Export blocked, FIT {{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %} < {{ export_threshold_low | round(3) }}
+              Export blocked ({{ fit_cents }}c < low tier, {{ (export_threshold_low * 100) | round(0) }}c){% if price_is_estimated %}*{% endif %}
             {% endif %}
           {% else %}
-            Export limited, FIT={{ feedin_price | round(3) }}{% if price_is_estimated %}*{% endif %}
+            Export low ({{ fit_cents }}c){% if price_is_estimated %}*{% endif %}
           {% endif %}
         {% endif %}
 
       import_reason: >
         {% set free_or_paid_import = price_is_actual and current_price <= 0 %}
+        {% set import_cents = (current_price * 100) | round(0) | int %}
         {% if free_or_paid_import %}
           {% if current_price < 0 %}
-            Importing, negative price={{ current_price | round(3) }}
+            Importing ({{ import_cents }}c)
           {% else %}
-            Importing, FREE (0.000)
+            Importing (FREE)
           {% endif %}
         {% elif morning_dump_active %}
-          Import blocked, dump active
+          Import blocked (dump active)
         {% elif demand_window_active %}
-          Import blocked, demand window
+          Import blocked (demand)
         {% elif standby_holdoff_active %}
-          Import blocked, holdoff
+          Import blocked (holdoff)
         {% elif not price_available %}
-          Import blocked, price N/A
+          Import blocked (no price)
         {% elif price_is_negative %}
-          Importing, negative price={{ current_price | round(3) }}
+          Importing ({{ import_cents }}c)
         {% elif feedin_price >= export_threshold_low %}
-          Import blocked, FIT {{ feedin_price | round(3) }} > {{ export_threshold_low | round(3) }}
+          Import blocked ({{ import_cents }}c), exporting{% if price_is_estimated %}*{% endif %}
         {% elif current_price > max_price_threshold and battery_soc >= (sunrise_soc_target | float(0)) %}
-          Import blocked, {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} > {{ max_price_threshold | round(3) }}, bat ok
+          Import blocked ({{ import_cents }}c){% if price_is_estimated %}*{% endif %}
         {% elif grid_limit_base <= 0 %}
           {% if current_price > max_price_threshold %}
-            Import blocked, {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} > {{ max_price_threshold | round(3) }}
+            Import blocked ({{ import_cents }}c){% if price_is_estimated %}*{% endif %}
           {% elif battery_soc >= daytime_topup_max_soc %}
-            Import blocked, SoC {{ battery_soc | round(0) }}% at limit
+            Import blocked (bat {{ battery_soc | round(0) }}%)
           {% else %}
             {% set pv_surplus_kw = [(pv_kw | float(0)) - (load_kw | float(0)), 0] | max %}
             {% if pv_surplus_kw >= target_battery_charge %}
-              Import blocked, PV surplus {{ pv_surplus_kw | round(1) }}kW > desired {{ target_battery_charge | round(1) }}kW
+              Import blocked (PV surplus)
             {% else %}
-              Import blocked, forecast sufficient
+              Import blocked (forecast ok)
             {% endif %}
           {% endif %}
         {% elif desired_import_limit > 0 %}
           {% set cheap_supplement = (battery_soc >= daytime_topup_max_soc) and (pv_kw < load_kw) and (current_price <= max_price_threshold) %}
           {% if price_is_negative %}
-            Importing, negative price={{ current_price | round(3) }}
+            Importing ({{ import_cents }}c)
           {% elif cheap_supplement %}
-            Importing, cheap {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} < {{ max_price_threshold | round(3) }}, PV low
+            Importing ({{ import_cents }}c), PV low{% if price_is_estimated %}*{% endif %}
           {% else %}
-            Importing, cheap {{ current_price | round(3) }}{% if price_is_estimated %}*{% endif %} < {{ max_price_threshold | round(3) }}
+            Importing ({{ import_cents }}c){% if price_is_estimated %}*{% endif %}
           {% endif %}
         {% else %}
-          Import blocked, no condition
+          Import blocked
         {% endif %}
 
       desired_export_limit: >
@@ -2121,7 +2149,7 @@ action:
             {{ morning_dump_limit }}
           {% elif price_is_negative or feedin_is_negative %}
             0
-          {% elif battery_soc < min_export_target_soc and not within_morning_grace_period %}
+          {% elif battery_soc < battery_soc_required_to_sunrise and not within_morning_grace_period %}
             0
           {% elif export_blocked_effective or export_forecast_guard %}
             0
@@ -2132,8 +2160,8 @@ action:
           {% if tier_cap <= 0 %}
             0
           {% elif high_price or spike %}
-            {% if spike and spike_full_power %}
-              {% set limit_cap = [tier_cap, cap_total_import | float(0)] | max %}
+            {% if spike %}
+              {% set limit_cap = [tier_cap, ess_max_discharge_kw, cap_total_import | float(0)] | max %}
             {% else %}
               {% set limit_cap = [tier_cap, export_limit_high | float(0)] | min %}
             {% endif %}
@@ -2176,12 +2204,36 @@ action:
               {% set boost = [1.5, 1 + (((tier_cap | float(0)) / (export_limit_high | float(1))) * 0.3)] | min %}
               {% set safe_kw = (safe_kw_base | float(0)) * boost %}
               {% set safe_cap = [(safe_kw | float(0)), (tier_cap | float(0))] | min %}
+              {% if export_medium_or_high_price %}
+                {% if high_price %}
+                  {% set safe_cap = safe_cap * 1.75 %}
+                {% else %}
+                  {% set safe_cap = safe_cap * 1.5 %}
+                {% endif %}
+              {% endif %}
               {% set raw_limit = (tier_cap | float(0)) * (scale_soc | float(0)) * 0.9 %}
               {% set final_limit = [raw_limit, safe_cap] | min %}
               {% set limit = [final_limit, ess_max_discharge_kw] | min | round(1) %}
               {% if (not is_evening_or_night) and (not high_price and not spike) %}
-                {% set pv_surplus = [(pv_kw | float(0)) - (load_kw | float(0)), 0] | max %}
-                {% set limit = [(limit | float(0)), (pv_surplus | float(0))] | min %}
+                {% set battery_full = battery_soc >= 99 %}
+                {% set pv_available = solar_potential_kw | float(0) if battery_full else pv_kw | float(0) %}
+                {% set pv_surplus = [(pv_available) - (load_kw | float(0)), 0] | max %}
+                {% set pv_surplus_with_overhead = pv_surplus * 0.9 %}
+                {% set limit = [(limit | float(0)), (pv_surplus_with_overhead | float(0))] | min %}
+                {% if battery_full and current_export_limit > 0 %}
+                  {% set batt_power = battery_power_actual | float(0) %}
+                  {% set discharge_threshold = -0.2 %}
+                  {% set charge_threshold = 0.2 %}
+                  {% if batt_power < discharge_threshold %}
+                    {% set adjustment = (batt_power | abs) * 0.5 %}
+                    {% set limit = [[(current_export_limit | float(0)) - adjustment, 0] | max, pv_surplus_with_overhead] | min %}
+                  {% elif batt_power > charge_threshold %}
+                    {% set adjustment = batt_power * 0.5 %}
+                    {% set limit = [[(current_export_limit | float(0)) + adjustment, ess_max_discharge_kw] | min, pv_surplus_with_overhead] | min %}
+                  {% else %}
+                    {% set limit = [(current_export_limit | float(0)), pv_surplus_with_overhead] | min %}
+                  {% endif %}
+                {% endif %}
               {% endif %}
               {% if limit <= 0 %}
                 0
@@ -2339,12 +2391,6 @@ action:
         ] %}
         {% if eta_label != '' %}
           {% set reasons = reasons + [eta_label] %}
-        {% endif %}
-        {% if demand_window_active %}
-          {% set reasons = reasons + ['Demand window'] %}
-        {% endif %}
-        {% if price_is_estimated %}
-          {% set reasons = reasons + ['*est'] %}
         {% endif %}
         {{ reasons | join('; ') }}
 
