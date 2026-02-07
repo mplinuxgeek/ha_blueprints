@@ -2145,10 +2145,24 @@ action:
           {% set spike_full_power = export_spike_full_power | bool(false) %}
           {% set bypass_min_soc = high_price or spike or solar_surplus_bypass or positive_fit_override %}
           {% set min_grid_kw = min_grid_transfer_kw | float(0.5) %}
-          {% if morning_dump_active %}
-            {{ morning_dump_limit }}
-          {% elif price_is_negative or feedin_is_negative %}
+          {% if price_is_negative or feedin_is_negative %}
             0
+          {% elif spike or high_price %}
+            {% if spike %}
+              {% set limit_cap = [export_tier_limit | float(0), ess_max_discharge_kw, cap_total_import | float(0)] | max %}
+            {% else %}
+              {% set limit_cap = [export_tier_limit | float(0), export_limit_high | float(0)] | min %}
+            {% endif %}
+            {% set limit = [limit_cap, ess_max_discharge_kw] | min | round(1) %}
+            {% if limit <= 0 %}
+              0
+            {% elif limit < min_grid_kw %}
+              {{ min_grid_kw | round(1) }}
+            {% else %}
+              {{ limit }}
+            {% endif %}
+          {% elif morning_dump_active %}
+            {{ morning_dump_limit }}
           {% elif battery_soc < battery_soc_required_to_sunrise and not within_morning_grace_period %}
             0
           {% elif export_blocked_effective or export_forecast_guard %}
@@ -2159,20 +2173,6 @@ action:
           {% set tier_cap = export_tier_limit | float(0) %}
           {% if tier_cap <= 0 %}
             0
-          {% elif high_price or spike %}
-            {% if spike %}
-              {% set limit_cap = [tier_cap, ess_max_discharge_kw, cap_total_import | float(0)] | max %}
-            {% else %}
-              {% set limit_cap = [tier_cap, export_limit_high | float(0)] | min %}
-            {% endif %}
-            {% set limit = [limit_cap, ess_max_discharge_kw] | min | round(1) %}
-            {% if limit <= 0 %}
-              0
-            {% elif limit < min_grid_kw %}
-              {{ min_grid_kw | round(1) }}
-            {% else %}
-              {{ limit }}
-            {% endif %}
           {% elif positive_fit_override %}
             {% set limit = [tier_cap, ess_max_discharge_kw] | min | round(1) %}
             {% if limit <= 0 %}
